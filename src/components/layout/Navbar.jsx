@@ -44,7 +44,7 @@ export default function Navbar() {
           {/* Tempat Logo Gambar. Ganti URL src dengan path gambar logo Anda, misalnya "/images/logo.png" */}
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm">
             <img 
-              src="https://via.placeholder.com/150/DC2626/FFFFFF?text=AL" 
+              src="https://placehold.co/150x150/DC2626/FFFFFF?text=AL" 
               alt="Logo AFKAR LAND" 
               className="w-full h-full object-cover"
             />

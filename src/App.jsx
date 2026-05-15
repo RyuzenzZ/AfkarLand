@@ -14,6 +14,8 @@ import AdminLayout from './components/layout/AdminLayout';
 import Home from './pages/Home';
 import About from './pages/About';
 import Career from './pages/Career';
+import Projects from './pages/Projects';         // ✅ sudah ada
+import ProjectDetail from './pages/ProjectDetail'; // ✅ TAMBAHKAN INI
 import Blog from './pages/Blog';
 import BlogDetail from './pages/BlogDetail';
 import Contact from './pages/Contact';
@@ -64,6 +66,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/tentang-kami" element={<About />} />
           <Route path="/karir" element={<Career />} />
+          <Route path="/proyek" element={<Projects />} />              {/* ✅ TAMBAHKAN */}
+          <Route path="/proyek/:slug" element={<ProjectDetail />} />
           <Route path="/artikel" element={<Blog />} />
           <Route path="/artikel/:slug" element={<BlogDetail />} />
           <Route path="/kontak" element={<Contact />} />
