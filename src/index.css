@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #DC2626; /* Merah Premium */
+  --color-brand-secondary: #000000;
+  --color-brand-accent: #B91C1C; 
+  --color-brand-surface: #FFFFFF;
+  --color-brand-text: #1A1A1A;
+  /* Menggunakan Montserrat untuk Judul, dan Inter untuk Teks Paragraf */
+  --font-heading: "Montserrat", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
