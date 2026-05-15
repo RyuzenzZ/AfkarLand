@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiMenu, FiX } from 'react-icons/fi';
+import { FiMenu, FiX, FiLock } from 'react-icons/fi';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
-  // Efek transisi warna Navbar saat halaman di-scroll
+  // LOGIKA: Transisi warna Navbar saat halaman di-scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -17,7 +17,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Tutup menu mobile otomatis saat berpindah halaman
+  // LOGIKA: Tutup menu mobile otomatis saat berpindah halaman
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
@@ -32,20 +32,19 @@ export default function Navbar() {
   ];
 
   return (
-    <header 
+    <header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled ? 'bg-red-700 shadow-lg py-4' : 'bg-red-600 py-6'
       }`}
     >
-      <div className="container mx-auto px-6 md:px-12 flex justify-between items-center relative">
-        
-        {/* Logo Perusahaan */}
-        <Link to="/" className="flex items-center gap-3 relative z-10 hover:scale-105 transition-transform">
-          {/* Tempat Logo Gambar. Ganti URL src dengan path gambar logo Anda, misalnya "/images/logo.png" */}
+      <div className="container mx-auto px-6 md:px-12 flex justify-between items-center">
+
+        {/* ===================== LOGO ===================== */}
+        <Link to="/" className="flex items-center gap-3 hover:scale-105 transition-transform shrink-0">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm">
-            <img 
-              src="https://placehold.co/150x150/DC2626/FFFFFF?text=AL" 
-              alt="Logo AFKAR LAND" 
+            <img
+              src="https://placehold.co/150x150/DC2626/FFFFFF?text=AL"
+              alt="Logo AFKAR LAND"
               className="w-full h-full object-cover"
             />
           </div>
@@ -54,62 +53,73 @@ export default function Navbar() {
           </div>
         </Link>
 
-        {/* Navigasi Desktop */}
-        <nav className="hidden md:flex items-center gap-8">
+        {/* ===================== NAVIGASI DESKTOP ===================== */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           {navLinks.map((link) => (
-            <Link 
-              key={link.name} 
-              to={link.path} 
-              className={`text-sm font-bold text-white hover:text-red-200 transition-colors uppercase tracking-wider relative group`}
+            <Link
+              key={link.name}
+              to={link.path}
+              className="text-sm font-bold text-white hover:text-red-200 transition-colors uppercase tracking-wider relative group"
             >
               {link.name}
-              {/* Garis bawah animasi saat hover atau sedang aktif */}
-              <span className={`absolute -bottom-1 left-0 h-0.5 bg-red-200 transition-all duration-300 ${location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+              {/* LOGIKA: Garis bawah animasi aktif/hover */}
+              <span
+                className={`absolute -bottom-1 left-0 h-0.5 bg-red-200 transition-all duration-300 ${
+                  location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
+                }`}
+              />
             </Link>
           ))}
+
+          {/* ===== TOMBOL LOGIN ADMIN (DESKTOP) ===== */}
+          <Link
+            to="/admin/login"
+            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/60 text-white text-sm font-bold px-4 py-2 rounded-full transition-all duration-300 uppercase tracking-wider backdrop-blur-sm"
+          >
+            <FiLock size={14} />
+            <span>Login</span>
+          </Link>
         </nav>
 
-        {/* 🔒 JALUR RAHASIA ADMIN (HIDDEN LINK) */}
-        <Link 
-          to="/admin/login" 
-          className="absolute right-0 top-0 w-10 h-10 opacity-0 z-20" 
-          title="Login Akses"
-        >
-          Admin
-        </Link>
-
-        {/* Tombol Hamburger Mobile */}
-        <button 
-          className="md:hidden text-white relative z-10 hover:text-red-200 transition-colors" 
+        {/* ===================== TOMBOL HAMBURGER MOBILE ===================== */}
+        <button
+          className="md:hidden text-white hover:text-red-200 transition-colors"
           onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle Menu"
         >
           {isOpen ? <FiX size={28} /> : <FiMenu size={28} />}
         </button>
       </div>
 
-      {/* Navigasi Dropdown Mobile */}
+      {/* ===================== MENU DROPDOWN MOBILE ===================== */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-red-800 absolute top-full left-0 w-full shadow-2xl border-t border-red-900/50"
+            className="md:hidden bg-red-800 absolute top-full left-0 w-full shadow-2xl border-t border-red-900/50 overflow-hidden"
           >
-            <div className="flex flex-col px-6 py-6 gap-2">
+            <div className="flex flex-col px-6 py-6 gap-1">
               {navLinks.map((link) => (
-                 <Link 
-                   key={link.name} 
-                   to={link.path} 
-                   className={`text-white font-bold text-lg py-3 border-b border-red-700/50 transition-colors ${location.pathname === link.path ? 'text-red-300' : 'hover:text-red-200'}`}
-                 >
-                   {link.name}
-                 </Link>
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  className={`text-white font-bold text-lg py-3 border-b border-red-700/50 transition-colors ${
+                    location.pathname === link.path ? 'text-red-300' : 'hover:text-red-200'
+                  }`}
+                >
+                  {link.name}
+                </Link>
               ))}
-              
-              {/* 🔒 Jalur Rahasia Admin untuk Mobile */}
-              <Link to="/admin/login" className="text-xs text-red-800 mt-6 text-right select-none">
-                login
+
+              {/* ===== TOMBOL LOGIN ADMIN (MOBILE) ===== */}
+              <Link
+                to="/admin/login"
+                className="flex items-center justify-center gap-2 mt-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white font-bold text-base py-3 rounded-xl transition-all duration-300"
+              >
+                <FiLock size={16} />
+                <span>Login Admin</span>
               </Link>
             </div>
           </motion.div>
