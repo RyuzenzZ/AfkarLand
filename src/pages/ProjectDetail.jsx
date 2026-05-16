@@ -22,7 +22,7 @@ const allMarketing = [
     spesialisasi: 'KPR Syariah & Investasi Properti',
     desc: 'Siap membantu konsultasi project dan kebutuhan property syariah Anda dengan pengalaman 5+ tahun.',
     foto: 'https://ui-avatars.com/api/?name=Damar+Mahendra&background=C0392B&color=fff&size=200&bold=true',
-    wa: '6281234567890', phone: '081234567890', // GANTI nomor aktif
+    wa: '6285705218281', phone: '085705218281', // GANTI nomor aktif
     isOnline: true, badge: '⭐ Top Performer',
     badgeClass: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
   },
