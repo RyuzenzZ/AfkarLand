@@ -5,7 +5,7 @@ import {
   FiMapPin, FiCheckCircle, FiSend, FiArrowLeft, FiArrowRight,
   FiDownload, FiMessageCircle, FiPhone, FiX, FiChevronDown,
   FiChevronRight, FiStar, FiShield, FiHome, FiTrendingUp,
-  FiNavigation, FiClock, FiAward, FiFileText
+  FiNavigation, FiFileText
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { createLead } from '../services/firestoreService';
@@ -14,56 +14,61 @@ import { createLead } from '../services/firestoreService';
 // CANVAS 1 — DATA LAYER LENGKAP
 // ─────────────────────────────────────────────────────────────
 
-// LOGIKA: Tim marketing — 5 orang, idealnya dari Firestore
+// LOGIKA: Tim marketing — 5 orang dengan nomor aktif per arahan Damar Mahendra
 const allMarketing = [
   {
     id: 'damar', name: 'Damar Mahendra',
-    role: 'Senior Marketing Executive AFKAR LAND',
-    spesialisasi: 'KPR Syariah & Investasi Properti',
-    desc: 'Siap membantu konsultasi project dan kebutuhan property syariah Anda dengan pengalaman 5+ tahun.',
+    role: 'Marketing Executive',
+    label: 'Marketing Executive',
+    ahli: 'Properti Syariah & Investasi',
+    spesialisasi: 'Properti Syariah & Investasi',
     foto: 'https://ui-avatars.com/api/?name=Damar+Mahendra&background=C0392B&color=fff&size=200&bold=true',
-    wa: '6285705218281', phone: '085705218281', // GANTI nomor aktif
+    wa: '6285705218281', phone: '085705218281',
     isOnline: true, badge: '⭐ Top Performer',
     badgeClass: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
   },
   {
     id: 'fila', name: 'Fila Amelia',
-    role: 'Marketing Executive AFKAR LAND',
-    spesialisasi: 'Rumah Perdana & KPR BTN',
-    desc: 'Spesialis membantu calon pembeli rumah pertama mendapatkan skema terbaik.',
+    role: 'Marketing Executive',
+    label: 'Marketing Executive',
+    ahli: 'Akad Syariah & Cash Bertahap',
+    spesialisasi: 'Akad Syariah & Cash Bertahap',
     foto: 'https://ui-avatars.com/api/?name=Fila+Amelia&background=C0392B&color=fff&size=200&bold=true',
-    wa: '6281234567891', phone: '081234567891',
-    isOnline: true, badge: '🏠 KPR Specialist',
+    wa: '6288975158899', phone: '088975158899',
+    isOnline: true, badge: '🏠 Syariah Specialist',
     badgeClass: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   },
   {
     id: 'hazfira', name: 'Hazfira',
-    role: 'Property Advisor AFKAR LAND',
-    spesialisasi: 'Cash Bertahap & Investasi',
-    desc: 'Ahli dalam skema cash bertahap dan analisis potensi investasi properti jangka panjang.',
+    role: 'Marketing Executive',
+    label: 'Marketing Executive',
+    ahli: 'Investasi & Cash Bertahap',
+    spesialisasi: 'Investasi & Cash Bertahap',
     foto: 'https://ui-avatars.com/api/?name=Hazfira&background=C0392B&color=fff&size=200&bold=true',
-    wa: '6281234567892', phone: '081234567892',
-    isOnline: false, badge: '💼 Investment Expert',
+    wa: '6285230922038', phone: '085230922038',
+    isOnline: true, badge: '💼 Investment Expert',
     badgeClass: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   },
   {
     id: 'erni', name: 'Erni',
-    role: 'Marketing Executive AFKAR LAND',
+    role: 'Marketing Executive',
+    label: 'Marketing Executive',
+    ahli: 'Konsultasi Properti Syariah',
     spesialisasi: 'Konsultasi Properti Syariah',
-    desc: 'Berpengalaman dalam konsultasi properti syariah dan membantu proses legalitas.',
     foto: 'https://ui-avatars.com/api/?name=Erni&background=C0392B&color=fff&size=200&bold=true',
-    wa: '6281234567893', phone: '081234567893',
+    wa: '6285280080063', phone: '085280080063',
     isOnline: true, badge: '✨ Syariah Expert',
     badgeClass: 'bg-green-500/10 text-green-400 border-green-500/20',
   },
   {
     id: 'ayu', name: 'Ayu',
-    role: 'Marketing Executive AFKAR LAND',
+    role: 'Marketing Executive',
+    label: 'Marketing Executive',
+    ahli: 'Survey Lokasi & Negosiasi',
     spesialisasi: 'Survey Lokasi & Negosiasi',
-    desc: 'Siap mendampingi survey lokasi dan membantu negosiasi terbaik untuk keluarga Anda.',
     foto: 'https://ui-avatars.com/api/?name=Ayu&background=C0392B&color=fff&size=200&bold=true',
-    wa: '6281234567894', phone: '081234567894',
-    isOnline: false, badge: '📍 Survey Specialist',
+    wa: '6285397587857', phone: '085397587857',
+    isOnline: true, badge: '📍 Survey Specialist',
     badgeClass: 'bg-[#C9A84C]/10 text-[#C9A84C] border-[#C9A84C]/20',
   },
 ];
@@ -122,7 +127,8 @@ const projectData = {
     brosurFileName: 'Brosur-Masagena-Green-Hills.pdf',
     brosurSize: '2.4 MB',
     websiteUrl: 'https://masagena.afkarland.id',
-    marketingIds: ['damar', 'fila', 'hazfira', 'erni', 'ayu'],
+    // LOGIKA: Masagena — Marketing Executive: Damar & Fila
+    marketingIds: ['damar', 'fila'],
     progress: progressDefault,
     faq: faqDefault,
   },
@@ -145,7 +151,8 @@ const projectData = {
     brosurFileName: 'Brosur-Wotu-Islamic-Village.pdf',
     brosurSize: '2.1 MB',
     websiteUrl: 'https://wotu.afkarland.id',
-    marketingIds: ['damar', 'fila', 'hazfira', 'erni', 'ayu'],
+    // LOGIKA: Wotu — Marketing Executive: Hazfira
+    marketingIds: ['hazfira'],
     progress: progressDefault,
     faq: faqDefault,
   },
@@ -168,7 +175,8 @@ const projectData = {
     brosurFileName: 'Brosur-Hasanah-Panakkukang.pdf',
     brosurSize: '1.9 MB',
     websiteUrl: 'https://hasanah.afkarland.id',
-    marketingIds: ['hazfira', 'fila', 'erni', 'ayu', 'damar'],
+    // LOGIKA: The Hasanah — Marketing Executive: Damar & Fila
+    marketingIds: ['damar', 'fila'],
     progress: progressDefault,
     faq: faqDefault,
   },
@@ -191,7 +199,8 @@ const projectData = {
     brosurFileName: 'Brosur-Afkar-Madani-Estate.pdf',
     brosurSize: '2.7 MB',
     websiteUrl: 'https://afkarmadani.afkarland.id',
-    marketingIds: ['damar', 'hazfira', 'erni', 'ayu', 'fila'],
+    // LOGIKA: Afkar Madani Estate — Marketing Executive: Erni & Ayu
+    marketingIds: ['erni', 'ayu'],
     progress: progressDefault,
     faq: faqDefault,
   },
@@ -323,15 +332,14 @@ function MarketingCard({ mk, isSelected, onSelect, projectName }) {
       </div>
 
       <h4 className="font-bold text-white text-sm leading-tight mb-0.5">{mk.name}</h4>
-      <p className="text-white/40 text-[10px] mb-2.5 leading-tight">{mk.role}</p>
+      {/* LABEL: Property Consultant */}
+      <p className="text-white/40 text-[10px] mb-2 leading-tight tracking-wide">Property Consultant</p>
 
-      {/* BADGE SPESIALISASI */}
-      <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-2.5 py-1 rounded-full border mb-3 ${mk.badgeClass}`}>
-        <FiAward size={8} />
-        {mk.spesialisasi}
+      {/* BADGE: Official Team Afkar Land */}
+      <span className="inline-flex items-center gap-1.5 text-[9px] font-bold px-2.5 py-1 rounded-full border mb-3 bg-[#C9A84C]/10 text-[#C9A84C] border-[#C9A84C]/30">
+        <FiShield size={8} />
+        Official Team Afkar Land
       </span>
-
-      <p className="text-white/30 text-[10px] leading-snug mb-4 line-clamp-2">{mk.desc}</p>
 
       {/* BUTTONS */}
       <AnimatePresence>
@@ -659,9 +667,9 @@ export default function ProjectDetail() {
 
         {/* ── MARKETING EXECUTIVE ── */}
         <section>
-          <SectionLabel>Konsultasikan Project Ini Bersama Tim Kami</SectionLabel>
-          <p className="text-white/35 text-sm mb-6 -mt-2">Klik konsultan pilihan Anda untuk langsung terhubung via WhatsApp atau telepon.</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <SectionLabel>Marketing Executive Project Ini</SectionLabel>
+          <p className="text-white/35 text-sm mb-6 -mt-2">Pilih konsultan properti syariah Anda — klik kartu untuk langsung terhubung via WhatsApp atau telepon.</p>
+          <div className={`grid gap-4 ${team.length === 1 ? 'grid-cols-1 max-w-xs mx-auto' : team.length === 2 ? 'grid-cols-2 max-w-lg mx-auto' : team.length === 3 ? 'grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'}`}>
             {team.map((mk) => (
               <MarketingCard key={mk.id} mk={mk} isSelected={selectedMkId === mk.id} onSelect={handleSelectMk} projectName={proj.name} />
             ))}
@@ -716,16 +724,6 @@ export default function ProjectDetail() {
                     <option value="Afkar Madani Estate">Afkar Madani Estate</option>
                   </select>
                 </div>
-                {/* PILIH MARKETING */}
-                <div>
-                  <label className="block text-xs font-bold text-white/60 mb-2">Pilih Marketing Executive</label>
-                  <select name="pilihanMarketing" value={form.pilihanMarketing} onChange={e => { handleChange(e); setSelectedMkId(e.target.value); }}
-                    className="w-full px-4 py-3 rounded-xl bg-[#1a1a1a] border border-white/10 focus:outline-none focus:border-[#C9A84C] text-white/80 text-sm transition-all"
-                  >
-                    <option value="">Pilih Konsultan (Opsional)</option>
-                    {team.map(mk => <option key={mk.id} value={mk.id}>{mk.name} — {mk.spesialisasi}</option>)}
-                  </select>
-                </div>
                 {/* TUJUAN */}
                 <div>
                   <label className="block text-xs font-bold text-white/60 mb-2">Tujuan Pembelian</label>
@@ -759,35 +757,65 @@ export default function ProjectDetail() {
           </div>
         </section>
 
-        {/* ── PROGRESS PEMBANGUNAN ── */}
+        {/* ── AJAKAN SURVEY LOKASI ── */}
         <section>
-          <SectionLabel>Progress Pembangunan</SectionLabel>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {proj.progress.map((p, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className="bg-[#111] border border-white/6 rounded-2xl p-5 space-y-3"
+          <SectionLabel>Buktikan Sendiri — Survey Lokasi Gratis!</SectionLabel>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f0f0f] via-[#141414] to-[#0f0f0f] border border-[#C9A84C]/20 p-8 md:p-10"
+          >
+            {/* Decorative gold line top */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/60 to-transparent" />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {[
+                {
+                  emoji: '👁️',
+                  title: 'Lihat Langsung Lokasinya',
+                  desc: 'Jangan percaya foto saja. Datang, rasakan suasana kawasannya sendiri — udara segar, lingkungan Islami, akses strategis.',
+                },
+                {
+                  emoji: '🤝',
+                  title: 'Didampingi Tim Marketing',
+                  desc: 'Kami antar, kami dampingi. Tim marketing kami siap menjawab semua pertanyaan Anda langsung di lokasi tanpa tekanan.',
+                },
+                {
+                  emoji: '📐',
+                  title: 'Pilih Unit Terbaik Anda',
+                  desc: 'Pilih langsung kavling atau unit yang paling sesuai kebutuhan & budget Anda. Booking di tempat dengan proses mudah.',
+                },
+              ].map((item, i) => (
+                <motion.div key={i} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                  className="flex flex-col items-center text-center p-5 rounded-xl bg-white/3 border border-white/6 hover:border-[#C9A84C]/30 transition-all duration-300 group"
+                >
+                  <span className="text-3xl mb-3">{item.emoji}</span>
+                  <h4 className="text-white font-bold text-sm mb-2 group-hover:text-[#C9A84C] transition-colors">{item.title}</h4>
+                  <p className="text-white/35 text-[11px] leading-relaxed">{item.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* CTA Quote + Button */}
+            <div className="text-center">
+              <p className="text-white/60 text-sm italic mb-1">
+                "Rumah adalah keputusan terbesar dalam hidup Anda.
+              </p>
+              <p className="text-[#C9A84C] font-bold text-sm mb-6">
+                Pastikan Anda memilih yang terbaik — dengan melihatnya sendiri." 🏡
+              </p>
+              <a
+                href={`https://wa.me/${team[0]?.wa || '6285705218281'}?text=${encodeURIComponent(`Assalamu'alaikum, saya ingin jadwalkan *Survey Lokasi* untuk project *${proj.name}*. Kapan bisa? 🙏`)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#C9A84C] hover:bg-[#e0c46e] text-black font-bold text-sm rounded-xl transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-[#C9A84C]/20"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[#C9A84C] text-[10px] font-bold uppercase tracking-wider">{p.fase}</span>
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${p.status === 'selesai' ? 'bg-green-500/15 text-green-400' : p.status === 'berjalan' ? 'bg-blue-500/15 text-blue-400' : 'bg-gray-500/15 text-gray-400'}`}>
-                    {p.status}
-                  </span>
-                </div>
-                <h4 className="text-white font-bold text-sm">{p.label}</h4>
-                {/* Progress bar */}
-                <div className="h-1.5 bg-white/8 rounded-full overflow-hidden">
-                  <motion.div initial={{ width: 0 }} whileInView={{ width: `${p.persen}%` }} viewport={{ once: true }} transition={{ duration: 0.8, delay: i * 0.1 }}
-                    className="h-full rounded-full bg-gradient-to-r from-brand-primary to-[#C9A84C]"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-white font-bold text-lg">{p.persen}%</span>
-                  <div className="flex items-center gap-1 text-white/30 text-[10px]"><FiClock size={9} />{p.tgl}</div>
-                </div>
-                <p className="text-white/30 text-[10px] leading-snug">{p.ket}</p>
-              </motion.div>
-            ))}
-          </div>
+                📅 Jadwalkan Survey Lokasi Sekarang — GRATIS!
+              </a>
+              <p className="text-white/20 text-[10px] mt-3">Tanpa biaya · Tanpa kewajiban beli · Kami siap menemani Anda</p>
+            </div>
+
+            {/* Decorative gold line bottom */}
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/60 to-transparent" />
+          </motion.div>
         </section>
 
         {/* ── FAQ ── */}
