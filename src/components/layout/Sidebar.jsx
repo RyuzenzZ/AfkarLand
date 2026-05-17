@@ -1,275 +1,138 @@
-// LOGIKA: Sidebar navigasi utama AFKAR LAND
-// Desain: background hitam #080808, teks putih, aksen merah
-// Fitur scrollable: area menu bisa digulir ke bawah, logo & logout tetap di tempat
-// Built with Webapp GASP Builder Era v2.0 Masterpiece Edition by @damarmahendra
+// Sidebar.jsx — AFKAR LAND Admin Panel
+// Navigasi lengkap dengan semua modul company profile
 
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Building, FileText,
-  LogOut, X, ChevronDown, ChevronRight,
-  Wallet, Shield, PieChart, CalendarCheck,
-  Bell, Map, Video, Zap, BarChart2,
-  BookOpen, Star, Bot, Home,
-  Download, Activity, Search
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+  FiGrid, FiUsers, FiMessageSquare, FiFileText,
+  FiBriefcase, FiSettings, FiLogOut, FiChevronDown,
+  FiChevronRight, FiImage, FiStar, FiSearch,
+  FiLayers, FiMonitor, FiInfo, FiHome
+} from 'react-icons/fi';
+import { MdApartment } from 'react-icons/md';
+import { CalendarCheck, BarChart2, Wrench } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
-// LOGIKA: Sub-menu item — aktif = merah, default = abu-abu
-const SubMenuItem = ({ path, label, badge, onClose }) => (
-  <NavLink
-    to={path}
-    onClick={onClose}
-    className={({ isActive }) =>
-      `flex items-center pl-10 pr-3 py-2.5 text-sm rounded-xl transition-all duration-200 ${
-        isActive
-          ? 'bg-red-600/15 text-red-400 font-bold border-l-2 border-red-500'
-          : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
-      }`
-    }
+// Struktur menu lengkap admin company profile
+const MENU_GROUPS = [
+  {
+    group: 'Overview',
+    items: [
+      { label: 'Dashboard',       path: '/admin/dashboard',    icon: <FiGrid size={16}/> },
+    ]
+  },
+  {
+    group: 'Konten Website',
+    items: [
+      { label: 'Homepage',        path: '/admin/homepage',     icon: <FiHome size={16}/> },
+      { label: 'Proyek',          path: '/admin/projects',     icon: <MdApartment size={16}/> },
+      { label: 'Unit Properti',   path: '/admin/units',        icon: <FiLayers size={16}/> },
+      { label: 'Layanan',         path: '/admin/services',     icon: <Wrench size={16}/> },
+      { label: 'Artikel / Blog',  path: '/admin/articles',     icon: <FiFileText size={16}/> },
+      { label: 'Galeri Media',    path: '/admin/gallery',      icon: <FiImage size={16}/> },
+      { label: 'Testimoni',       path: '/admin/testimonials', icon: <FiStar size={16}/> },
+    ]
+  },
+  {
+    group: 'CRM & Leads',
+    items: [
+      { label: 'Leads Masuk',     path: '/admin/leads',        icon: <FiUsers size={16}/> },
+      { label: 'Pesan Kontak',    path: '/admin/messages',     icon: <FiMessageSquare size={16}/> },
+      { label: 'Lamaran Kerja',   path: '/admin/applications', icon: <FiBriefcase size={16}/> },
+      { label: 'Booking Unit',    path: '/admin/bookings',     icon: <CalendarCheck size={16}/> },
+    ]
+  },
+  {
+    group: 'Optimasi & Analitik',
+    items: [
+      { label: 'SEO Manager',     path: '/admin/seo',          icon: <FiSearch size={16}/> },
+      { label: 'Analytics',       path: '/admin/analytics',    icon: <BarChart2 size={16}/> },
+    ]
+  },
+  {
+    group: 'Sistem',
+    items: [
+      { label: 'Pengaturan Web',  path: '/admin/settings',     icon: <FiSettings size={16}/> },
+    ]
+  },
+];
+
+const MenuItem = ({ item, isActive, depth = 0 }) => (
+  <Link
+    to={item.path}
+    className={`
+      flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+      ${isActive
+        ? 'bg-red-600 text-white shadow-md shadow-red-600/30'
+        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+      }
+    `}
+    style={{ paddingLeft: depth > 0 ? `${12 + depth * 16}px` : undefined }}
   >
-    <span className="flex-1 truncate text-[13px]">{label}</span>
-    {badge && (
-      <span className="ml-2 text-[8px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold shrink-0">
-        {badge}
+    <span className={isActive ? 'text-white' : 'text-gray-400'}>{item.icon}</span>
+    <span className="truncate">{item.label}</span>
+    {item.badge && (
+      <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'}`}>
+        {item.badge}
       </span>
     )}
-  </NavLink>
-);
-
-// LOGIKA: Grup menu collapsible dengan toggle
-const MenuGroup = ({ id, label, icon, children, openMenus, toggleMenu }) => (
-  <div>
-    <button
-      onClick={() => toggleMenu(id)}
-      className="w-full flex items-center justify-between px-4 py-3 rounded-xl
-                 text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
-    >
-      <div className="flex items-center gap-3 font-medium text-[13px]">
-        {icon}
-        {label}
-      </div>
-      <span className="text-gray-600 shrink-0">
-        {openMenus[id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-      </span>
-    </button>
-    {openMenus[id] && (
-      <div className="mt-0.5 space-y-0.5 pb-1">
-        {children}
-      </div>
-    )}
-  </div>
-);
-
-// LOGIKA: Label pemisah antar seksi menu
-const SectionLabel = ({ label }) => (
-  <div className="px-4 pt-5 pb-1.5">
-    <p className="text-[9px] uppercase tracking-[0.18em] text-gray-600 font-bold">{label}</p>
-  </div>
+  </Link>
 );
 
 export default function Sidebar({ onClose }) {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
 
-  // LOGIKA: State semua grup menu — project default terbuka
-  const [openMenus, setOpenMenus] = useState({
-    crm:        false,
-    booking:    false,
-    customer:   false,
-    project:    true,
-    marketing:  false,
-    content:    false,
-    automation: false,
-    analytics:  false,
-    system:     false,
-  });
+  const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
-  const toggleMenu = (menu) =>
-    setOpenMenus(prev => ({ ...prev, [menu]: !prev[menu] }));
-
-  const handleLogout = () => {
-    toast.success('Berhasil keluar dari sistem');
-    navigate('/admin/login');
+  const handleLogout = async () => {
+    try { await logout(); } catch {}
   };
 
   return (
-    // LOGIKA: h-screen + flex-col → logo atas fixed, menu scroll, logout bawah fixed
-    <aside className="w-64 bg-[#080808] text-white h-screen flex flex-col border-r border-white/5 shadow-2xl">
-
-      {/* Tombol X — hanya tampil mobile */}
-      <button
-        onClick={onClose}
-        className="md:hidden absolute top-5 right-4 p-2 text-gray-400 hover:text-white z-10"
-      >
-        <X size={20} />
-      </button>
-
-      {/* ── LOGO — shrink-0 agar tidak ikut scroll ── */}
-      <div className="shrink-0 h-20 flex flex-col items-center justify-center border-b border-white/5 px-6">
-        <div className="text-xl font-heading font-extrabold tracking-[0.15em] text-center">
-          AFKAR <span className="text-red-500">LAND</span>
+    <aside className="flex flex-col h-full bg-white border-r border-gray-100 w-64">
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-gray-100 flex items-center gap-3 shrink-0">
+        <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center shrink-0">
+          <MdApartment size={20} className="text-white"/>
         </div>
-        <p className="text-[9px] text-gray-500 tracking-widest mt-1 uppercase">Admin Panel</p>
+        <div>
+          <div className="font-heading font-extrabold text-gray-900 text-base leading-none">AFKAR LAND</div>
+          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Admin Panel</div>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="ml-auto p-1 text-gray-400 hover:text-gray-700 lg:hidden">
+            ✕
+          </button>
+        )}
       </div>
 
-      {/* ── MENU SCROLL AREA ──
-          LOGIKA: flex-1 mengisi sisa ruang, overflow-y-auto mengaktifkan scroll
-          Logo dan Logout tidak ikut scroll karena keduanya pakai shrink-0
-      ── */}
-      <div
-        className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5"
-        style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}
-      >
+      {/* Menu Groups */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {MENU_GROUPS.map((group) => (
+          <div key={group.group}>
+            <p className="text-[10px] font-extrabold text-gray-300 uppercase tracking-widest px-3 mb-2">
+              {group.group}
+            </p>
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <MenuItem key={item.path} item={item} isActive={isActive(item.path)} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
 
-        {/* ─ DASHBOARD UTAMA ─ */}
-        <NavLink
-          to="/admin/dashboard"
-          onClick={onClose}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-[13px] transition-all duration-200 ${
-              isActive
-                ? 'bg-red-600 text-white shadow-lg shadow-red-900/30'
-                : 'text-gray-400 hover:bg-white/5 hover:text-white'
-            }`
-          }
-        >
-          <LayoutDashboard size={16} /> Dashboard Utama
-        </NavLink>
-
-        {/* ════════════════════════ */}
-        {/* CRM & KONSUMEN          */}
-        {/* ════════════════════════ */}
-        <SectionLabel label="CRM & Konsumen" />
-
-        <MenuGroup id="crm" label="CRM & Leads" icon={<Users size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/leads"    label="Data Leads Baru"    onClose={onClose} />
-          <SubMenuItem path="/admin/messages" label="Pesan & Konsultasi" onClose={onClose} />
-          <SubMenuItem path="/admin/survey"   label="Jadwal Survey"      onClose={onClose} badge="F.25" />
-        </MenuGroup>
-
-        <MenuGroup id="booking" label="Booking Management" icon={<CalendarCheck size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/bookings"          label="Daftar Booking"   onClose={onClose} badge="F.21" />
-          <SubMenuItem path="/admin/bookings/approval" label="Approval Booking" onClose={onClose} />
-          <SubMenuItem path="/admin/bookings/invoice"  label="Generate Invoice" onClose={onClose} />
-        </MenuGroup>
-
-        <MenuGroup id="customer" label="Customer Portal" icon={<Home size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/customers"          label="Data Customer"     onClose={onClose} badge="F.28" />
-          <SubMenuItem path="/admin/customers/progress" label="Progress Unit"     onClose={onClose} />
-          <SubMenuItem path="/admin/customers/payments" label="Jadwal Pembayaran" onClose={onClose} />
-          <SubMenuItem path="/admin/live-chat"          label="Live Chat CS"      onClose={onClose} badge="F.35" />
-        </MenuGroup>
-
-        {/* ════════════════════════ */}
-        {/* PROJECT & UNIT          */}
-        {/* ════════════════════════ */}
-        <SectionLabel label="Project & Unit" />
-
-        <MenuGroup id="project" label="Manajemen Project" icon={<Building size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/projects"   label="Daftar Project"        onClose={onClose} />
-          <SubMenuItem path="/admin/units"      label="Manajemen Unit (Blok)" onClose={onClose} badge="F.23" />
-          <SubMenuItem path="/admin/siteplan"   label="Interactive Siteplan"  onClose={onClose} badge="F.22" />
-          <SubMenuItem path="/admin/documents"  label="Dokumen & Legalitas"   onClose={onClose} badge="F.24" />
-          <SubMenuItem path="/admin/videos"     label="Video Management"      onClose={onClose} badge="F.39" />
-          <SubMenuItem path="/admin/comparison" label="Perbandingan Project"  onClose={onClose} badge="F.37" />
-        </MenuGroup>
-
-        {/* ════════════════════════ */}
-        {/* MARKETING & KONTEN      */}
-        {/* ════════════════════════ */}
-        <SectionLabel label="Marketing & Konten" />
-
-        <MenuGroup id="marketing" label="Marketing Performance" icon={<PieChart size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/performance"             label="Statistik Tim"   onClose={onClose} badge="F.27" />
-          <SubMenuItem path="/admin/performance/leaderboard" label="Leaderboard"     onClose={onClose} />
-          <SubMenuItem path="/admin/applications"            label="Lamaran Kerja"   onClose={onClose} />
-          <SubMenuItem path="/admin/tasks"                   label="Task Management" onClose={onClose} badge="F.44" />
-        </MenuGroup>
-
-        <MenuGroup id="content" label="Konten & Media" icon={<FileText size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/articles"      label="Kelola Artikel / Blog" onClose={onClose} />
-          <SubMenuItem path="/admin/ai-content"    label="AI Content Tools"      onClose={onClose} badge="F.30" />
-          <SubMenuItem path="/admin/social-media"  label="Social Media Manager"  onClose={onClose} badge="F.33" />
-          <SubMenuItem path="/admin/events"        label="Event & Webinar"       onClose={onClose} badge="F.32" />
-          <SubMenuItem path="/admin/promotions"    label="Promo Engine"          onClose={onClose} badge="F.49" />
-          <SubMenuItem path="/admin/testimonials"  label="Video Testimoni"       onClose={onClose} badge="F.48" />
-          <SubMenuItem path="/admin/forms"         label="Form Builder"          onClose={onClose} badge="F.31" />
-          <SubMenuItem path="/admin/landing-pages" label="Multi Landing Page"    onClose={onClose} badge="F.46" />
-        </MenuGroup>
-
-        {/* ════════════════════════ */}
-        {/* OTOMASI & NOTIFIKASI    */}
-        {/* ════════════════════════ */}
-        <SectionLabel label="Otomasi & Notifikasi" />
-
-        <MenuGroup id="automation" label="Automation System" icon={<Zap size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/whatsapp-auto"     label="Smart WA Automation"    onClose={onClose} badge="F.29" />
-          <SubMenuItem path="/admin/notifications"     label="Notifikasi Realtime"    onClose={onClose} badge="F.26" />
-          <SubMenuItem path="/admin/download-tracking" label="Download Tracking"      onClose={onClose} badge="F.41" />
-          <SubMenuItem path="/admin/mobile-app"        label="Mobile App Integration" onClose={onClose} badge="F.40" />
-        </MenuGroup>
-
-        {/* ════════════════════════ */}
-        {/* ANALITIK & KEUANGAN     */}
-        {/* ════════════════════════ */}
-        <SectionLabel label="Analitik & Keuangan" />
-
-        <MenuGroup id="analytics" label="Analytics & Insight" icon={<BarChart2 size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/heatmap"      label="Heatmap Analytics"    onClose={onClose} badge="F.42" />
-          <SubMenuItem path="/admin/smart-search" label="Smart Search System"  onClose={onClose} badge="F.36" />
-          <SubMenuItem path="/admin/map"          label="Interactive Map"      onClose={onClose} badge="F.38" />
-          <SubMenuItem path="/admin/calculator"   label="Kalkulator Investasi" onClose={onClose} badge="F.47" />
-        </MenuGroup>
-
-        {/* Keuangan Internal — standalone link */}
-        <NavLink
-          to="/admin/finance"
-          onClick={onClose}
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-[13px] transition-all duration-200 ${
-              isActive
-                ? 'bg-red-600 text-white shadow-lg shadow-red-900/30'
-                : 'text-gray-400 hover:bg-white/5 hover:text-white'
-            }`
-          }
-        >
-          <Wallet size={16} />
-          <span className="flex-1">Keuangan Internal</span>
-          <span className="text-[8px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full font-bold">F.34</span>
-        </NavLink>
-
-        {/* ════════════════════════ */}
-        {/* SISTEM & KEAMANAN       */}
-        {/* ════════════════════════ */}
-        <SectionLabel label="Sistem & Keamanan" />
-
-        <MenuGroup id="system" label="Sistem & Keamanan" icon={<Shield size={16} />} openMenus={openMenus} toggleMenu={toggleMenu}>
-          <SubMenuItem path="/admin/settings"          label="Pengaturan Web"     onClose={onClose} />
-          <SubMenuItem path="/admin/users"             label="Manajemen Admin"    onClose={onClose} />
-          <SubMenuItem path="/admin/security"          label="Enterprise Security" onClose={onClose} badge="F.50" />
-          <SubMenuItem path="/admin/backup"            label="Backup Otomatis"    onClose={onClose} badge="F.43" />
-          <SubMenuItem path="/admin/widget-customizer" label="Widget Customizer"  onClose={onClose} badge="F.45" />
-        </MenuGroup>
-
-        {/* Spacer akhir agar item terakhir tidak terpotong */}
-        <div className="h-6" />
-      </div>
-
-      {/* ── LOGOUT — shrink-0 agar tetap di bawah ── */}
-      <div className="shrink-0 p-4 border-t border-white/5 bg-[#060606]">
+      {/* Logout */}
+      <div className="px-3 py-4 border-t border-gray-100 shrink-0">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3
-                     bg-red-600/10 hover:bg-red-600/20 text-red-500
-                     rounded-xl transition-colors font-bold text-sm"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all"
         >
-          <LogOut size={15} /> Keluar Sistem
+          <FiLogOut size={16}/>
+          <span>Keluar</span>
         </button>
-        <p className="text-center text-[9px] text-gray-700 mt-2">
-          Built with Webapp GASP Builder Era v2.0 by @damarmahendra
-        </p>
       </div>
-
     </aside>
   );
 }

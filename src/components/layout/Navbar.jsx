@@ -43,8 +43,8 @@ export default function Navbar() {
         <Link to="/" className="flex items-center gap-3 hover:scale-105 transition-transform shrink-0">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm">
             <img
-              src="/images/LogoAfkar.png"
-              alt="LogoAfkar.png"
+              src="/images/Logomerahafkar.jpeg"
+              alt="Logomerahafkar.jpeg"
               className="w-full h-full object-cover"
             />
           </div>

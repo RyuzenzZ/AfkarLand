@@ -175,12 +175,15 @@ export default function Contact() {
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} 
               className="w-full h-full min-h-[450px] rounded-[2.5rem] overflow-hidden border border-white/10 relative bg-[#111]"
             >
+              {/* LOGIKA: Embed Google Maps tepat ke lokasi AFKAR MADANI ESTATE
+                  Koordinat: -5.1308482, 119.5068271
+                  Filter dark mode agar sesuai tema gelap website */}
               <iframe 
-                title="Lokasi Kantor AFKAR LAND"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127153.28424036074!2d119.345262!3d-5.111453!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dbee329d96c4671%3A0x3030bfbcaf770b0!2sMakassar%2C%20Makassar%20City%2C%20South%20Sulawesi!5e0!3m2!1sen!2sid!4v1716301234567!5m2!1sen!2sid" 
+                title="Lokasi AFKAR MADANI ESTATE"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d478.6!2d119.5068271!3d-5.1308482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dbefd83f4ba7a69%3A0x84a26c0292a6dff1!2sAFKAR%20MADANI%20ESTATE!5e0!3m2!1sid!2sid!4v1716301234567!5m2!1sid!2sid"
                 width="100%" 
                 height="100%" 
-                style={{ border: 0, filter: 'grayscale(100%) invert(92%) contrast(83%)', minHeight: '100%' }} 
+                style={{ border: 0, filter: 'grayscale(100%) invert(100%) contrast(90%) hue-rotate(180deg)', minHeight: '100%' }} 
                 allowFullScreen="" 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"

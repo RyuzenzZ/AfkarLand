@@ -1,10 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { 
   FiArrowRight, FiShield, FiHome, FiHeart, FiCheckCircle, 
   FiTarget, FiTrendingUp, FiLayers, FiUsers, FiAward, 
-  FiDownload, FiStar, FiMapPin, FiMessageSquare
+  FiDownload, FiStar, FiMapPin, FiMessageSquare, FiMonitor, FiShare2
 } from 'react-icons/fi';
 
 const fadeUp = {
@@ -19,21 +19,70 @@ const stagger = {
 
 // --- DATA PROJECT (Untuk Beranda) ---
 const featuredProjects = [
-  { slug: 'masagena-green-hills', name: 'Masagena Green Hills', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80', desc: 'Kawasan hunian modern bernuansa hijau dengan lingkungan strategis.' },
-  { slug: 'wotu-islamic-village', name: 'Wotu Islamic Village', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80', desc: 'Kawasan islami terpadu dengan masjid agung dan lingkungan syariah.' },
-  { slug: 'hasanah-panakkukang', name: 'The Hasanah Panakkukang', img: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80', desc: 'Hunian premium modern di kawasan paling strategis pusat kota Makassar.' },
-  { slug: 'afkar-madani-estate', name: 'Afkar Madani Estate', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80', desc: 'Perumahan premium eksklusif dengan gerbang mewah & infrastruktur modern.' }
+  { slug: 'masagena-green-hills', name: 'Masagena Green Hills', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80', desc: 'Kawasan hunian modern bernuansa hijau dengan lingkungan strategis.', brosurUrl: '/brosur/Brosur_Masagena_Green_Hills.pdf' },
+  { slug: 'wotu-islamic-village', name: 'Wotu Islamic Village', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80', desc: 'Kawasan islami terpadu dengan masjid agung dan lingkungan syariah.', brosurUrl: '/brosur/Brosur_Wotu_Islamic_Village.pdf' },
+  { slug: 'hasanah-panakkukang', name: 'The Hasanah Panakkukang', img: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80', desc: 'Hunian premium modern di kawasan paling strategis pusat kota Makassar.', brosurUrl: '/brosur/Brosur_The_Hasanah_Panakkukang.pdf' },
+  { slug: 'afkar-madani-estate', name: 'Afkar Madani Estate', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80', desc: 'Perumahan premium eksklusif dengan gerbang mewah & infrastruktur modern.', brosurUrl: '/brosur/Brosur_Afkar_Madani_Estate.pdf' }
 ];
 
+// --- DATA ANGGOTA TIM PER DIVISI ---
+const teamMembersData = {
+  'Marketing Executive': [
+    { name: 'Fila Amelia', role: 'Official Masagena Green Hills', img: 'https://ui-avatars.com/api/?name=Fila+Amelia&background=111&color=fff&size=200' },
+    { name: 'Hazfira', role: 'Official Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Hazfira&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Official The Hasanah Panakkukang', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Official Afkar Madani Estate', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' }
+  ],
+  'Digital Marketing': [
+    { name: 'Damar Mahendra', role: 'Adsvertiser & Pengembang Web & APK', img: 'https://ui-avatars.com/api/?name=Damar+Mahendra&background=111&color=fff&size=200' }
+  ],
+  'Sales Leader': [
+    { name: 'Cooming Soon', role: 'Leader Official Project AFKAR LAND', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' }
+  ],
+  'Marcomm': [
+    { name: 'Nabila Azzahra', role: 'Creative Content Editor', img: 'https://ui-avatars.com/api/?name=Nabila+Azzahra&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Creative Documenter', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' }
+  ],
+  'Pimpinan Proyek / Teknis': [
+    { name: 'Cooming Soon', role: 'Pimpinan Proyek AFKAR LAND', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Project Engineering Lead – Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Project Engineering Lead – The Hasanah Panakkukang', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Project Engineering Lead – Afkar Madani Estate', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Project Engineering Lead – Masagena Green Hills', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Novi Marliani', role: 'Admin Project Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Novi+Marliani&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Admin Project The Hasanah Panakkukang', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Admin Project Afkar Madani Estate', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
+    { name: 'Cooming Soon', role: 'Admin Project Masagena Green Hills', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' }
+  ]
+};
+
+// --- DATA TESTIMONI ---
+const testimonials = [
+  { text: "Alhamdulillah, proses pembelian sangat mudah tanpa ribet urusan bank. Developer sangat kooperatif dan yang terpenting hati tenang karena tidak ada denda jika telat bayar.", name: "Keluarga Ahmad", project: "Masagena Green Hills" },
+  { text: "Lingkungan islami yang kami cari akhirnya ketemu di sini. Proses syariahnya benar-benar menenangkan hati, bebas dari perasaan was-was.", name: "Keluarga Rahman", project: "Wotu Islamic Village" },
+  { text: "Lokasi sangat strategis di pusat kota namun tetap mengedepankan nilai-nilai syariah. Tanpa BI checking sangat membantu kami yang berwirausaha.", name: "Keluarga Ibrahim", project: "The Hasanah Panakkukang" },
+  { text: "Desain rumahnya premium dan elegan. Gerbangnya mewah. Alhamdulillah bisa punya rumah tanpa riba di lingkungan yang aman dan nyaman.", name: "Keluarga Wijaya", project: "Afkar Madani Estate" },
+  { text: "Sangat merekomendasikan AFKAR LAND untuk siapapun yang ingin hijrah dari transaksi ribawi. Legalitas aman dan sangat terpercaya.", name: "Keluarga Syamsuddin", project: "Masagena Green Hills" },
+];
+
+// Duplicate data to create a seamless infinite marquee effect
+const duplicatedTestimonials = [...testimonials, ...testimonials];
+
 export default function Home() {
+  // State untuk melacak divisi mana yang sedang diklik (terbuka)
+  const [activeDivision, setActiveDivision] = useState(null);
+
+  const toggleDivision = (divisionName) => {
+    setActiveDivision(activeDivision === divisionName ? null : divisionName);
+  };
+
   return (
     <div className="w-full bg-[#080808] font-body overflow-hidden text-white">
 
       {/* ==========================================
-          1. HERO SECTION (UPDATE)
+          1. HERO SECTION
       ========================================== */}
       <section className="relative h-screen min-h-[900px] flex items-center justify-center overflow-hidden">
-        {/* Cinematic Background */}
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80"
@@ -46,8 +95,6 @@ export default function Home() {
 
         <div className="container relative z-10 mx-auto px-6 md:px-12 mt-10">
           <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-4xl mx-auto text-center">
-            
-            {/* Logo / Badge Area */}
             <motion.div variants={fadeUp} className="mb-6">
               <div className="inline-block text-3xl font-heading font-extrabold tracking-[0.2em] mb-2">
                 AFKAR <span className="text-red-600">LAND</span>
@@ -59,7 +106,6 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* Headline */}
             <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl lg:text-7xl font-heading font-extrabold leading-[1.1] mb-6 tracking-tight">
               Hunian Syariah Modern<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-300">
@@ -67,7 +113,6 @@ export default function Home() {
               </span>
             </motion.h1>
 
-            {/* Subheadline */}
             <motion.p variants={fadeUp} className="text-base md:text-lg text-gray-300 font-light mb-12 max-w-2xl mx-auto leading-relaxed">
               AFKAR LAND menghadirkan kawasan property syariah premium tanpa riba, tanpa bank, tanpa bunga, dan tanpa sita dengan konsep hunian modern islami di Indonesia Timur.
             </motion.p>
@@ -80,7 +125,6 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Floating Statistics Cards */}
         <motion.div 
           initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8 }}
           className="absolute bottom-10 left-0 right-0 z-20 px-6 hidden md:block"
@@ -149,13 +193,12 @@ export default function Home() {
             <p className="text-gray-400 text-sm">Orang-orang hebat di balik berdirinya AFKAR LAND.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* FOUNDER CARD */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="lg:col-span-5">
-              <div className="relative rounded-3xl overflow-hidden group h-full border border-white/5 bg-[#1a1a1a]">
-                <img src="https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80" alt="Ustadz Haris Amrin" className="w-full h-[400px] object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700" />
+              <div className="relative rounded-3xl overflow-hidden group h-full border border-white/5 bg-[#1a1a1a] min-h-[400px]">
+                <img src="https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80" alt="Ustadz Haris Amrin" className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700 absolute inset-0" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent" />
-                <div className="absolute bottom-0 left-0 w-full p-8">
+                <div className="absolute bottom-0 left-0 w-full p-8 relative z-10 h-full flex flex-col justify-end">
                   <div className="mb-4">
                     <FiMessageSquare className="text-red-500 w-8 h-8 mb-3 opacity-50" />
                     <p className="text-sm font-medium italic text-gray-300">
@@ -168,11 +211,10 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* MANAGEMENT CARD */}
-            <div className="lg:col-span-7 flex flex-col gap-8">
-              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex flex-col md:flex-row gap-6 items-center">
-                <img src="https://ui-avatars.com/api/?name=Nia+Kartika+Putri&background=111&color=fff&size=200" alt="Nia Kartika" className="w-24 h-24 rounded-full border-2 border-red-500/50" />
-                <div>
+            <div className="lg:col-span-7 flex flex-col gap-6">
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex flex-col sm:flex-row gap-6 items-center flex-1 transition-colors hover:border-red-500/30 group">
+                <img src="https://ui-avatars.com/api/?name=Nia+Kartika+Putri&background=111&color=fff&size=200" alt="Nia Kartika Putri" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
+                <div className="text-center sm:text-left">
                   <h3 className="text-xl font-bold text-white mb-1">Nia Kartika Putri</h3>
                   <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-3">Project Management</p>
                   <p className="text-gray-400 text-sm leading-relaxed">
@@ -181,22 +223,105 @@ export default function Home() {
                 </div>
               </motion.div>
 
-              {/* TIM MARKETING PREVIEW */}
-              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex-1">
-                <h4 className="text-sm font-bold text-white mb-6">Tim Konsultan Property Kami</h4>
-                <div className="flex flex-wrap gap-4">
-                  {['Damar Mahendra', 'Fila Amelia', 'Hazfira', 'Nabila Azzahra', 'Sultan Alfatih'].map((name, i) => (
-                    <div key={i} className="flex flex-col items-center gap-2 group cursor-pointer">
-                      <div className="w-12 h-12 rounded-full border-2 border-white/10 group-hover:border-red-500 overflow-hidden transition-all duration-300">
-                        <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=080808&color=fff`} alt={name} className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-[9px] text-gray-500 group-hover:text-white transition-colors">{name.split(' ')[0]}</span>
-                    </div>
-                  ))}
+              <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} transition={{ delay: 0.1 }} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex flex-col sm:flex-row gap-6 items-center flex-1 transition-colors hover:border-red-500/30 group">
+                <img src="https://ui-avatars.com/api/?name=Abdi+Negara&background=111&color=fff&size=200" alt="Abdi Negara" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
+                <div className="text-center sm:text-left">
+                  <h3 className="text-xl font-bold text-white mb-1">Abdi Negara</h3>
+                  <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-3">HRD (Human Resources Development)</p>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Membangun budaya kerja profesional dan islami, serta memastikan AFKAR LAND diisi oleh SDM yang amanah dan berkualitas tinggi.
+                  </p>
                 </div>
               </motion.div>
             </div>
           </div>
+
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="pt-10 border-t border-white/5">
+            <h3 className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">
+              Struktur Divisi & Tim Profesional
+            </h3>
+            <p className="text-center text-xs text-red-500/70 mb-8 -mt-4 animate-pulse">Klik divisi di bawah ini untuk melihat anggota tim</p>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { name: 'Marketing Executive', icon: <FiUsers /> },
+                { name: 'Digital Marketing', icon: <FiMonitor /> },
+                { name: 'Sales Leader', icon: <FiTrendingUp /> },
+                { name: 'Marcomm', icon: <FiShare2 /> },
+                { name: 'Pimpinan Proyek / Teknis', icon: <FiLayers /> },
+              ].map((div, i) => {
+                const isActive = activeDivision === div.name;
+                return (
+                  <motion.button 
+                    key={i} 
+                    variants={fadeUp} 
+                    onClick={() => toggleDivision(div.name)}
+                    className={`
+                      border p-6 rounded-2xl flex flex-col items-center justify-center text-center transition-all duration-300 group
+                      ${isActive 
+                        ? 'border-red-500 bg-red-900/10 shadow-lg shadow-red-900/20' 
+                        : 'border-white/5 bg-[#080808] hover:border-red-500/50 hover:bg-[#111]'}
+                    `}
+                  >
+                    <div className={`mb-4 transition-colors text-3xl group-hover:scale-110 ${isActive ? 'text-red-500' : 'text-gray-600 group-hover:text-red-400'}`}>
+                      {div.icon}
+                    </div>
+                    <h4 className={`text-[13px] font-bold transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
+                      {div.name}
+                    </h4>
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            <AnimatePresence>
+              {activeDivision && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, y: -20 }}
+                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  exit={{ opacity: 0, height: 0, y: -20 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="overflow-hidden mt-6"
+                >
+                  <div className="bg-[#1a1a1a] p-8 md:p-10 rounded-3xl border border-white/10 relative">
+                    <button 
+                      onClick={() => setActiveDivision(null)}
+                      className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:bg-red-500 hover:text-white transition-colors"
+                    >
+                      ✕
+                    </button>
+                    
+                    <h4 className="text-xl md:text-2xl font-bold text-white mb-8 border-b border-white/5 pb-4">
+                      Tim <span className="text-red-500">{activeDivision}</span>
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                      {teamMembersData[activeDivision]?.map((member, idx) => (
+                        <div key={idx} className="flex flex-col items-center text-center group">
+                          <div className="relative mb-4">
+                            <div className="absolute inset-0 bg-red-500 rounded-full blur-md opacity-0 group-hover:opacity-40 transition-opacity duration-300" />
+                            <img 
+                              src={member.img} 
+                              alt={member.name} 
+                              className="w-24 h-24 rounded-full object-cover border-2 border-white/10 group-hover:border-red-500 relative z-10 transition-colors duration-300" 
+                            />
+                          </div>
+                          <h5 className="font-bold text-white text-sm md:text-base mb-1">{member.name}</h5>
+                          <p className="text-gray-500 text-[10px] uppercase tracking-widest">{member.role}</p>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {!teamMembersData[activeDivision] && (
+                      <p className="text-gray-500 italic text-center py-4">Data anggota tim untuk divisi ini belum tersedia.</p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+          </motion.div>
+
         </div>
       </section>
 
@@ -302,9 +427,15 @@ export default function Home() {
                     <Link to={`/proyek/${proj.slug}`} className="w-full text-center py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors">
                       Lihat Detail
                     </Link>
-                    <button className="w-full text-center py-2.5 bg-transparent border border-white/10 hover:border-white/30 text-white/70 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <a 
+                      href={proj.brosurUrl}
+                      download={`Brosur_${proj.name.replace(/\s+/g, '_')}.pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full text-center py-2.5 bg-transparent border border-white/10 hover:border-white/30 text-white/70 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
                       <FiDownload size={14} /> Download Brosur
-                    </button>
+                    </a>
                   </div>
                 </div>
               </motion.div>
@@ -338,50 +469,68 @@ export default function Home() {
       </section>
 
       {/* ==========================================
-          8. SECTION TRUST / TESTIMONI
+          8. SECTION TRUST / TESTIMONI (UPDATED)
       ========================================== */}
-      <section className="py-32 bg-[#080808]">
-        <div className="container mx-auto px-6 md:px-12">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
-              <h2 className="text-3xl md:text-4xl font-heading font-extrabold mb-6">Dipercaya Ratusan Keluarga Muslim</h2>
-              <p className="text-gray-400 mb-10 leading-relaxed text-sm">
-                Alhamdulillah, progres pembangunan terus berjalan dan serah terima unit telah dilakukan kepada konsumen-konsumen setia kami.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-6 mb-10">
-                <div>
-                  <div className="text-4xl font-black text-red-500 mb-1">500+</div>
-                  <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Konsumen Percaya</div>
-                </div>
-                <div>
-                  <div className="text-4xl font-black text-red-500 mb-1">4</div>
-                  <div className="text-xs text-gray-500 font-bold uppercase tracking-widest">Project Berkembang</div>
-                </div>
+      <section className="py-32 bg-[#080808] overflow-hidden">
+        <div className="container mx-auto px-6 md:px-12 mb-16 text-center max-w-4xl">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
+            <h2 className="text-3xl md:text-5xl font-heading font-extrabold mb-6">Dipercaya Ratusan Keluarga Muslim</h2>
+            <p className="text-gray-400 mb-10 leading-relaxed text-sm md:text-base">
+              AfkarLand berkomitmen untuk menghadirkan dan mengembangkan proyek properti syariah di seluruh wilayah sulawesi termasuk Makassar, Gowa, Wotu dan beberapa wilayah lainnya yang akan menjadi wilayah pengembangan property syariah.
+            </p>
+            
+            <div className="flex justify-center mb-10">
+              <div className="bg-[#111] border border-white/5 rounded-2xl p-6 md:p-8 inline-block shadow-xl shadow-black/50">
+                <div className="text-5xl md:text-6xl font-black text-red-500 mb-2">4</div>
+                <div className="text-xs md:text-sm text-gray-400 font-bold uppercase tracking-widest">Project Berkembang</div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="relative">
-              <div className="bg-[#111] p-8 rounded-3xl border border-white/5 relative z-10">
-                <div className="flex gap-1 mb-4">
-                  {[1,2,3,4,5].map(star => <FiStar key={star} className="text-yellow-500 w-4 h-4 fill-yellow-500" />)}
+            <div className="bg-gradient-to-r from-transparent via-red-900/20 to-transparent p-6 rounded-3xl border-y border-red-500/10 mb-8">
+              <p className="text-white font-medium mb-4 text-sm md:text-base">
+                Ingin AFKAR LAND membangun property syariah di wilayahmu? Hubungi kami sekarang.
+              </p>
+              <Link to="/kontak" className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-8 py-3.5 rounded-full font-bold transition-all hover:-translate-y-1 shadow-lg shadow-red-900/30">
+                Hubungi Kami <FiArrowRight />
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* SLIDER TESTIMONI BERJALAN OTOMATIS (MARQUEE) */}
+        <div className="relative w-full overflow-hidden flex pb-10">
+          {/* Gradient mask untuk memberikan efek fade pada ujung layar */}
+          <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-[#080808] to-transparent z-10 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-[#080808] to-transparent z-10 pointer-events-none" />
+
+          <motion.div
+            className="flex gap-6 w-max"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ ease: "linear", duration: 35, repeat: Infinity }}
+          >
+            {duplicatedTestimonials.map((t, i) => (
+              <div key={i} className="w-[300px] md:w-[420px] bg-[#111] p-8 rounded-3xl border border-white/5 shrink-0 whitespace-normal flex flex-col justify-between">
+                <div>
+                  <div className="flex gap-1 mb-5">
+                    {[1,2,3,4,5].map(star => <FiStar key={star} className="text-yellow-500 w-4 h-4 fill-yellow-500" />)}
+                  </div>
+                  <p className="text-gray-300 italic text-sm md:text-base leading-relaxed mb-8">
+                    "{t.text}"
+                  </p>
                 </div>
-                <p className="text-gray-300 italic text-sm leading-relaxed mb-6">
-                  "Alhamdulillah, proses pembelian sangat mudah tanpa ribet urusan bank. Developer sangat kooperatif dan yang terpenting hati tenang karena tidak ada denda jika telat bayar. Sangat merekomendasikan AFKAR LAND."
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center font-bold text-red-500">
-                    B
+                <div className="flex items-center gap-4 border-t border-white/5 pt-4 mt-auto">
+                  <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center font-bold text-red-500 text-lg shrink-0">
+                    {/* Mengambil huruf pertama dari nama keluarga (misal 'A' dari 'Keluarga Ahmad') */}
+                    {t.name.split(' ')[1]?.charAt(0) || t.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm">Bapak Budi & Keluarga</h4>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">Konsumen Masagena Green Hills</p>
+                    <h4 className="font-bold text-sm text-white">{t.name}</h4>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">Konsumen {t.project}</p>
                   </div>
                 </div>
               </div>
-              <div className="absolute -top-6 -right-6 w-32 h-32 bg-red-600 rounded-full blur-3xl opacity-20" />
-            </motion.div>
-          </div>
+            ))}
+          </motion.div>
         </div>
       </section>
 

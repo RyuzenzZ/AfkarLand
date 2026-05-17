@@ -24,10 +24,11 @@ const featureHighlights = [
 // LOGIKA: Setiap badge punya style warna berbeda
 function getBadgeClass(badge) {
   switch (badge) {
-    case 'BEST SELLER':      return 'bg-brand-primary text-white';
-    case 'NEW PROJECT':      return 'bg-blue-600 text-white';
-    case 'COMING SOON':      return 'bg-gray-700 text-white/80';
-    default:                 return 'bg-[#C9A84C] text-black'; // PROPERTY SYARIAH = gold
+    case 'BEST SELLER':             return 'bg-brand-primary text-white';
+    case 'COMING SOON':             return 'bg-gray-700 text-white/80';
+    case 'LAUNCHING JUNI':          return 'bg-purple-700 text-white';
+    case 'BEST PREMIUM LOCATION':   return 'bg-[#C9A84C] text-black';  // LOGIKA: Gold premium untuk Hasanah
+    default:                        return 'bg-brand-primary text-white';
   }
 }
 
@@ -37,60 +38,92 @@ const projects = [
   {
     slug: 'masagena-green-hills',
     name: 'Masagena Green Hills',
-    desc: 'Kawasan hunian modern bernuansa hijau dengan konsep lingkungan nyaman dan strategis untuk keluarga masa kini.',
-    location: 'Sulawesi Selatan',
+    desc: 'Hunian syariah asri di perbukitan Gowa — dekat Kampus Unismuh & Puncak Bollangi. Mulai Tipe 24 s/d 60, tanpa bank, tanpa riba.',
+    location: 'Pattallassang, Kab. Gowa',
+    locationDetail: 'Timbusseng, Borongpa\'la\'la, Kec. Pattallassang, Kabupaten Gowa (Dekat Kampus Unismuh & Puncak Bollangi)',
+    // LOGIKA: status 'Tersedia' — unit masih banyak tersedia
     status: 'Tersedia',
     badge: 'BEST SELLER',
-    harga: 'Mulai Rp 295 Juta',
+    statusLabel: 'Unit Tersedia',
+    // LOGIKA: Harga cash keras tipe 24/72 sesuai Product Knowledge terbaru
+    harga: 'Mulai Rp 171,8 Juta',
+    tipeUnit: [
+      { tipe: 'Tipe 24/72', lantai: '1 Lantai', kamar: '1 Kamar Tidur', normal: 'Rp 232.568.000', cashKeras: 'Rp 171.800.000', cashLunak: 'Rp 178.552.000' },
+      { tipe: 'Tipe 36/72', lantai: '1 Lantai', kamar: '2 Kamar Tidur', normal: 'Rp 306.283.099', cashKeras: 'Rp 226.002.279', cashLunak: 'Rp 234.922.370' },
+      { tipe: 'Tipe 42/78', lantai: '1 Lantai', kamar: '2 Kamar Tidur', normal: 'Rp 352.135.800', cashKeras: 'Rp 259.717.500', cashLunak: 'Rp 269.986.200' },
+      { tipe: 'Tipe 60/78', lantai: '2 Lantai', kamar: '3 Kamar Tidur', normal: 'Rp 625.501.784', cashKeras: 'Rp 460.721.900', cashLunak: 'Rp 479.030.776' },
+    ],
     image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80',
     brosurUrl: '/assets/brosur/masagena-green-hills.pdf',
     brosurFileName: 'Brosur-Masagena-Green-Hills.pdf',
-    features: ['Area Berkembang', 'Lingkungan Islami', 'Akses Mudah', 'Cocok Investasi'],
+    features: ['Area Berkembang', 'Lingkungan Islami', 'Dekat Unismuh', 'Cocok Investasi'],
     order: 1,
     isFeatured: true,
   },
   {
     slug: 'wotu-islamic-village',
     name: 'Wotu Islamic Village',
-    desc: 'Kawasan islami terpadu pertama dengan masjid agung dan lingkungan bertetangga yang menjunjung nilai syariah.',
-    location: 'Luwu Timur, Sulsel',
+    desc: 'Kawasan islami terpadu pertama di Luwu Timur — rumah & kavling syariah, tanpa riba, tanpa bank. Mulai 71 jutaan.',
+    location: 'Wotu, Kab. Luwu Timur',
+    locationDetail: 'Jl. Pahlawan Arolipu, Wotu, Kab. Luwu Timur (Depan SMAN 2 Luwu Timur)',
+    // LOGIKA: status 'Tersedia' — unit masih banyak tersedia
     status: 'Tersedia',
-    badge: 'NEW PROJECT',
-    harga: 'Mulai Rp 350 Juta',
+    badge: 'BEST SELLER',
+    statusLabel: 'Unit Tersedia',
+    // LOGIKA: Harga cash keras kavling 91 m² sesuai Product Knowledge
+    harga: 'Mulai Rp 71 Juta',
+    tipeUnit: [
+      { tipe: 'Kavling 6×14 (91 m²)', lantai: 'Tanah Kosong', kamar: '-', normal: 'Rp 93.720.000', cashKeras: 'Rp 71.000.000', cashLunak: 'Rp 75.970.000' },
+      { tipe: 'Kavling 7×14 (98 m²)', lantai: 'Tanah Kosong', kamar: '-', normal: 'Rp 100.320.000', cashKeras: 'Rp 76.000.000', cashLunak: 'Rp 79.040.000' },
+      { tipe: 'Rumah Tipe 20/91', lantai: '1 Lantai', kamar: '1 Kamar Tidur', normal: 'Rp 225.598.400', cashKeras: 'Rp 155.800.000', cashLunak: 'Rp 162.032.000' },
+      { tipe: 'Rumah Tipe 42/91', lantai: '1 Lantai', kamar: '2 Kamar Tidur', normal: 'Rp 344.624.000', cashKeras: 'Rp 238.000.000', cashLunak: 'Rp 247.520.000' },
+      { tipe: 'Rumah Tipe 60/98', lantai: '2 Lantai', kamar: '3 Kamar Tidur', normal: 'Rp 449.604.000', cashKeras: 'Rp 310.500.000', cashLunak: 'Rp 322.920.000' },
+    ],
     image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80',
     brosurUrl: '/assets/brosur/wotu-islamic-village.pdf',
     brosurFileName: 'Brosur-Wotu-Islamic-Village.pdf',
-    features: ['Masjid Agung', 'Lingkungan Islami', 'One Gate System', 'Cocok Investasi'],
+    features: ['Rumah & Kavling', 'Lingkungan Islami', 'One Gate System', 'Cocok Investasi'],
     order: 2,
     isFeatured: false,
   },
   {
     slug: 'hasanah-panakkukang',
     name: 'The Hasanah Panakkukang',
-    desc: 'Hunian premium modern di kawasan paling strategis Makassar — akses mudah ke pusat bisnis dan fasilitas publik.',
-    location: 'Makassar',
+    desc: 'Hunian premium 2 lantai di jantung Makassar — hanya tersisa 2 unit eksklusif, lokasi tak ternilai, skema syariah tanpa bank.',
+    location: 'Panakkukang, Makassar',
+    locationDetail: 'Kompleks PAM, Jl. Penjernihan Raya III, Panakkukang, Makassar',
+    // LOGIKA: status 'Sisa Sedikit' untuk filter — display label menunjukkan 2 unit tersisa
     status: 'Sisa Sedikit',
-    badge: 'PROPERTY SYARIAH',
-    harga: 'Mulai Rp 650 Juta',
+    badge: 'BEST PREMIUM LOCATION',
+    statusLabel: 'Sisa 2 Unit!',
+    // LOGIKA: Harga promo sesuai Product Knowledge
+    harga: 'Mulai Rp 1,299 Miliar',
+    tipeUnit: [
+      { tipe: 'Tipe 70/82 (2 Lantai)', lantai: '2 Lantai', kamar: '3 Kamar Tidur + 2 KM', normal: 'Rp 1.399.000.000', cashKeras: 'Rp 1.299.000.000 (Promo)', cashLunak: 'DP 50% = Rp 699.500.000 (cicil s/d 3 tahun)' },
+    ],
     image: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80',
     brosurUrl: '/assets/brosur/hasanah-panakkukang.pdf',
     brosurFileName: 'Brosur-Hasanah-Panakkukang.pdf',
-    features: ['Lokasi Premium', 'Lingkungan Islami', 'Akses Mudah', 'Cocok Investasi'],
+    features: ['Lokasi Premium', 'Lingkungan Islami', '2 Lantai 70 m²', 'Unit Terbatas'],
     order: 3,
     isFeatured: false,
   },
   {
     slug: 'afkar-madani-estate',
     name: 'Afkar Madani Estate',
-    desc: 'Perumahan premium eksklusif dengan gerbang mewah, infrastruktur modern, dan keamanan satu pintu 24 jam.',
-    location: 'Sulawesi Selatan',
-    status: 'Tersedia',
-    badge: 'PROPERTY SYARIAH',
-    harga: 'Mulai Rp 480 Juta',
+    desc: 'Perumahan eksklusif syariah terbaru AFKAR LAND. Grand Launching 7 Juni 2026 — daftarkan minat Anda & dapatkan penawaran Early Bird!',
+    location: 'BTP, Makassar',
+    locationDetail: 'AFKAR MADANI ESTATE BTP, Makassar — Segera hadir Juni 2026',
+    // LOGIKA: status 'Coming Soon' — grand launching 7 Juni 2026
+    status: 'Coming Soon',
+    badge: 'LAUNCHING JUNI',
+    statusLabel: '🚀 Grand Launching 7 Juni!',
+    harga: 'Segera Diumumkan',
+    tipeUnit: [],
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80',
     brosurUrl: '/assets/brosur/afkar-madani-estate.pdf',
     brosurFileName: 'Brosur-Afkar-Madani-Estate.pdf',
-    features: ['Area Berkembang', 'Lingkungan Islami', 'SHM Aman', 'Cocok Investasi'],
+    features: ['Grand Launching 7 Juni', 'Lingkungan Islami', 'SHM Aman', 'Eksklusif Premium'],
     order: 4,
     isFeatured: false,
   },
@@ -142,21 +175,61 @@ function ProjectCard({ project, index }) {
         {/* OVERLAY gradien hitam */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/20 to-transparent" />
 
-        {/* BADGES kiri atas: tipe project + syariah */}
+        {/* COMING SOON overlay */}
+        {project.status === 'Coming Soon' && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
+            <span className="text-white font-black text-sm uppercase tracking-widest px-4 py-2 border border-white/30 rounded-xl bg-black/40">
+              🚀 Coming Soon
+            </span>
+            {/* LOGIKA: Tampilkan tanggal launching untuk Afkar Madani */}
+            <span className="text-[#C9A84C] font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full bg-[#C9A84C]/10 border border-[#C9A84C]/30 animate-pulse">
+              Grand Launching 7 Juni 2026
+            </span>
+          </div>
+        )}
+
+        {/* BADGES kiri atas: badge proyek + badge syariah glowing */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+          {/* Badge utama proyek */}
           <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${getBadgeClass(project.badge)}`}>
             {project.badge}
           </span>
-          <span className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10 uppercase tracking-wider w-fit">
-            ☽ Syariah
+
+          {/* LOGIKA: Badge Syariah baru — ikon glowing green premium */}
+          <span className="
+            inline-flex items-center gap-1 w-fit
+            text-[9px] font-black px-2 py-1 rounded-full
+            uppercase tracking-wider
+            bg-black/60 backdrop-blur-sm
+            border border-emerald-500/60
+            text-emerald-400
+          "
+            style={{
+              boxShadow: '0 0 8px rgba(52,211,153,0.5), 0 0 16px rgba(52,211,153,0.2)',
+              textShadow: '0 0 6px rgba(52,211,153,0.8)',
+            }}
+          >
+            {/* LOGIKA: Dot pulsing hijau sebagai indikator aktif */}
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+            </span>
+            ✦ Property Syariah
           </span>
         </div>
 
-        {/* BADGE status kanan atas */}
+        {/* BADGE status kanan atas — tampil bila bukan Coming Soon */}
         {project.status === 'Sisa Sedikit' && (
           <div className="absolute top-3 right-3">
-            <span className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-brand-primary text-white animate-pulse uppercase tracking-wider">
-              Sisa Sedikit!
+            <span className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-orange-600 text-white animate-pulse uppercase tracking-wider">
+              {project.statusLabel || 'Sisa Sedikit!'}
+            </span>
+          </div>
+        )}
+        {project.status === 'Tersedia' && (
+          <div className="absolute top-3 right-3">
+            <span className="text-[9px] font-bold px-2.5 py-1 rounded-full bg-green-700/80 text-white uppercase tracking-wider">
+              ✓ Unit Tersedia
             </span>
           </div>
         )}
@@ -177,7 +250,7 @@ function ProjectCard({ project, index }) {
         </h3>
 
         {/* HARGA */}
-        <p className="text-brand-primary font-bold text-xs leading-none">{project.harga}</p>
+        <p className={`font-bold text-xs leading-none ${project.status === 'Coming Soon' ? 'text-[#C9A84C]' : 'text-brand-primary'}`}>{project.harga}</p>
 
         {/* DESKRIPSI */}
         <p className="text-white/38 text-xs leading-relaxed line-clamp-2 grow">{project.desc}</p>
@@ -353,7 +426,7 @@ export default function Projects() {
             </div>
 
             <div className="flex gap-1 bg-white/4 p-1 rounded-xl border border-white/7">
-              {['Semua', 'Tersedia', 'Sisa Sedikit'].map((f) => (
+              {['Semua', 'Tersedia', 'Sisa Sedikit', 'Coming Soon'].map((f) => (
                 <button
                   key={f}
                   onClick={() => setActiveFilter(f)}
@@ -479,7 +552,7 @@ export default function Projects() {
         </div>
       </section>
 
-      {/* Built with Webapp GASP Builder Era v.1.0 by @damarmahendra */}
+      {/* AFKAR LAND */}
     </div>
   );
 }
