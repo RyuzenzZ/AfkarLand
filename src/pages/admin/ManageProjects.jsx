@@ -1,24 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus, Edit2, Trash2, X, Save, Image as ImageIcon, 
-  List, Users, HelpCircle, BarChart2
+  List, Users, HelpCircle, BarChart2, Upload, FileText, ExternalLink
 } from 'lucide-react';
 
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+// ✅ FIX AUDIT: Import db dari config terpusat — bukan initializeApp sendiri
+// Path: src/pages/admin/ → ../../config/firebaseConfig (naik 2 level ke src/)
+import { db } from '../../config/firebaseConfig';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 
-// INISIALISASI FIREBASE AMAN UNTUK CANVAS / ENVIRONMENT
-let db = null;
-try {
-  const firebaseConfig = typeof __firebase_config !== 'undefined' 
-    ? JSON.parse(__firebase_config) 
-    : { apiKey: "demo", projectId: "demo" };
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-} catch (e) {
-  console.warn("Firebase berjalan dalam mode fallback offline.");
-}
+// ─────────────────────────────────────────────────────────────
+// CLOUDINARY CONFIG
+// Ganti dengan Cloud Name & Upload Preset milik akun Cloudinary kamu
+// Upload Preset: buat di Cloudinary Dashboard → Settings → Upload → Add upload preset
+// Mode preset: UNSIGNED (agar bisa upload langsung dari browser)
+// ─────────────────────────────────────────────────────────────
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'your-cloud-name';
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'your-upload-preset';
 
 // ── KONSTANTA MARKETING (Sinkron dengan ProjectDetail.jsx) ──
 const AVAILABLE_MARKETING = [
@@ -51,6 +50,121 @@ export default function ManageProjects() {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [activeTab, setActiveTab] = useState('umum'); // Tab form
+
+  // ── CLOUDINARY: Load widget script sekali saat komponen mount ──
+  const cloudinaryWidgetRef = useRef(null);
+  useEffect(() => {
+    if (document.getElementById('cloudinary-widget-script')) return;
+    const script = document.createElement('script');
+    script.id = 'cloudinary-widget-script';
+    script.src = 'https://upload-widget.cloudinary.com/global/all.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
+  // ── CLOUDINARY: Buka widget upload ──
+  // mode: 'image' | 'pdf'
+  // onSuccess: callback(url, originalFilename, bytes)
+  const openCloudinaryWidget = useCallback((mode, onSuccess) => {
+    if (!window.cloudinary) {
+      toast.error('Widget Cloudinary belum siap, coba lagi sebentar.');
+      return;
+    }
+    const isImage = mode === 'image';
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'url', 'camera'],
+        multiple: false,
+        resourceType: isImage ? 'image' : 'raw',
+        clientAllowedFormats: isImage ? ['jpg', 'jpeg', 'png', 'webp'] : ['pdf'],
+        maxFileSize: isImage ? 5000000 : 20000000, // 5MB gambar / 20MB PDF
+        cropping: false,
+        showSkipCropButton: false,
+        language: 'en',
+        text: {
+          en: {
+            or: 'Atau',
+            back: 'Kembali',
+            advanced: 'Lanjutan',
+            close: 'Tutup',
+            no_results: 'Tidak ada hasil',
+            search_placeholder: 'Cari file...',
+            about_uw: 'Upload Widget',
+          }
+        },
+        styles: {
+          palette: {
+            window: '#FFFFFF',
+            windowBorder: '#E5E7EB',
+            tabIcon: '#C9A84C',
+            menuIcons: '#5A616A',
+            textDark: '#000000',
+            textLight: '#FFFFFF',
+            link: '#C9A84C',
+            action: '#C9A84C',
+            inactiveTabIcon: '#9CA3AF',
+            error: '#EF4444',
+            inProgress: '#C9A84C',
+            complete: '#10B981',
+            sourceBg: '#F9FAFB',
+          },
+          fonts: { default: null, "'Poppins', sans-serif": { url: 'https://fonts.googleapis.com/css?family=Poppins', active: true } }
+        },
+      },
+      (error, result) => {
+        if (error) {
+          toast.error('Upload gagal: ' + (error.message || 'Unknown error'));
+          return;
+        }
+        if (result.event === 'success') {
+          const info = result.info;
+          onSuccess(info.secure_url, info.original_filename, info.bytes);
+          widget.close();
+          toast.success('✅ File berhasil diupload ke Cloudinary!');
+        }
+      }
+    );
+    widget.open();
+  }, []);
+
+  // ── CLOUDINARY: Upload galeri — buka widget pilih banyak foto ──
+  const openGalleryWidget = useCallback((index) => {
+    if (!window.cloudinary) {
+      toast.error('Widget Cloudinary belum siap, coba lagi sebentar.');
+      return;
+    }
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName: CLOUDINARY_CLOUD_NAME,
+        uploadPreset: CLOUDINARY_UPLOAD_PRESET,
+        sources: ['local', 'url', 'camera'],
+        multiple: index === -1, // -1 = tambah banyak sekaligus, angka = ganti 1 slot
+        resourceType: 'image',
+        clientAllowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
+        maxFileSize: 5000000,
+        styles: {
+          palette: { window: '#FFFFFF', windowBorder: '#E5E7EB', tabIcon: '#C9A84C', link: '#C9A84C', action: '#C9A84C', complete: '#10B981', inProgress: '#C9A84C', error: '#EF4444', sourceBg: '#F9FAFB', textDark: '#000000', textLight: '#FFFFFF', menuIcons: '#5A616A', inactiveTabIcon: '#9CA3AF' },
+        },
+      },
+      (error, result) => {
+        if (error) { toast.error('Upload gagal'); return; }
+        if (result.event === 'success') {
+          const url = result.info.secure_url;
+          if (index === -1) {
+            // Tambah ke array gallery
+            setFormData(prev => ({ ...prev, gallery: [...prev.gallery, url] }));
+          } else {
+            // Ganti slot tertentu
+            handleArrayChange(index, 'gallery', url);
+          }
+          toast.success('✅ Foto berhasil diupload!');
+        }
+      }
+    );
+    widget.open();
+  }, []);
 
   // 1. FETCH DATA REAL-TIME DARI FIREBASE
   useEffect(() => {
@@ -386,44 +500,213 @@ export default function ManageProjects() {
                 {/* ── TAB 2: MEDIA & BROSUR ── */}
                 <div className={activeTab === 'media' ? 'block' : 'hidden'}>
                   <div className="space-y-6">
+
+                    {/* ── GAMBAR COVER UTAMA ── */}
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                      <h3 className="font-bold text-gray-900 mb-4 border-b pb-2">Gambar Utama (Cover)</h3>
-                      <input type="url" name="image" value={formData.image} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none" placeholder="URL Gambar Cover (https://...)" />
-                      {formData.image && <img src={formData.image} alt="Preview" className="mt-3 h-32 rounded-lg object-cover" />}
+                      <h3 className="font-bold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
+                        <ImageIcon size={16} className="text-[#C9A84C]" /> Gambar Utama (Cover)
+                      </h3>
+                      <div className="flex flex-col md:flex-row gap-4 items-start">
+                        {/* Preview */}
+                        <div className="w-full md:w-48 h-36 rounded-xl border-2 border-dashed border-gray-200 overflow-hidden flex-shrink-0 bg-gray-50 flex items-center justify-center">
+                          {formData.image
+                            ? <img src={formData.image} alt="Cover" className="w-full h-full object-cover" />
+                            : <div className="text-center text-gray-300"><ImageIcon size={28} className="mx-auto mb-1" /><p className="text-xs">Belum ada gambar</p></div>
+                          }
+                        </div>
+                        {/* Controls */}
+                        <div className="flex-1 space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => openCloudinaryWidget('image', (url) => setFormData(prev => ({ ...prev, image: url })))}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#C9A84C] hover:bg-[#b09240] text-black font-bold text-sm rounded-xl transition-all shadow-sm"
+                          >
+                            <Upload size={16} /> Pilih / Upload Gambar dari Cloudinary
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-px bg-gray-100" />
+                            <span className="text-xs text-gray-400">atau tempel URL manual</span>
+                            <div className="flex-1 h-px bg-gray-100" />
+                          </div>
+                          <input
+                            type="url" name="image" value={formData.image} onChange={handleChange}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm text-gray-600"
+                            placeholder="https://res.cloudinary.com/..."
+                          />
+                          {formData.image && (
+                            <a href={formData.image} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline">
+                              <ExternalLink size={11} /> Buka gambar di tab baru
+                            </a>
+                          )}
+                          <p className="text-[10px] text-gray-400">Format: JPG, PNG, WEBP · Maks. 5 MB · Rasio ideal 4:3</p>
+                        </div>
+                      </div>
                     </div>
 
+                    {/* ── GALERI FOTO ── */}
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                       <div className="flex justify-between items-center border-b pb-2 mb-4">
-                        <h3 className="font-bold text-gray-900">Galeri Foto Slider (Halaman Detail)</h3>
-                        <button type="button" onClick={() => addArrayItem('gallery')} className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-lg font-bold hover:bg-blue-100">+ Tambah Foto</button>
+                        <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                          <ImageIcon size={16} className="text-blue-500" /> Galeri Foto Slider (Halaman Detail)
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => openGalleryWidget(-1)}
+                          className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition-colors"
+                        >
+                          <Upload size={12} /> Tambah Foto
+                        </button>
                       </div>
-                      <div className="space-y-3">
-                        {formData.gallery.map((url, i) => (
-                          <div key={i} className="flex gap-2">
-                            <input type="url" value={url} onChange={(e) => handleArrayChange(i, 'gallery', e.target.value)} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 outline-none text-sm" placeholder="URL Gambar..." />
-                            <button type="button" onClick={() => removeArrayItem(i, 'gallery')} className="p-2 text-red-500 bg-red-50 rounded-xl hover:bg-red-100"><Trash2 size={16} /></button>
+
+                      {/* Grid Preview Galeri */}
+                      {formData.gallery.filter(u => u).length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                          {formData.gallery.map((url, i) => url && (
+                            <div key={i} className="relative group aspect-video rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+                              <img src={url} alt={`Galeri ${i + 1}`} className="w-full h-full object-cover" />
+                              {/* Overlay actions */}
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => openGalleryWidget(i)}
+                                  className="p-2 bg-white/90 rounded-lg text-blue-600 hover:bg-white transition-colors"
+                                  title="Ganti foto"
+                                >
+                                  <Upload size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeArrayItem(i, 'gallery')}
+                                  className="p-2 bg-white/90 rounded-lg text-red-500 hover:bg-white transition-colors"
+                                  title="Hapus foto"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                              <div className="absolute bottom-1 left-1 bg-black/50 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">
+                                {i + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => openGalleryWidget(-1)}
+                          className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#C9A84C]/50 hover:bg-[#C9A84C]/5 transition-all group mb-4"
+                        >
+                          <Upload size={24} className="mx-auto mb-2 text-gray-300 group-hover:text-[#C9A84C] transition-colors" />
+                          <p className="text-sm text-gray-400 group-hover:text-gray-600 font-medium">Klik untuk upload foto galeri</p>
+                          <p className="text-xs text-gray-300 mt-1">JPG, PNG, WEBP · Maks. 5 MB per foto</p>
+                        </div>
+                      )}
+
+                      {/* URL manual fallback untuk galeri */}
+                      <details className="mt-2">
+                        <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 select-none">
+                          ▸ Tambah via URL manual (opsional)
+                        </summary>
+                        <div className="space-y-2 mt-3">
+                          {formData.gallery.map((url, i) => (
+                            <div key={i} className="flex gap-2">
+                              <input
+                                type="url" value={url}
+                                onChange={(e) => handleArrayChange(i, 'gallery', e.target.value)}
+                                className="flex-1 px-3 py-2 rounded-xl border border-gray-200 outline-none text-xs text-gray-600"
+                                placeholder="https://res.cloudinary.com/..."
+                              />
+                              <button type="button" onClick={() => removeArrayItem(i, 'gallery')} className="p-2 text-red-400 bg-red-50 rounded-xl hover:bg-red-100">
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          <button type="button" onClick={() => addArrayItem('gallery')}
+                            className="text-xs text-blue-500 hover:text-blue-700 font-medium">
+                            + Tambah baris URL
+                          </button>
+                        </div>
+                      </details>
+                    </div>
+
+                    {/* ── FILE BROSUR PDF ── */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                      <h3 className="font-bold text-gray-900 mb-4 border-b pb-2 flex items-center gap-2">
+                        <FileText size={16} className="text-red-500" /> File Brosur (PDF)
+                      </h3>
+
+                      {/* Preview jika sudah ada */}
+                      {formData.brosurUrl && (
+                        <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-100 rounded-xl mb-4">
+                          <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <FileText size={18} className="text-white" />
                           </div>
-                        ))}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-800 truncate">{formData.brosurFileName || 'Brosur.pdf'}</p>
+                            <p className="text-xs text-gray-500">{formData.brosurSize || 'Ukuran tidak diketahui'}</p>
+                          </div>
+                          <a href={formData.brosurUrl} target="_blank" rel="noopener noreferrer"
+                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0">
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      )}
+
+                      {/* Tombol upload */}
+                      <button
+                        type="button"
+                        onClick={() => openCloudinaryWidget('pdf', (url, filename, bytes) => {
+                          const sizeMB = (bytes / 1048576).toFixed(1);
+                          setFormData(prev => ({
+                            ...prev,
+                            brosurUrl: url,
+                            brosurFileName: filename ? `${filename}.pdf` : 'Brosur.pdf',
+                            brosurSize: `${sizeMB} MB`,
+                          }));
+                        })}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-sm rounded-xl border border-red-200 transition-all"
+                      >
+                        <Upload size={16} />
+                        {formData.brosurUrl ? 'Ganti File Brosur PDF' : 'Upload Brosur PDF ke Cloudinary'}
+                      </button>
+
+                      {/* URL manual fallback */}
+                      <div className="mt-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-px bg-gray-100" />
+                          <span className="text-xs text-gray-400">atau isi manual</span>
+                          <div className="flex-1 h-px bg-gray-100" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="md:col-span-3">
+                            <label className="block text-xs font-bold text-gray-500 mb-1">URL File PDF</label>
+                            <input type="text" name="brosurUrl" value={formData.brosurUrl} onChange={handleChange}
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm"
+                              placeholder="https://res.cloudinary.com/... atau /assets/brosur/nama-file.pdf" />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Nama File Download</label>
+                            <input type="text" name="brosurFileName" value={formData.brosurFileName} onChange={handleChange}
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm"
+                              placeholder="Brosur-Project.pdf" />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Ukuran File</label>
+                            <input type="text" name="brosurSize" value={formData.brosurSize} onChange={handleChange}
+                              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm"
+                              placeholder="Contoh: 2.4 MB" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Website URL project */}
+                      <div className="mt-4">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Website URL Project (Opsional)</label>
+                        <input type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm"
+                          placeholder="https://masagena.afkarland.id" />
                       </div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                      <h3 className="font-bold text-gray-900 mb-4 border-b pb-2">File Brosur</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="md:col-span-3">
-                          <label className="block text-xs font-bold text-gray-500 mb-1">URL File PDF</label>
-                          <input type="text" name="brosurUrl" value={formData.brosurUrl} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm" placeholder="/assets/brosur/nama-file.pdf  ATAU  https://..." />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-bold text-gray-500 mb-1">Nama File Download</label>
-                          <input type="text" name="brosurFileName" value={formData.brosurFileName} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm" placeholder="Brosur-Project.pdf" />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-1">Ukuran File</label>
-                          <input type="text" name="brosurSize" value={formData.brosurSize} onChange={handleChange} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 outline-none text-sm" placeholder="Contoh: 2.4 MB" />
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
 

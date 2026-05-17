@@ -4,17 +4,8 @@ import {
   Home, MapPin, CheckCircle, Clock, AlertCircle 
 } from 'lucide-react';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
 import toast from 'react-hot-toast';
-
-// INISIALISASI FIREBASE (Fallback Mode)
-let db = null;
-try {
-  const { initializeApp } = require('firebase/app');
-  const { getFirestore } = require('firebase/firestore');
-  const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "demo" };
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-} catch (e) {}
 
 const STATUS_COLORS = {
   'Available': 'bg-green-100 text-green-700 border-green-200',
@@ -44,14 +35,21 @@ export default function ManageUnits() {
   const [formData, setFormData] = useState(INITIAL_FORM);
 
   useEffect(() => {
-    if (!db) { setLoading(false); return; }
-    const unsubscribe = onSnapshot(collection(db, 'units'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Urutkan berdasarkan blok dan nomor
-      data.sort((a, b) => a.blok.localeCompare(b.blok) || a.nomor - b.nomor);
-      setUnits(data);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      collection(db, 'units'),
+      (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Urutkan berdasarkan blok dan nomor
+        data.sort((a, b) => a.blok.localeCompare(b.blok) || a.nomor - b.nomor);
+        setUnits(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Gagal memuat units:', error);
+        toast.error('Gagal memuat data unit');
+        setLoading(false);
+      }
+    );
     return () => unsubscribe();
   }, []);
 
@@ -59,7 +57,6 @@ export default function ManageUnits() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!db) return toast.error("Database offline");
     try {
       if (isEditing) {
         await updateDoc(doc(db, 'units', editId), { ...formData, updatedAt: serverTimestamp() });
@@ -69,7 +66,10 @@ export default function ManageUnits() {
         toast.success('Unit baru berhasil ditambahkan!');
       }
       setIsModalOpen(false);
-    } catch (err) { toast.error('Gagal menyimpan data'); }
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal menyimpan data');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -77,7 +77,10 @@ export default function ManageUnits() {
       try {
         await deleteDoc(doc(db, 'units', id));
         toast.success('Unit dihapus');
-      } catch (err) { toast.error('Gagal menghapus'); }
+      } catch (err) {
+        console.error(err);
+        toast.error('Gagal menghapus');
+      }
     }
   };
 

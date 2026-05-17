@@ -190,7 +190,7 @@ export default function About() {
               <div className="absolute inset-0 bg-red-600 rounded-3xl -translate-x-4 translate-y-4 opacity-20" />
               <div className="relative rounded-3xl overflow-hidden border border-white/10 aspect-[3/4] bg-[#1a1a1a]">
                 <img 
-                  src="https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80" 
+                  src="/images/ustadz.png" 
                   alt="Ustadz Haris Amrin" 
                   className="w-full h-full object-cover filter contrast-125 grayscale hover:grayscale-0 transition-all duration-700"
                 />

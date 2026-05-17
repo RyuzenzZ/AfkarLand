@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FiEye, FiDownload, FiEdit2, FiTrash2, FiPlus, FiX, FiPhone, FiUser, FiHome, FiDollarSign, FiCheck } from 'react-icons/fi';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../config/firebaseConfig';
+import toast from 'react-hot-toast';
 
 // ============================================================
 // LOGIKA: Data proyek pilihan (sesuaikan dengan proyek nyata)
@@ -53,27 +56,48 @@ export default function ManageLeads() {
   const [form, setForm] = useState(EMPTY_FORM);
 
   // ----------------------------------------------------------------
-  // LOGIKA: Load data awal (dummy — ganti dengan Firestore jika siap)
+  // LOGIKA: Load data realtime dari Firestore koleksi 'leads'
   // ----------------------------------------------------------------
   useEffect(() => {
-    setTimeout(() => {
-      setLeads([
-        { id: 1, nama: 'Budi Santoso',  nomorWa: '081234567890', pilihanProject: 'Masagena Green Hills',    estimasiBudget: '500 Juta - 1 Miliar', status: 'Baru',      catatan: 'Tertarik unit tipe 45.' },
-        { id: 2, nama: 'Andi Manggala', nomorWa: '089988776655', pilihanProject: 'The Hasanah Panakkukang', estimasiBudget: 'Di atas 1 Miliar',    status: 'Follow Up', catatan: 'Sudah dihubungi, tunggu konfirmasi.' },
-      ]);
-      setLoading(false);
-    }, 800);
+    const unsubscribe = onSnapshot(
+      collection(db, 'leads'),
+      (snapshot) => {
+        const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Urutkan terbaru di atas berdasarkan createdAt
+        data.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis?.() ?? 0;
+          const timeB = b.createdAt?.toMillis?.() ?? 0;
+          return timeB - timeA;
+        });
+        setLeads(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Gagal memuat leads:', error);
+        toast.error('Gagal memuat data lead');
+        setLoading(false);
+      }
+    );
+    return () => unsubscribe();
   }, []);
 
   // ----------------------------------------------------------------
-  // LOGIKA: Tambah lead baru
+  // LOGIKA: Tambah lead baru ke Firestore
   // ----------------------------------------------------------------
-  const handleTambah = () => {
-    if (!form.nama || !form.nomorWa) return alert('Nama dan Nomor WhatsApp wajib diisi!');
-    const newLead = { ...form, id: Date.now() };
-    setLeads(prev => [newLead, ...prev]);
-    setModalTambah(false);
-    setForm(EMPTY_FORM);
+  const handleTambah = async () => {
+    if (!form.nama || !form.nomorWa) return toast.error('Nama dan Nomor WhatsApp wajib diisi!');
+    try {
+      await addDoc(collection(db, 'leads'), {
+        ...form,
+        createdAt: serverTimestamp(),
+      });
+      toast.success('Lead baru berhasil ditambahkan!');
+      setModalTambah(false);
+      setForm(EMPTY_FORM);
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal menyimpan lead');
+    }
   };
 
   // ----------------------------------------------------------------
@@ -84,29 +108,54 @@ export default function ManageLeads() {
     setModalEdit(lead);
   };
 
-  // LOGIKA: Simpan hasil edit
-  const handleEdit = () => {
-    if (!form.nama || !form.nomorWa) return alert('Nama dan Nomor WhatsApp wajib diisi!');
-    setLeads(prev => prev.map(l => l.id === modalEdit.id ? { ...form, id: modalEdit.id } : l));
-    setModalEdit(null);
-    setForm(EMPTY_FORM);
+  // LOGIKA: Simpan hasil edit ke Firestore
+  const handleEdit = async () => {
+    if (!form.nama || !form.nomorWa) return toast.error('Nama dan Nomor WhatsApp wajib diisi!');
+    try {
+      const { id, createdAt, ...updateData } = form;
+      await updateDoc(doc(db, 'leads', modalEdit.id), {
+        ...updateData,
+        updatedAt: serverTimestamp(),
+      });
+      toast.success('Data lead berhasil diperbarui!');
+      setModalEdit(null);
+      setForm(EMPTY_FORM);
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal memperbarui lead');
+    }
   };
 
   // ----------------------------------------------------------------
-  // LOGIKA: Hapus lead berdasarkan id
+  // LOGIKA: Hapus lead dari Firestore
   // ----------------------------------------------------------------
-  const handleHapus = () => {
-    setLeads(prev => prev.filter(l => l.id !== modalHapus));
-    setModalHapus(null);
+  const handleHapus = async () => {
+    try {
+      await deleteDoc(doc(db, 'leads', modalHapus));
+      toast.success('Lead berhasil dihapus');
+      setModalHapus(null);
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal menghapus lead');
+    }
   };
 
   // ----------------------------------------------------------------
-  // LOGIKA: Update status cepat (tombol centang di tabel)
+  // LOGIKA: Update status cepat ke Firestore (tombol centang di tabel)
   // ----------------------------------------------------------------
-  const nextStatus = (lead) => {
+  const nextStatus = async (lead) => {
     const idx = STATUS_OPTIONS.indexOf(lead.status);
     const next = STATUS_OPTIONS[(idx + 1) % STATUS_OPTIONS.length];
-    setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: next } : l));
+    try {
+      await updateDoc(doc(db, 'leads', lead.id), {
+        status: next,
+        updatedAt: serverTimestamp(),
+      });
+      toast.success(`Status diubah ke "${next}"`);
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal mengubah status');
+    }
   };
 
   // ----------------------------------------------------------------

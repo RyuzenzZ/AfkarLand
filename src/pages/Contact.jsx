@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../config/firebaseConfig';
 
 // --- INTERNAL SVG ICONS (To avoid unresolved dependency issues) ---
 const IconMapPin = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
@@ -31,16 +33,34 @@ export default function Contact() {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // ----------------------------------------------------------------
+  // LOGIKA: Kirim pesan ke Firestore koleksi 'messages'
+  // ----------------------------------------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      await addDoc(collection(db, 'messages'), {
+        nama: formData.nama,
+        email: formData.email,
+        telepon: formData.telepon,
+        pesan: formData.pesan,
+        dibaca: false,
+        sumber: 'Halaman Kontak',
+        createdAt: serverTimestamp(),
+      });
       toast.success('Pesan Anda berhasil dikirim! Tim kami akan segera merespon.', {
         style: { borderRadius: '10px', background: '#111', color: '#fff' }
       });
       setFormData({ nama: '', email: '', telepon: '', pesan: '' });
+    } catch (err) {
+      console.error(err);
+      toast.error('Gagal mengirim pesan. Coba lagi atau hubungi via WhatsApp.', {
+        style: { borderRadius: '10px', background: '#111', color: '#fff' }
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   return (

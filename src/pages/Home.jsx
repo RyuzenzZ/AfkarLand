@@ -7,6 +7,9 @@ import {
   FiDownload, FiStar, FiMapPin, FiMessageSquare, FiMonitor, FiShare2
 } from 'react-icons/fi';
 
+// ── Real-time settings dari admin ──────────────────────────────
+import { useSiteSettings } from '../hooks/useSiteSettings';
+
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } }
@@ -19,7 +22,7 @@ const stagger = {
 
 // --- DATA PROJECT (Untuk Beranda) ---
 const featuredProjects = [
-  { slug: 'masagena-green-hills', name: 'Masagena Green Hills', img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80', desc: 'Kawasan hunian modern bernuansa hijau dengan lingkungan strategis.', brosurUrl: '/brosur/Brosur_Masagena_Green_Hills.pdf' },
+  { slug: 'masagena-green-hills', name: 'Masagena Green Hills', img: '/images/Masagena.jpg', desc: 'Kawasan hunian modern bernuansa hijau dengan lingkungan strategis.', brosurUrl: '/brosur/Brosur_Masagena_Green_Hills.pdf' },
   { slug: 'wotu-islamic-village', name: 'Wotu Islamic Village', img: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80', desc: 'Kawasan islami terpadu dengan masjid agung dan lingkungan syariah.', brosurUrl: '/brosur/Brosur_Wotu_Islamic_Village.pdf' },
   { slug: 'hasanah-panakkukang', name: 'The Hasanah Panakkukang', img: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&q=80', desc: 'Hunian premium modern di kawasan paling strategis pusat kota Makassar.', brosurUrl: '/brosur/Brosur_The_Hasanah_Panakkukang.pdf' },
   { slug: 'afkar-madani-estate', name: 'Afkar Madani Estate', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80', desc: 'Perumahan premium eksklusif dengan gerbang mewah & infrastruktur modern.', brosurUrl: '/brosur/Brosur_Afkar_Madani_Estate.pdf' }
@@ -65,12 +68,43 @@ const testimonials = [
   { text: "Sangat merekomendasikan AFKAR LAND untuk siapapun yang ingin hijrah dari transaksi ribawi. Legalitas aman dan sangat terpercaya.", name: "Keluarga Syamsuddin", project: "Masagena Green Hills" },
 ];
 
-// Duplicate data to create a seamless infinite marquee effect
 const duplicatedTestimonials = [...testimonials, ...testimonials];
 
+// Default fallback values
+const DEFAULTS = {
+  heroImage:  '/images/Hero.jpg',
+  badge:      'Developer Property Syariah Terpercaya',
+  judul:      'Hunian Syariah Modern\nuntuk Masa Depan Keluarga Anda',
+  subjudul:   'AFKAR LAND menghadirkan kawasan property syariah premium tanpa riba, tanpa bank, tanpa bunga, dan tanpa sita dengan konsep hunian modern islami di Indonesia Timur.',
+  ctaUtama:      'Lihat Project Kami',
+  ctaUtamaLink:  '/proyek',
+  ctaKedua:      'Jadwalkan Survey Lokasi',
+  ctaKeduaLink:  '/kontak',
+  statistik: [
+    { label: 'Unit Terjual',   value: '500+' },
+    { label: 'Proyek Aktif',   value: '4'    },
+    { label: 'Kota Jangkauan', value: '8+'   },
+    { label: 'Kepuasan Klien', value: '98%'  },
+  ],
+};
+
 export default function Home() {
-  // State untuk melacak divisi mana yang sedang diklik (terbuka)
   const [activeDivision, setActiveDivision] = useState(null);
+
+  // ── Baca pengaturan real-time dari Firestore via admin ─────
+  const { settings } = useSiteSettings();
+
+  // Ambil nilai dari admin, fallback ke default jika belum diisi
+  const heroImage  = settings?.pages?.home?.heroImage  || DEFAULTS.heroImage;
+  const hero       = settings?.hero   || {};
+  const badge      = hero.badge        || DEFAULTS.badge;
+  const judul      = hero.judul        || DEFAULTS.judul;
+  const subjudul   = hero.subjudul     || DEFAULTS.subjudul;
+  const ctaUtama      = hero.ctaUtama      || DEFAULTS.ctaUtama;
+  const ctaUtamaLink  = hero.ctaUtamaLink  || DEFAULTS.ctaUtamaLink;
+  const ctaKedua      = hero.ctaKedua      || DEFAULTS.ctaKedua;
+  const ctaKeduaLink  = hero.ctaKeduaLink  || DEFAULTS.ctaKeduaLink;
+  const statistik  = settings?.statistik?.length ? settings.statistik : DEFAULTS.statistik;
 
   const toggleDivision = (divisionName) => {
     setActiveDivision(activeDivision === divisionName ? null : divisionName);
@@ -80,12 +114,13 @@ export default function Home() {
     <div className="w-full bg-[#080808] font-body overflow-hidden text-white">
 
       {/* ==========================================
-          1. HERO SECTION
+          1. HERO SECTION — gambar & teks dari admin
       ========================================== */}
       <section className="relative h-screen min-h-[900px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
+          {/* ✅ Hero image real-time dari admin */}
           <img
-            src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&q=80"
+            src={heroImage}
             alt="AFKAR LAND"
             className="w-full h-full object-cover opacity-40 scale-105 animate-[pulse_20s_ease-in-out_infinite_alternate]"
           />
@@ -99,33 +134,48 @@ export default function Home() {
               <div className="inline-block text-3xl font-heading font-extrabold tracking-[0.2em] mb-2">
                 AFKAR <span className="text-red-600">LAND</span>
               </div>
+              {/* ✅ Badge dari admin */}
               <div className="flex items-center justify-center gap-2 text-red-500 font-bold tracking-widest text-[10px] uppercase">
                 <span className="w-1 h-1 rounded-full bg-red-500" />
-                Developer Property Syariah Terpercaya
+                {badge}
                 <span className="w-1 h-1 rounded-full bg-red-500" />
               </div>
             </motion.div>
 
+            {/* ✅ Judul dari admin */}
             <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl lg:text-7xl font-heading font-extrabold leading-[1.1] mb-6 tracking-tight">
-              Hunian Syariah Modern<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-300">
-                untuk Masa Depan Keluarga Anda
-              </span>
+              {judul.includes('\n') ? (
+                <>
+                  {judul.split('\n')[0]}<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-300">
+                    {judul.split('\n')[1]}
+                  </span>
+                </>
+              ) : (
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-300">
+                  {judul}
+                </span>
+              )}
             </motion.h1>
 
+            {/* ✅ Subjudul dari admin */}
             <motion.p variants={fadeUp} className="text-base md:text-lg text-gray-300 font-light mb-12 max-w-2xl mx-auto leading-relaxed">
-              AFKAR LAND menghadirkan kawasan property syariah premium tanpa riba, tanpa bank, tanpa bunga, dan tanpa sita dengan konsep hunian modern islami di Indonesia Timur.
+              {subjudul}
             </motion.p>
-            
+
+            {/* ✅ CTA buttons dari admin */}
             <motion.div variants={fadeUp}>
-              <Link to="/proyek" className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-900/30 hover:-translate-y-1">
-                Lihat Project Kami <FiArrowRight size={18} />
+              <Link
+                to={ctaUtamaLink}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-900/30 hover:-translate-y-1"
+              >
+                {ctaUtama} <FiArrowRight size={18} />
               </Link>
             </motion.div>
           </motion.div>
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8 }}
           className="absolute bottom-10 left-0 right-0 z-20 px-6 hidden md:block"
         >
@@ -146,6 +196,28 @@ export default function Home() {
           </div>
         </motion.div>
       </section>
+
+      {/* ==========================================
+          STATISTIK BANNER — angka dari admin
+      ========================================== */}
+      {statistik.length > 0 && (
+        <section className="py-12 bg-[#111] border-y border-white/5">
+          <div className="container mx-auto px-6 md:px-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {statistik.map((s, i) => (
+                <motion.div key={i}
+                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="text-3xl md:text-4xl font-black text-red-500 mb-1">{s.value}</div>
+                  <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">{s.label}</div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ==========================================
           2. SECTION TENTANG AFKAR LAND
@@ -172,8 +244,8 @@ export default function Home() {
             
             <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="relative">
               <div className="grid grid-cols-2 gap-4">
-                <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80" alt="Premium House" className="rounded-3xl w-full h-64 object-cover mt-8 border border-white/5" />
-                <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&q=80" alt="Islamic Environment" className="rounded-3xl w-full h-80 object-cover border border-white/5" />
+                <img src="/images/Masagena.jpg" alt="Premium House" className="rounded-3xl w-full h-64 object-cover mt-8 border border-white/5" />
+                <img src="/images/Masagena1.jpg" alt="Islamic Environment" className="rounded-3xl w-full h-80 object-cover border border-white/5" />
               </div>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-red-600 rounded-full flex items-center justify-center border-8 border-[#080808] shadow-2xl z-10">
                 <FiHome className="text-white w-8 h-8" />
@@ -195,8 +267,8 @@ export default function Home() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="lg:col-span-5">
-              <div className="relative rounded-3xl overflow-hidden group h-full border border-white/5 bg-[#1a1a1a] min-h-[400px]">
-                <img src="https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80" alt="Ustadz Haris Amrin" className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700 absolute inset-0" />
+              <div className="relative rounded-3xl overflow-hidden group h-full border border-white/5 bg-[#1a1a1a] min-h-[600px]">
+                <img src="/images/ustadz.png" alt="Ustadz Haris Amrin" className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700 absolute inset-0" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent" />
                 <div className="absolute bottom-0 left-0 w-full p-8 relative z-10 h-full flex flex-col justify-end">
                   <div className="mb-4">
@@ -213,7 +285,7 @@ export default function Home() {
 
             <div className="lg:col-span-7 flex flex-col gap-6">
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex flex-col sm:flex-row gap-6 items-center flex-1 transition-colors hover:border-red-500/30 group">
-                <img src="https://ui-avatars.com/api/?name=Nia+Kartika+Putri&background=111&color=fff&size=200" alt="Nia Kartika Putri" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
+                <img src="/images/nia.png" alt="Nia Kartika Putri" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
                 <div className="text-center sm:text-left">
                   <h3 className="text-xl font-bold text-white mb-1">Nia Kartika Putri</h3>
                   <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-3">Project Management</p>
@@ -224,7 +296,7 @@ export default function Home() {
               </motion.div>
 
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} transition={{ delay: 0.1 }} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex flex-col sm:flex-row gap-6 items-center flex-1 transition-colors hover:border-red-500/30 group">
-                <img src="https://ui-avatars.com/api/?name=Abdi+Negara&background=111&color=fff&size=200" alt="Abdi Negara" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
+                <img src="/images/Abdi.jpeg" alt="Abdi Negara" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
                 <div className="text-center sm:text-left">
                   <h3 className="text-xl font-bold text-white mb-1">Abdi Negara</h3>
                   <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-3">HRD (Human Resources Development)</p>
@@ -391,7 +463,7 @@ export default function Home() {
       </section>
 
       {/* ==========================================
-          6. SECTION PROJECT UNGGULAN (WAJIB)
+          6. SECTION PROJECT UNGGULAN
       ========================================== */}
       <section className="py-32 bg-[#080808]">
         <div className="container mx-auto px-6 md:px-12">
@@ -454,7 +526,7 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-heading font-extrabold mb-4">7 Pilar Transaksi Syariah</h2>
             <p className="text-gray-400 text-sm">Menghindari jebakan finansial demi rumah yang berkah.</p>
           </div>
-
+          
           <div className="flex flex-wrap justify-center gap-4">
             {['Tanpa Bank', 'Tanpa Bunga', 'Tanpa Denda', 'Tanpa Sita', 'Tanpa BI Checking', 'Tanpa Penalti', 'Tanpa Asuransi'].map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
@@ -469,7 +541,7 @@ export default function Home() {
       </section>
 
       {/* ==========================================
-          8. SECTION TRUST / TESTIMONI (UPDATED)
+          8. SECTION TRUST / TESTIMONI
       ========================================== */}
       <section className="py-32 bg-[#080808] overflow-hidden">
         <div className="container mx-auto px-6 md:px-12 mb-16 text-center max-w-4xl">
@@ -481,7 +553,10 @@ export default function Home() {
             
             <div className="flex justify-center mb-10">
               <div className="bg-[#111] border border-white/5 rounded-2xl p-6 md:p-8 inline-block shadow-xl shadow-black/50">
-                <div className="text-5xl md:text-6xl font-black text-red-500 mb-2">4</div>
+                {/* ✅ Jumlah project dari statistik admin */}
+                <div className="text-5xl md:text-6xl font-black text-red-500 mb-2">
+                  {statistik.find(s => s.label?.toLowerCase().includes('proyek') || s.label?.toLowerCase().includes('project'))?.value || '4'}
+                </div>
                 <div className="text-xs md:text-sm text-gray-400 font-bold uppercase tracking-widest">Project Berkembang</div>
               </div>
             </div>
@@ -497,9 +572,8 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* SLIDER TESTIMONI BERJALAN OTOMATIS (MARQUEE) */}
+        {/* SLIDER TESTIMONI BERJALAN OTOMATIS */}
         <div className="relative w-full overflow-hidden flex pb-10">
-          {/* Gradient mask untuk memberikan efek fade pada ujung layar */}
           <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-[#080808] to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-[#080808] to-transparent z-10 pointer-events-none" />
 
@@ -520,7 +594,6 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-4 border-t border-white/5 pt-4 mt-auto">
                   <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center font-bold text-red-500 text-lg shrink-0">
-                    {/* Mengambil huruf pertama dari nama keluarga (misal 'A' dari 'Keluarga Ahmad') */}
                     {t.name.split(' ')[1]?.charAt(0) || t.name.charAt(0)}
                   </div>
                   <div>
@@ -535,7 +608,7 @@ export default function Home() {
       </section>
 
       {/* ==========================================
-          9. CTA PENUTUP
+          9. CTA PENUTUP — tombol dari admin
       ========================================== */}
       <section className="py-24 border-t border-white/5 bg-[#080808]">
         <div className="container mx-auto px-6 md:px-12">
@@ -549,16 +622,19 @@ export default function Home() {
               <p className="text-red-100 mb-10 max-w-2xl mx-auto text-sm md:text-base">
                 Konsultasikan kebutuhan property Anda bersama tim konsultan profesional AFKAR LAND sekarang juga. Gratis tanpa komitmen!
               </p>
+              {/* ✅ CTA buttons dari admin */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer"
+                <Link
+                  to={ctaUtamaLink}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-red-600 px-8 py-4 rounded-xl font-bold hover:bg-gray-100 transition-all hover:-translate-y-1"
                 >
-                  Hubungi Marketing <FiArrowRight size={18} />
-                </a>
-                <Link to="/kontak"
+                  {ctaUtama} <FiArrowRight size={18} />
+                </Link>
+                <Link
+                  to={ctaKeduaLink}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent border border-white/30 text-white px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-all"
                 >
-                  Jadwalkan Survey Lokasi
+                  {ctaKedua}
                 </Link>
               </div>
             </div>
