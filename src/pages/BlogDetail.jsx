@@ -162,7 +162,7 @@ export default function BlogDetail() {
                 <h3 className="text-2xl font-heading font-bold text-white mb-3">Ingin Menjadi Bagian dari Kawasan Islami Kami?</h3>
                 <p className="text-gray-400 mb-8 max-w-lg mx-auto">Konsultasikan properti impian Anda secara gratis dan dapatkan pricelist terbaru dari tim ahli kami.</p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer"
+                  <a href="https://wa.me/6285705218281" target="_blank" rel="noopener noreferrer"
                     className="w-full sm:w-auto px-8 py-3.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg">
                     Konsultasi Sekarang
                   </a>
