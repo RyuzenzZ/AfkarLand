@@ -2,86 +2,76 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX, FiLock } from 'react-icons/fi';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
 
-  // LOGIKA: Transisi warna Navbar saat halaman di-scroll
+  const { settings } = useSiteSettings();
+  const { navbar, branding } = settings;
+  const logoUrl  = navbar.logoUrl || branding.logoUrl;
+  const siteName = branding.siteName || 'AFKAR LAND';
+  const navLinks = navbar.links || [];
+
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // LOGIKA: Tutup menu mobile otomatis saat berpindah halaman
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setIsOpen(false); }, [location.pathname]);
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'About', path: '/tentang-kami' },
-    { name: 'Project', path: '/proyek' },
-    { name: 'Article', path: '/artikel' },
-    { name: 'Career', path: '/karir' },
-    { name: 'Contact', path: '/kontak' },
-  ];
+  const renderSiteName = () => {
+    const parts = siteName.split(' ');
+    if (parts.length < 2) return <span>{siteName}</span>;
+    return <>{parts[0]} <span className="text-red-200">{parts.slice(1).join(' ')}</span></>;
+  };
 
   return (
-    <header
-      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-red-700 shadow-lg py-4' : 'bg-red-600 py-6'
-      }`}
-    >
+    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+      isScrolled ? 'bg-red-700 shadow-lg py-4' : 'bg-red-600 py-6'
+    }`}>
       <div className="container mx-auto px-6 md:px-12 flex justify-between items-center">
 
-        {/* ===================== LOGO ===================== */}
+        {/* LOGO */}
         <Link to="/" className="flex items-center gap-3 hover:scale-105 transition-transform shrink-0">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm">
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm shrink-0">
             <img
-              src="/images/Logomerahafkar.jpeg"
-              alt="Logomerahafkar.jpeg"
+              src={logoUrl || '/images/Logomerahafkar.jpeg'}
+              alt={branding.logoAlt || siteName}
               className="w-full h-full object-cover"
             />
           </div>
           <div className="text-2xl font-heading font-extrabold text-white tracking-widest">
-            AFKAR <span className="text-red-200">LAND</span>
+            {renderSiteName()}
           </div>
         </Link>
 
-        {/* ===================== NAVIGASI DESKTOP ===================== */}
+        {/* NAVIGASI DESKTOP */}
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           {navLinks.map((link) => (
             <Link
-              key={link.name}
+              key={link.path}
               to={link.path}
               className="text-sm font-bold text-white hover:text-red-200 transition-colors uppercase tracking-wider relative group"
             >
-              {link.name}
-              {/* LOGIKA: Garis bawah animasi aktif/hover */}
-              <span
-                className={`absolute -bottom-1 left-0 h-0.5 bg-red-200 transition-all duration-300 ${
-                  location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
-                }`}
-              />
+              {link.label}
+              <span className={`absolute -bottom-1 left-0 h-0.5 bg-red-200 transition-all duration-300 ${
+                location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
+              }`} />
             </Link>
           ))}
-
-          {/* ===== TOMBOL LOGIN ADMIN (DESKTOP) ===== */}
           <Link
             to="/admin/login"
             className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/60 text-white text-sm font-bold px-4 py-2 rounded-full transition-all duration-300 uppercase tracking-wider backdrop-blur-sm"
           >
-            <FiLock size={14} />
-            <span>Login</span>
+            <FiLock size={14} /><span>Login</span>
           </Link>
         </nav>
 
-        {/* ===================== TOMBOL HAMBURGER MOBILE ===================== */}
+        {/* HAMBURGER MOBILE */}
         <button
           className="md:hidden text-white hover:text-red-200 transition-colors"
           onClick={() => setIsOpen(!isOpen)}
@@ -91,7 +81,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* ===================== MENU DROPDOWN MOBILE ===================== */}
+      {/* MENU DROPDOWN MOBILE */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -103,23 +93,20 @@ export default function Navbar() {
             <div className="flex flex-col px-6 py-6 gap-1">
               {navLinks.map((link) => (
                 <Link
-                  key={link.name}
+                  key={link.path}
                   to={link.path}
                   className={`text-white font-bold text-lg py-3 border-b border-red-700/50 transition-colors ${
                     location.pathname === link.path ? 'text-red-300' : 'hover:text-red-200'
                   }`}
                 >
-                  {link.name}
+                  {link.label}
                 </Link>
               ))}
-
-              {/* ===== TOMBOL LOGIN ADMIN (MOBILE) ===== */}
               <Link
                 to="/admin/login"
                 className="flex items-center justify-center gap-2 mt-4 bg-white/15 hover:bg-white/25 border border-white/30 text-white font-bold text-base py-3 rounded-xl transition-all duration-300"
               >
-                <FiLock size={16} />
-                <span>Login Admin</span>
+                <FiLock size={16} /><span>Login Admin</span>
               </Link>
             </div>
           </motion.div>

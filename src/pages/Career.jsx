@@ -4,33 +4,45 @@ import {
   FiExternalLink, FiBriefcase, FiTrendingUp, 
   FiUsers, FiAward, FiArrowRight, FiMail 
 } from 'react-icons/fi';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
+// ── Framer Motion variants ──────────────────────────────────────────────────
 const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+  hidden:  { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 };
 
 const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.2 } }
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.1 } },
 };
 
 export default function Career() {
-  // Link portal HRD resmi AFKAR LAND
-  const hrPortalLink = "https://sites.google.com/view/afkar-rekrutmen/";
+  // ── Data dari Firestore via useSiteSettings ──────────────────────────────
+  const { settings } = useSiteSettings();
+  const career = settings.career || {};
 
-  // Nomor & pesan otomatis WhatsApp HRD
-  const hrdWa = '6285355355323';
-  const hrdWaMsg = encodeURIComponent(
-    `Assalamu'alaikum 👋\n\nSaya ingin menanyakan informasi lebih lanjut mengenai *lowongan pekerjaan* di AFKAR LAND.\n\nMohon bantuannya ya, terima kasih 🙏`
-  );
+  const hrPortalLink = career.hrPortalLink || "https://sites.google.com/view/afkar-rekrutmen/";
+  const hrdWa        = career.hrdWaNumber  || '6285355355323';
+  const hrdNama      = career.hrdNama      || 'Pak Abdi';
+  const flyerSrc     = career.flyerImage   || '/lowongan/open-recruitment.jpg';
+  const budayaImage  = career.budayaImage  || 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80';
+  const heroImage    = career.heroImage    || 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80';
+  const heroJudul    = career.heroJudul    || 'Tumbuh Bersama AFKAR LAND';
+  const heroSubjudul = career.heroSubjudul || 'Bangun karir cemerlang di industri properti sambil mengumpulkan amal jariyah melalui sistem kerja yang profesional dan islami.';
+  const rekPeriode   = career.rekrutmenPeriode || '13 Mei – 25 Mei 2026';
+  const rekLokasi    = career.rekrutmenLokasi  || 'Makassar & Wotu';
+  const rekTahun     = career.rekrutmenTahun   || '2026';
+
+  const hrdWaMsg  = encodeURIComponent(`Assalamu'alaikum 👋\n\nSaya ingin menanyakan informasi lebih lanjut mengenai *lowongan pekerjaan* di AFKAR LAND.\n\nMohon bantuannya ya, terima kasih 🙏`);
   const hrdWaLink = `https://wa.me/${hrdWa}?text=${hrdWaMsg}`;
 
-  // Flyer lowongan — simpan gambar di public/lowongan/open-recruitment.jpg
-  const flyerSrc = '/lowongan/open-recruitment.jpg';
-
-  // Data posisi dari flyer — Marketing Executive & Teknik = PRIORITAS
-  const posisiList = [
+  // posisiList: dari Firestore kalau ada, fallback ke data statis
+  const posisiFromDB = career.posisi || [];
+  const posisiList = posisiFromDB.length > 0 ? posisiFromDB.map(p => ({
+    ...p,
+    waMsg: encodeURIComponent(`Assalamu'alaikum ${hrdNama} 👋\n\nSaya ingin melamar posisi *${p.title}* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
+  })) : [
     {
       title: 'Marketing Executive',
       prioritas: true,
@@ -91,7 +103,7 @@ export default function Career() {
       ],
       waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Admin Sales* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
     },
-  ];
+  ]; // end fallback posisiList ternary
 
   return (
     <div className="w-full bg-[#080808] font-body min-h-screen text-white overflow-hidden pb-24">
@@ -116,12 +128,11 @@ export default function Career() {
               </motion.div>
 
               <motion.h1 variants={fadeUp} className="text-4xl md:text-6xl lg:text-7xl font-heading font-extrabold mb-6 leading-tight">
-                Tumbuh Bersama <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-300">AFKAR LAND</span>
+                {heroJudul}
               </motion.h1>
 
               <motion.p variants={fadeUp} className="text-lg md:text-xl text-gray-400 font-light leading-relaxed mb-10 max-w-lg">
-                Bangun karir cemerlang di industri properti sambil mengumpulkan amal jariyah melalui sistem kerja yang profesional dan islami.
+                {heroSubjudul}
               </motion.p>
               
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4">
@@ -142,7 +153,7 @@ export default function Career() {
             <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.3 }} className="relative hidden lg:block">
               <div className="rounded-[2.5rem] overflow-hidden border border-white/10 relative z-10 aspect-square">
                 <img 
-                  src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80" 
+                  src={heroImage} 
                   alt="Tim AFKAR LAND Meeting" 
                   className="w-full h-full object-cover opacity-90" 
                 />
@@ -246,7 +257,7 @@ export default function Career() {
             {/* Background Image full width */}
             <div className="absolute inset-0">
               <img 
-                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80" 
+                src={budayaImage} 
                 alt="Budaya Kerja Kolaboratif" 
                 className="w-full h-full object-cover"
               />
@@ -287,14 +298,14 @@ export default function Career() {
               <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-white mb-2 leading-tight">
                 Posisi yang Sedang Dibuka
               </h2>
-              <p className="text-white/40 text-sm">AFKAR GROUP INDONESIA · Makassar & Wotu</p>
+              <p className="text-white/40 text-sm">AFKAR GROUP INDONESIA · {rekLokasi}</p>
             </div>
             {/* Deadline badge */}
             <div className="shrink-0 flex items-center gap-3 bg-[#111] border border-white/8 rounded-2xl px-5 py-4">
               <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center text-lg shrink-0">📅</div>
               <div>
                 <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Pendaftaran</p>
-                <p className="text-white font-extrabold text-sm">13 Mei – 25 Mei 2026</p>
+                <p className="text-white font-extrabold text-sm">{rekPeriode}</p>
               </div>
             </div>
           </motion.div>
@@ -331,8 +342,8 @@ export default function Career() {
                   >
                     <div className="w-9 h-9 rounded-lg bg-green-500/20 flex items-center justify-center text-base shrink-0">💬</div>
                     <div className="min-w-0">
-                      <p className="text-white font-bold text-sm group-hover/wa:text-green-400 transition-colors truncate">+62853-5535-5323</p>
-                      <p className="text-white/35 text-xs">Pak Abdi · HRD AFKAR GROUP</p>
+                      <p className="text-white font-bold text-sm group-hover/wa:text-green-400 transition-colors truncate">+{hrdWa}</p>
+                      <p className="text-white/35 text-xs">{hrdNama} · HRD AFKAR GROUP</p>
                     </div>
                     <FiArrowRight size={14} className="text-white/25 group-hover/wa:text-green-400 transition-colors shrink-0 ml-auto" />
                   </a>
