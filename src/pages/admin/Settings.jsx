@@ -1,66 +1,64 @@
 // Settings.jsx — AFKAR LAND Admin Panel
-// Pengaturan website lengkap: Info Perusahaan, Kontak, Sosial Media,
-// WhatsApp CTA, Tampilan, dan Maintenance Mode
+// Pengaturan OPERASIONAL sistem: Kontak, WhatsApp, Maintenance
+// ⚠️ Branding, Logo, Sosmed, Footer → kelola di Manajemen Website (ManageHomepage)
 
 import React, { useState, useEffect } from 'react';
-import { FiSave, FiSettings, FiGlobe, FiPhone, FiMail,
-         FiMapPin, FiInstagram, FiYoutube, FiFacebook,
-         FiAlertTriangle, FiEye, FiEyeOff } from 'react-icons/fi';
-import { RiWhatsappLine, RiTiktokLine } from 'react-icons/ri';
+import {
+  FiSave, FiSettings, FiPhone, FiMail,
+  FiMapPin, FiAlertTriangle, FiEye,
+  FiExternalLink, FiInfo, FiCheckCircle,
+} from 'react-icons/fi';
+import { RiWhatsappLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 
-// ── Default nilai jika Firestore kosong ──────────────────────────
+// ── Default nilai ────────────────────────────────────────────────
 const DEFAULT = {
-  // Info Perusahaan
-  namaPerusahaan: 'AFKAR LAND',
-  tagline: 'Bersama AFKAR GROUP INDONESIA, wujudkan properti syariah di seluruh wilayah sulawesi.',
-  deskripsiSingkat: 'Developer properti syariah terpercaya di Sulawesi sejak 2015.',
-  emailUtama: 'halo@afkarland.com',
-  teleponUtama: '+62 812-3456-7890',
-  alamat: 'Makassar, Sulawesi Selatan, Indonesia',
-  googleMapsEmbed: '',
+  // Kontak Operasional
+  emailUtama:       'halo@afkarland.com',
+  teleponUtama:     '+62 812-3456-7890',
+  teleponKantor:    '',
+  alamat:           'Makassar, Sulawesi Selatan, Indonesia',
+  googleMapsEmbed:  '',
+  jamOperasional:   'Senin–Jumat, 08.00–17.00 WITA',
 
   // WhatsApp
-  nomorWa: '6281234567890',
-  pesanWaDefault: 'Halo AFKAR LAND, saya ingin bertanya mengenai properti Anda.',
-
-  // Sosial Media
-  instagram: 'https://instagram.com/afkarland',
-  facebook: '',
-  youtube: '',
-  tiktok: '',
-
-  // Tampilan
-  logoUrl: '',
-  faviconUrl: '',
-  warnaPrimer: '#dc2626',
+  nomorWa:          '6281234567890',
+  nomorWa2:         '',
+  pesanWaDefault:   'Halo AFKAR LAND, saya ingin bertanya mengenai properti Anda.',
+  pesanWaLead:      'Halo AFKAR LAND, saya tertarik dengan proyek {proyek}. Boleh minta informasi lebih lanjut?',
+  pesanWaKarir:     'Halo AFKAR LAND, saya ingin menanyakan status lamaran saya untuk posisi {posisi}.',
+  tampilkanTombolWa: true,
 
   // Maintenance
-  maintenanceMode: false,
-  pesanMaintenance: 'Website sedang dalam pemeliharaan. Silakan coba beberapa saat lagi.',
+  maintenanceMode:      false,
+  pesanMaintenance:     'Website sedang dalam pemeliharaan. Silakan coba beberapa saat lagi.',
+  maintenanceEmail:     '',
+  maintenanceEstimasi:  '',
+
+  // Email Notifikasi
+  emailNotifLead:       '',
+  emailNotifPesan:      '',
+  emailNotifLamaran:    '',
+  aktifkanEmailNotif:   false,
 };
 
-// ── Komponen Section Card ─────────────────────────────────────────
-const SectionCard = ({ title, icon, children }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+// ── Komponen ──────────────────────────────────────────────────────
+const SectionCard = ({ title, icon, children, className = '' }) => (
+  <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden ${className}`}>
     <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
-      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">
-        {icon}
-      </div>
+      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600">{icon}</div>
       <h2 className="font-heading font-bold text-gray-800 text-sm">{title}</h2>
     </div>
     <div className="p-6 space-y-5">{children}</div>
   </div>
 );
 
-// ── Komponen Field Label ──────────────────────────────────────────
 const Field = ({ label, hint, children }) => (
   <div>
-    <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">
-      {label}
-    </label>
+    <label className="block text-xs font-bold text-gray-600 mb-1.5 uppercase tracking-wider">{label}</label>
     {hint && <p className="text-xs text-gray-400 mb-2">{hint}</p>}
     {children}
   </div>
@@ -68,7 +66,6 @@ const Field = ({ label, hint, children }) => (
 
 const inputCls = "w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-400 outline-none text-sm transition-colors";
 
-// ── Komponen Input dengan Icon ────────────────────────────────────
 const IconInput = ({ icon, ...props }) => (
   <div className="relative">
     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>
@@ -76,22 +73,35 @@ const IconInput = ({ icon, ...props }) => (
   </div>
 );
 
-// ── TABS ─────────────────────────────────────────────────────────
+const Toggle = ({ checked, onChange, label, sublabel }) => (
+  <div className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer
+    ${checked ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-100'}`}
+    onClick={() => onChange(!checked)}>
+    <div>
+      <div className="font-bold text-gray-800 text-sm">{label}</div>
+      {sublabel && <div className="text-xs text-gray-500 mt-0.5">{sublabel}</div>}
+    </div>
+    <div className={`relative w-14 h-7 rounded-full transition-all duration-300 shrink-0
+      ${checked ? 'bg-emerald-500' : 'bg-gray-300'}`}>
+      <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
+        ${checked ? 'left-7' : 'left-0.5'}`}/>
+    </div>
+  </div>
+);
+
 const TABS = [
-  { id: 'perusahaan', label: '🏢 Perusahaan'   },
-  { id: 'kontak',     label: '📞 Kontak & WA'  },
-  { id: 'sosmed',     label: '📱 Sosial Media' },
-  { id: 'tampilan',   label: '🎨 Tampilan'     },
-  { id: 'maintenance',label: '⚙️ Maintenance'  },
+  { id: 'kontak',      label: '📞 Kontak & Lokasi'   },
+  { id: 'whatsapp',    label: '💬 WhatsApp'           },
+  { id: 'notifikasi',  label: '🔔 Notifikasi'         },
+  { id: 'maintenance', label: '⚙️ Maintenance'        },
 ];
 
 export default function Settings() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading]       = useState(true);
-  const [activeTab, setActiveTab]       = useState('perusahaan');
+  const [activeTab, setActiveTab]       = useState('kontak');
   const [formData, setFormData]         = useState(DEFAULT);
 
-  // Ambil data dari Firestore saat mount
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -109,9 +119,8 @@ export default function Settings() {
   const set = (key, val) => setFormData(f => ({ ...f, [key]: val }));
   const handleChange = (e) => set(e.target.name, e.target.value);
 
-  // Simpan ke Firestore
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setIsSubmitting(true);
     try {
       await setDoc(doc(db, 'settings', 'general'), formData, { merge: true });
@@ -139,16 +148,26 @@ export default function Settings() {
             <FiSettings size={22}/>
           </div>
           <div>
-            <h1 className="text-3xl font-heading font-bold text-gray-900">Pengaturan Website</h1>
-            <p className="text-gray-500 mt-0.5 text-sm">Perubahan tersimpan langsung ke server Firebase.</p>
+            <h1 className="text-3xl font-heading font-bold text-gray-900">Pengaturan Sistem</h1>
+            <p className="text-gray-500 mt-0.5 text-sm">Kontak operasional, WhatsApp, notifikasi & maintenance.</p>
           </div>
         </div>
-        <button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
+        <button onClick={handleSubmit} disabled={isSubmitting}
           className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-60">
           <FiSave size={15}/> {isSubmitting ? 'Menyimpan...' : 'Simpan Semua'}
         </button>
+      </div>
+
+      {/* BANNER — arahkan ke ManageHomepage untuk branding */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl px-5 py-4 flex items-start gap-3">
+        <FiInfo size={16} className="text-blue-500 shrink-0 mt-0.5"/>
+        <div>
+          <p className="text-sm text-blue-700 font-semibold">Pengaturan Branding ada di Manajemen Website</p>
+          <p className="text-xs text-blue-600 mt-0.5">
+            Logo, favicon, warna brand, navbar, footer, hero banner, statistik, dan FAQ dikelola di
+            <Link to="/admin/homepage" className="font-bold underline ml-1">Manajemen Website →</Link>
+          </p>
+        </div>
       </div>
 
       {/* TABS */}
@@ -164,214 +183,219 @@ export default function Settings() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* ── TAB: PERUSAHAAN ──────────────────────────────────── */}
-        {activeTab === 'perusahaan' && (
-          <SectionCard title="Informasi Perusahaan" icon={<FiGlobe size={15}/>}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label="Nama Perusahaan *">
-                <input className={inputCls} name="namaPerusahaan" value={formData.namaPerusahaan}
-                  onChange={handleChange} required placeholder="AFKAR LAND"/>
-              </Field>
-              <Field label="Email Publik">
-                <IconInput icon={<FiMail size={14}/>} type="email" name="emailUtama"
-                  value={formData.emailUtama} onChange={handleChange} placeholder="halo@afkarland.com"/>
-              </Field>
-            </div>
-            <Field label="Tagline / Slogan">
-              <input className={inputCls} name="tagline" value={formData.tagline}
-                onChange={handleChange} placeholder="Properti syariah terpercaya..."/>
-            </Field>
-            <Field label="Deskripsi Singkat" hint="Tampil di section About dan footer website.">
-              <textarea className={inputCls} name="deskripsiSingkat" rows={3}
-                value={formData.deskripsiSingkat} onChange={handleChange}
-                placeholder="Developer properti syariah terpercaya..."/>
-            </Field>
-            <Field label="Alamat Kantor Lengkap">
-              <div className="relative">
-                <FiMapPin size={14} className="absolute left-3.5 top-3 text-gray-400"/>
-                <textarea className={`${inputCls} pl-10`} name="alamat" rows={2}
-                  value={formData.alamat} onChange={handleChange}
-                  placeholder="Jl. Contoh No.1, Makassar, Sulawesi Selatan"/>
+        {/* ── TAB: KONTAK & LOKASI ─────────────────────────────── */}
+        {activeTab === 'kontak' && (
+          <>
+            <SectionCard title="Informasi Kontak Publik" icon={<FiPhone size={15}/>}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Field label="Email Utama (tampil di website)">
+                  <IconInput icon={<FiMail size={14}/>} type="email" name="emailUtama"
+                    value={formData.emailUtama} onChange={handleChange}
+                    placeholder="halo@afkarland.com"/>
+                </Field>
+                <Field label="Nomor Telepon Utama">
+                  <IconInput icon={<FiPhone size={14}/>} name="teleponUtama"
+                    value={formData.teleponUtama} onChange={handleChange}
+                    placeholder="+62 812-3456-7890"/>
+                </Field>
+                <Field label="Nomor Telepon Kantor (opsional)">
+                  <IconInput icon={<FiPhone size={14}/>} name="teleponKantor"
+                    value={formData.teleponKantor} onChange={handleChange}
+                    placeholder="+62 411-xxxxxx"/>
+                </Field>
+                <Field label="Jam Operasional">
+                  <input className={inputCls} name="jamOperasional"
+                    value={formData.jamOperasional} onChange={handleChange}
+                    placeholder="Senin–Jumat, 08.00–17.00 WITA"/>
+                </Field>
               </div>
-            </Field>
-            <Field label="Embed Google Maps URL" hint="Ambil dari Google Maps → Bagikan → Sematkan peta → salin src URL saja.">
-              <input className={inputCls} name="googleMapsEmbed" value={formData.googleMapsEmbed}
-                onChange={handleChange} placeholder="https://www.google.com/maps/embed?..."/>
+              <Field label="Alamat Kantor Lengkap">
+                <div className="relative">
+                  <FiMapPin size={14} className="absolute left-3.5 top-3 text-gray-400"/>
+                  <textarea className={`${inputCls} pl-10`} name="alamat" rows={2}
+                    value={formData.alamat} onChange={handleChange}
+                    placeholder="Jl. Contoh No.1, Makassar, Sulawesi Selatan"/>
+                </div>
+              </Field>
+            </SectionCard>
+
+            <SectionCard title="Embed Google Maps" icon={<FiMapPin size={15}/>}>
+              <Field label="URL Embed Google Maps"
+                hint="Google Maps → Bagikan → Sematkan Peta → salin nilai src saja (bukan seluruh iframe).">
+                <input className={inputCls} name="googleMapsEmbed"
+                  value={formData.googleMapsEmbed} onChange={handleChange}
+                  placeholder="https://www.google.com/maps/embed?pb=..."/>
+              </Field>
               {formData.googleMapsEmbed && (
-                <div className="mt-3 rounded-xl overflow-hidden border border-gray-100 h-48">
+                <div className="mt-3 rounded-xl overflow-hidden border border-gray-100 h-52">
                   <iframe src={formData.googleMapsEmbed} width="100%" height="100%"
                     style={{ border: 0 }} allowFullScreen loading="lazy" title="Lokasi Kantor"/>
                 </div>
-              )}
-            </Field>
-          </SectionCard>
-        )}
-
-        {/* ── TAB: KONTAK & WA ─────────────────────────────────── */}
-        {activeTab === 'kontak' && (
-          <>
-            <SectionCard title="Nomor Kontak" icon={<FiPhone size={15}/>}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Field label="Nomor Telepon Utama">
-                  <IconInput icon={<FiPhone size={14}/>} type="text" name="teleponUtama"
-                    value={formData.teleponUtama} onChange={handleChange} placeholder="+62 812-3456-7890"/>
-                </Field>
-                <Field label="Nomor WhatsApp" hint="Format: 628xxxxx (tanpa + atau spasi)">
-                  <IconInput icon={<RiWhatsappLine size={15}/>} type="text" name="nomorWa"
-                    value={formData.nomorWa} onChange={handleChange} placeholder="6281234567890"/>
-                </Field>
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Pesan WhatsApp Default" icon={<RiWhatsappLine size={15}/>}>
-              <Field label="Teks Pesan Otomatis" hint="Pesan ini akan muncul saat pengunjung klik tombol WhatsApp di website.">
-                <textarea className={inputCls} name="pesanWaDefault" rows={3}
-                  value={formData.pesanWaDefault} onChange={handleChange}
-                  placeholder="Halo AFKAR LAND, saya ingin bertanya..."/>
-              </Field>
-              {/* Preview link WA */}
-              {formData.nomorWa && (
-                <a
-                  href={`https://wa.me/${formData.nomorWa}?text=${encodeURIComponent(formData.pesanWaDefault)}`}
-                  target="_blank" rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg transition-colors">
-                  <RiWhatsappLine size={14}/> Test Link WhatsApp
-                </a>
               )}
             </SectionCard>
           </>
         )}
 
-        {/* ── TAB: SOSIAL MEDIA ────────────────────────────────── */}
-        {activeTab === 'sosmed' && (
-          <SectionCard title="Akun Sosial Media" icon={<FiInstagram size={15}/>}>
-            <p className="text-xs text-gray-400 -mt-2">Link ini akan tampil di footer dan halaman kontak website.</p>
-            <Field label="Instagram">
-              <IconInput icon={<FiInstagram size={14}/>} type="url" name="instagram"
-                value={formData.instagram} onChange={handleChange}
-                placeholder="https://instagram.com/afkarland"/>
-            </Field>
-            <Field label="Facebook">
-              <IconInput icon={<FiFacebook size={14}/>} type="url" name="facebook"
-                value={formData.facebook} onChange={handleChange}
-                placeholder="https://facebook.com/afkarland"/>
-            </Field>
-            <Field label="YouTube">
-              <IconInput icon={<FiYoutube size={14}/>} type="url" name="youtube"
-                value={formData.youtube} onChange={handleChange}
-                placeholder="https://youtube.com/@afkarland"/>
-            </Field>
-            <Field label="TikTok">
-              <IconInput icon={<RiTiktokLine size={14}/>} type="url" name="tiktok"
-                value={formData.tiktok} onChange={handleChange}
-                placeholder="https://tiktok.com/@afkarland"/>
-            </Field>
-
-            {/* Preview sosmed aktif */}
-            <div className="pt-2 border-t border-gray-100">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aktif</p>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  { key: 'instagram', icon: <FiInstagram size={16}/>, color: 'text-pink-600 bg-pink-50', label: 'Instagram' },
-                  { key: 'facebook',  icon: <FiFacebook size={16}/>,  color: 'text-blue-600 bg-blue-50',  label: 'Facebook'  },
-                  { key: 'youtube',   icon: <FiYoutube size={16}/>,   color: 'text-red-600 bg-red-50',    label: 'YouTube'   },
-                  { key: 'tiktok',    icon: <RiTiktokLine size={16}/>,color: 'text-gray-800 bg-gray-100', label: 'TikTok'    },
-                ].map(s => formData[s.key] && (
-                  <a key={s.key} href={formData[s.key]} target="_blank" rel="noreferrer"
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold ${s.color} transition-opacity hover:opacity-80`}>
-                    {s.icon} {s.label}
-                  </a>
-                ))}
+        {/* ── TAB: WHATSAPP ────────────────────────────────────── */}
+        {activeTab === 'whatsapp' && (
+          <>
+            <SectionCard title="Nomor WhatsApp" icon={<RiWhatsappLine size={15}/>}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Field label="Nomor WA Utama" hint="Format: 628xxxxxxxxxx (tanpa + atau spasi)">
+                  <IconInput icon={<RiWhatsappLine size={15}/>} name="nomorWa"
+                    value={formData.nomorWa} onChange={handleChange}
+                    placeholder="6281234567890"/>
+                  {formData.nomorWa && (
+                    <a href={`https://wa.me/${formData.nomorWa}`} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 mt-2 hover:text-emerald-700">
+                      <FiExternalLink size={11}/> Tes link WA
+                    </a>
+                  )}
+                </Field>
+                <Field label="Nomor WA Kedua (backup, opsional)" hint="Tampil sebagai alternatif kontak.">
+                  <IconInput icon={<RiWhatsappLine size={15}/>} name="nomorWa2"
+                    value={formData.nomorWa2} onChange={handleChange}
+                    placeholder="6285xxxxxxxxxx"/>
+                </Field>
               </div>
-            </div>
-          </SectionCard>
+              <Toggle
+                checked={formData.tampilkanTombolWa}
+                onChange={v => set('tampilkanTombolWa', v)}
+                label={formData.tampilkanTombolWa ? '✅ Tombol WA ditampilkan di web' : '🚫 Tombol WA disembunyikan'}
+                sublabel="Tombol floating WhatsApp di kanan bawah halaman publik"/>
+            </SectionCard>
+
+            <SectionCard title="Template Pesan WhatsApp" icon={<RiWhatsappLine size={15}/>}>
+              <p className="text-xs text-gray-400 -mt-2 mb-2">
+                Gunakan <code className="bg-gray-100 px-1 rounded text-red-600">{'{proyek}'}</code> dan <code className="bg-gray-100 px-1 rounded text-red-600">{'{posisi}'}</code> sebagai placeholder yang akan otomatis diisi.
+              </p>
+
+              <Field label="Pesan Default (tombol WA umum)">
+                <textarea className={inputCls} name="pesanWaDefault" rows={2}
+                  value={formData.pesanWaDefault} onChange={handleChange}
+                  placeholder="Halo AFKAR LAND, saya ingin bertanya..."/>
+              </Field>
+
+              <Field label="Pesan dari Halaman Lead / Proyek"
+                hint="Dikirim saat pengunjung klik WA dari halaman proyek.">
+                <textarea className={inputCls} name="pesanWaLead" rows={2}
+                  value={formData.pesanWaLead} onChange={handleChange}
+                  placeholder="Halo, saya tertarik dengan {proyek}..."/>
+              </Field>
+
+              <Field label="Pesan Balasan Lamaran Kerja"
+                hint="Digunakan admin saat menghubungi pelamar dari ManageApplications.">
+                <textarea className={inputCls} name="pesanWaKarir" rows={2}
+                  value={formData.pesanWaKarir} onChange={handleChange}
+                  placeholder="Halo, kami dari AFKAR LAND ingin menghubungi terkait lamaran posisi {posisi}..."/>
+              </Field>
+
+              {/* Preview test WA */}
+              {formData.nomorWa && formData.pesanWaDefault && (
+                <div className="pt-3 border-t border-gray-100">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Test Pesan Default</p>
+                  <a href={`https://wa.me/${formData.nomorWa}?text=${encodeURIComponent(formData.pesanWaDefault)}`}
+                    target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 px-4 py-2.5 rounded-xl transition-colors">
+                    <RiWhatsappLine size={15}/> Test Kirim via WhatsApp
+                  </a>
+                </div>
+              )}
+            </SectionCard>
+          </>
         )}
 
-        {/* ── TAB: TAMPILAN ────────────────────────────────────── */}
-        {activeTab === 'tampilan' && (
-          <SectionCard title="Aset & Warna Website" icon={<span className="text-sm">🎨</span>}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label="URL Logo" hint="Rekomendasikan format PNG transparan, minimal 200×60px.">
-                <input className={inputCls} name="logoUrl" value={formData.logoUrl}
-                  onChange={handleChange} placeholder="https://contoh.com/logo.png"/>
-                {formData.logoUrl && (
-                  <img src={formData.logoUrl} alt="Logo preview"
-                    className="mt-2 h-12 object-contain rounded-lg border border-gray-100 p-1 bg-gray-50"
-                    onError={e => e.target.style.display='none'}/>
-                )}
-              </Field>
-              <Field label="URL Favicon" hint="Format ICO atau PNG 32×32px.">
-                <input className={inputCls} name="faviconUrl" value={formData.faviconUrl}
-                  onChange={handleChange} placeholder="https://contoh.com/favicon.ico"/>
-                {formData.faviconUrl && (
-                  <img src={formData.faviconUrl} alt="Favicon preview"
-                    className="mt-2 w-8 h-8 object-contain rounded border border-gray-100"
-                    onError={e => e.target.style.display='none'}/>
-                )}
-              </Field>
-            </div>
-            <Field label="Warna Aksen Primer" hint="Warna ini digunakan untuk tombol, highlight, dan elemen utama website.">
-              <div className="flex items-center gap-3">
-                <input type="color" value={formData.warnaPrimer}
-                  onChange={e => set('warnaPrimer', e.target.value)}
-                  className="w-12 h-10 rounded-lg border border-gray-200 cursor-pointer p-0.5 bg-gray-50"/>
-                <input className={`${inputCls} flex-1`} value={formData.warnaPrimer}
-                  onChange={e => set('warnaPrimer', e.target.value)} placeholder="#dc2626"/>
-                <div className="w-10 h-10 rounded-lg border border-gray-100 shrink-0"
-                  style={{ backgroundColor: formData.warnaPrimer }}/>
+        {/* ── TAB: NOTIFIKASI ──────────────────────────────────── */}
+        {activeTab === 'notifikasi' && (
+          <SectionCard title="Notifikasi Email Admin" icon={<FiMail size={15}/>}>
+            <Toggle
+              checked={formData.aktifkanEmailNotif}
+              onChange={v => set('aktifkanEmailNotif', v)}
+              label={formData.aktifkanEmailNotif ? '✅ Email notifikasi aktif' : '🔕 Email notifikasi nonaktif'}
+              sublabel="Terima email setiap ada lead, pesan, atau lamaran baru"/>
+
+            {formData.aktifkanEmailNotif && (
+              <div className="space-y-4 pt-2">
+                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                  ⚠️ Fitur ini memerlukan integrasi layanan email (Firebase Functions + Nodemailer). Isi dulu sebagai konfigurasi awal.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Field label="Email notif Lead Baru">
+                    <IconInput icon={<FiMail size={13}/>} type="email" name="emailNotifLead"
+                      value={formData.emailNotifLead} onChange={handleChange}
+                      placeholder="admin@afkarland.com"/>
+                  </Field>
+                  <Field label="Email notif Pesan Masuk">
+                    <IconInput icon={<FiMail size={13}/>} type="email" name="emailNotifPesan"
+                      value={formData.emailNotifPesan} onChange={handleChange}
+                      placeholder="admin@afkarland.com"/>
+                  </Field>
+                  <Field label="Email notif Lamaran Kerja">
+                    <IconInput icon={<FiMail size={13}/>} type="email" name="emailNotifLamaran"
+                      value={formData.emailNotifLamaran} onChange={handleChange}
+                      placeholder="hrd@afkarland.com"/>
+                  </Field>
+                </div>
               </div>
-            </Field>
+            )}
+
+            {!formData.aktifkanEmailNotif && (
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex gap-3">
+                <FiCheckCircle size={15} className="text-gray-400 shrink-0 mt-0.5"/>
+                <p className="text-xs text-gray-500">
+                  Notifikasi di dalam panel admin tetap berjalan real-time melalui halaman
+                  <Link to="/admin/notifications" className="font-bold text-red-600 ml-1">Notifikasi →</Link>
+                </p>
+              </div>
+            )}
           </SectionCard>
         )}
 
         {/* ── TAB: MAINTENANCE ─────────────────────────────────── */}
         {activeTab === 'maintenance' && (
-          <SectionCard title="Mode Maintenance" icon={<FiAlertTriangle size={15}/>}>
-            {/* Toggle */}
-            <div className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all
-              ${formData.maintenanceMode ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100'}`}>
-              <div>
-                <div className="font-bold text-gray-800 text-sm">
-                  {formData.maintenanceMode ? '🔴 Maintenance Aktif' : '🟢 Website Online Normal'}
-                </div>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {formData.maintenanceMode
-                    ? 'Halaman publik menampilkan pesan maintenance.'
-                    : 'Semua pengunjung dapat mengakses website normal.'}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => set('maintenanceMode', !formData.maintenanceMode)}
-                className={`relative w-14 h-7 rounded-full transition-all duration-300 shrink-0
-                  ${formData.maintenanceMode ? 'bg-red-500' : 'bg-gray-300'}`}>
-                <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
-                  ${formData.maintenanceMode ? 'left-7' : 'left-0.5'}`}/>
-              </button>
-            </div>
+          <SectionCard title="Mode Maintenance Website" icon={<FiAlertTriangle size={15}/>}>
+            <Toggle
+              checked={formData.maintenanceMode}
+              onChange={v => set('maintenanceMode', v)}
+              label={formData.maintenanceMode ? '🔴 Maintenance AKTIF — website tidak bisa diakses publik' : '🟢 Website Online Normal'}
+              sublabel={formData.maintenanceMode
+                ? 'Pengunjung melihat halaman maintenance. Admin tetap bisa login.'
+                : 'Semua pengunjung dapat mengakses halaman publik.'}/>
 
             {formData.maintenanceMode && (
-              <>
+              <div className="space-y-4">
                 <Field label="Pesan Maintenance" hint="Ditampilkan kepada pengunjung saat website dalam mode maintenance.">
                   <textarea className={inputCls} name="pesanMaintenance" rows={3}
                     value={formData.pesanMaintenance} onChange={handleChange}
                     placeholder="Website sedang dalam pemeliharaan..."/>
                 </Field>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field label="Estimasi Selesai (opsional)">
+                    <input className={inputCls} name="maintenanceEstimasi"
+                      value={formData.maintenanceEstimasi} onChange={handleChange}
+                      placeholder="Senin 20 Mei 2025, pukul 10.00 WITA"/>
+                  </Field>
+                  <Field label="Email Kontak saat Maintenance">
+                    <IconInput icon={<FiMail size={13}/>} name="maintenanceEmail"
+                      value={formData.maintenanceEmail} onChange={handleChange}
+                      placeholder="info@afkarland.com"/>
+                  </Field>
+                </div>
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
                   <FiAlertTriangle size={16} className="text-amber-500 shrink-0 mt-0.5"/>
                   <div className="text-xs text-amber-700 leading-relaxed">
                     <strong>Perhatian:</strong> Mode maintenance aktif. Pengunjung tidak dapat mengakses halaman publik.
-                    Halaman admin tetap bisa diakses melalui <strong>/admin/login</strong>.
+                    Panel admin tetap bisa diakses melalui <strong>/admin/login</strong>.
+                    Matikan toggle ini setelah maintenance selesai.
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
-            {/* Preview */}
             {!formData.maintenanceMode && (
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex gap-3">
                 <FiEye size={16} className="text-emerald-500 shrink-0 mt-0.5"/>
-                <p className="text-xs text-emerald-700">Website dalam kondisi normal. Semua halaman publik dapat diakses.</p>
+                <p className="text-xs text-emerald-700">Website dalam kondisi normal. Semua halaman publik dapat diakses pengunjung.</p>
               </div>
             )}
           </SectionCard>
@@ -379,9 +403,7 @@ export default function Settings() {
 
         {/* TOMBOL SIMPAN BAWAH */}
         <div className="flex justify-end pt-2 pb-6">
-          <button
-            type="submit"
-            disabled={isSubmitting}
+          <button type="submit" disabled={isSubmitting}
             className="flex items-center gap-2 bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-xl font-bold text-sm transition-colors disabled:opacity-60">
             <FiSave size={15}/> {isSubmitting ? 'Menyimpan ke Cloud...' : 'Simpan Perubahan'}
           </button>

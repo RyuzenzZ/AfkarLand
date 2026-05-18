@@ -55,7 +55,9 @@ const SOURCES = [
     color: 'bg-emerald-500',
     iconBg: 'bg-emerald-50',
     textColor: 'text-emerald-600',
-    link: '/admin/bookings',
+    // FIX: Route /admin/bookings sudah dihapus → arahkan ke siteplan
+    // karena booking unit dikelola dari ManageSiteplan
+    link: '/admin/siteplan',
     getMessage: (d) => `${d.nama || 'Seseorang'} melakukan booking unit ${d.unit || d.blok || '-'}`,
   },
 ];

@@ -70,7 +70,7 @@ const testimonials = [
 
 const duplicatedTestimonials = [...testimonials, ...testimonials];
 
-// Default fallback values
+// Default fallback values — termasuk konten dari ManageHomepage
 const DEFAULTS = {
   heroImage:  '/images/Hero.jpg',
   badge:      'Developer Property Syariah Terpercaya',
@@ -86,6 +86,15 @@ const DEFAULTS = {
     { label: 'Kota Jangkauan', value: '8+'   },
     { label: 'Kepuasan Klien', value: '98%'  },
   ],
+  // ── Konten halaman — sinkron dengan ManageHomepage "Konten Halaman" tab ──
+  konten: {
+    tentangParagraf1: 'AFKAR LAND adalah perusahaan pengembang property syariah modern yang berfokus menghadirkan kawasan hunian nyaman, berkualitas, dan bernilai investasi tinggi.',
+    tentangParagraf2: 'Kami hadir untuk memberikan solusi kepemilikan rumah tanpa riba melalui sistem transaksi syariah yang aman, transparan, dan sesuai prinsip Islam. Menghindari sistem denda dan sita yang memberatkan.',
+    pilarSyariah: ['Tanpa Bank', 'Tanpa Bunga', 'Tanpa Denda', 'Tanpa Sita', 'Tanpa BI Checking', 'Tanpa Penalti', 'Tanpa Asuransi'],
+    ctaPenutupJudul:    'Siap Memiliki Hunian Syariah Impian Anda?',
+    ctaPenutupSubjudul: 'Konsultasikan kebutuhan property Anda bersama tim konsultan profesional AFKAR LAND sekarang juga. Gratis tanpa komitmen!',
+    trustSubjudul: 'AfkarLand berkomitmen untuk menghadirkan dan mengembangkan proyek properti syariah di seluruh wilayah sulawesi termasuk Makassar, Gowa, Wotu dan beberapa wilayah lainnya yang akan menjadi wilayah pengembangan property syariah.',
+  },
 };
 
 export default function Home() {
@@ -105,6 +114,17 @@ export default function Home() {
   const ctaKedua      = hero.ctaKedua      || DEFAULTS.ctaKedua;
   const ctaKeduaLink  = hero.ctaKeduaLink  || DEFAULTS.ctaKeduaLink;
   const statistik  = settings?.statistik?.length ? settings.statistik : DEFAULTS.statistik;
+
+  // ── Konten halaman — dari tab "Konten Halaman" di ManageHomepage ──
+  const konten = { ...DEFAULTS.konten, ...(settings?.konten || {}) };
+  const tentangParagraf1  = konten.tentangParagraf1;
+  const tentangParagraf2  = konten.tentangParagraf2;
+  const pilarSyariah      = Array.isArray(konten.pilarSyariah) && konten.pilarSyariah.length
+    ? konten.pilarSyariah
+    : DEFAULTS.konten.pilarSyariah;
+  const ctaPenutupJudul    = konten.ctaPenutupJudul;
+  const ctaPenutupSubjudul = konten.ctaPenutupSubjudul;
+  const trustSubjudul      = konten.trustSubjudul;
 
   const toggleDivision = (divisionName) => {
     setActiveDivision(activeDivision === divisionName ? null : divisionName);
@@ -221,6 +241,7 @@ export default function Home() {
 
       {/* ==========================================
           2. SECTION TENTANG AFKAR LAND
+          ✅ Paragraf dari ManageHomepage → Konten Halaman
       ========================================== */}
       <section className="py-24 md:py-32 bg-[#080808] relative">
         <div className="container mx-auto px-6 md:px-12">
@@ -232,12 +253,13 @@ export default function Home() {
               <h2 className="text-3xl md:text-5xl font-heading font-extrabold mb-6 leading-tight">
                 Membangun Hunian,<br />Membangun Kehidupan yang Lebih Berkah
               </h2>
+              {/* ✅ Paragraf real-time dari ManageHomepage → tab Konten Halaman */}
               <div className="space-y-4 text-gray-400 leading-relaxed text-sm md:text-base">
                 <p>
-                  <strong className="text-white">AFKAR LAND</strong> adalah perusahaan pengembang property syariah modern yang berfokus menghadirkan kawasan hunian nyaman, berkualitas, dan bernilai investasi tinggi.
+                  <strong className="text-white">AFKAR LAND</strong> {tentangParagraf1}
                 </p>
                 <p>
-                  Kami hadir untuk memberikan solusi kepemilikan rumah tanpa riba melalui sistem transaksi syariah yang aman, transparan, dan sesuai prinsip Islam. Menghindari sistem denda dan sita yang memberatkan.
+                  {tentangParagraf2}
                 </p>
               </div>
             </motion.div>
@@ -518,6 +540,7 @@ export default function Home() {
 
       {/* ==========================================
           7. SECTION SISTEM PROPERTY SYARIAH
+          ✅ Daftar pilar dari ManageHomepage → Konten Halaman
       ========================================== */}
       <section className="py-24 bg-[#111] border-y border-white/5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-red-900/10 rounded-full blur-3xl" />
@@ -527,8 +550,9 @@ export default function Home() {
             <p className="text-gray-400 text-sm">Menghindari jebakan finansial demi rumah yang berkah.</p>
           </div>
           
+          {/* ✅ Pilar syariah real-time dari ManageHomepage → Konten Halaman */}
           <div className="flex flex-wrap justify-center gap-4">
-            {['Tanpa Bank', 'Tanpa Bunga', 'Tanpa Denda', 'Tanpa Sita', 'Tanpa BI Checking', 'Tanpa Penalti', 'Tanpa Asuransi'].map((item, i) => (
+            {pilarSyariah.map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="bg-[#080808]/50 backdrop-blur-sm border border-red-500/10 p-6 rounded-2xl text-center hover:bg-red-600/10 transition-colors group flex-1 min-w-[140px] max-w-[180px]"
               >
@@ -542,13 +566,15 @@ export default function Home() {
 
       {/* ==========================================
           8. SECTION TRUST / TESTIMONI
+          ✅ Subjudul dari ManageHomepage → Konten Halaman
       ========================================== */}
       <section className="py-32 bg-[#080808] overflow-hidden">
         <div className="container mx-auto px-6 md:px-12 mb-16 text-center max-w-4xl">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}>
             <h2 className="text-3xl md:text-5xl font-heading font-extrabold mb-6">Dipercaya Ratusan Keluarga Muslim</h2>
+            {/* ✅ Subjudul trust real-time dari ManageHomepage */}
             <p className="text-gray-400 mb-10 leading-relaxed text-sm md:text-base">
-              AfkarLand berkomitmen untuk menghadirkan dan mengembangkan proyek properti syariah di seluruh wilayah sulawesi termasuk Makassar, Gowa, Wotu dan beberapa wilayah lainnya yang akan menjadi wilayah pengembangan property syariah.
+              {trustSubjudul}
             </p>
             
             <div className="flex justify-center mb-10">
@@ -608,7 +634,8 @@ export default function Home() {
       </section>
 
       {/* ==========================================
-          9. CTA PENUTUP — tombol dari admin
+          9. CTA PENUTUP — dari ManageHomepage → Konten Halaman
+          ✅ Judul, subjudul, dan tombol dari admin
       ========================================== */}
       <section className="py-24 border-t border-white/5 bg-[#080808]">
         <div className="container mx-auto px-6 md:px-12">
@@ -616,11 +643,13 @@ export default function Home() {
             className="relative bg-gradient-to-br from-red-800 via-red-600 to-[#1a0000] rounded-3xl p-12 md:p-20 text-center overflow-hidden border border-red-500/30 shadow-2xl shadow-red-900/20"
           >
             <div className="relative z-10">
+              {/* ✅ Judul CTA penutup real-time dari ManageHomepage */}
               <h2 className="text-3xl md:text-5xl font-heading font-extrabold text-white mb-4">
-                Siap Memiliki Hunian Syariah Impian Anda?
+                {ctaPenutupJudul}
               </h2>
+              {/* ✅ Subjudul CTA penutup real-time dari ManageHomepage */}
               <p className="text-red-100 mb-10 max-w-2xl mx-auto text-sm md:text-base">
-                Konsultasikan kebutuhan property Anda bersama tim konsultan profesional AFKAR LAND sekarang juga. Gratis tanpa komitmen!
+                {ctaPenutupSubjudul}
               </p>
               {/* ✅ CTA buttons dari admin */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

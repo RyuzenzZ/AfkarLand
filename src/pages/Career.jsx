@@ -313,7 +313,7 @@ export default function Career() {
                   src={flyerSrc}
                   alt="Flyer Open Recruitment AFKAR GROUP INDONESIA 2026"
                   className="w-full object-cover"
-                  onError={e => { e.target.src = 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80'; }}
+                  onError={e => { e.target.src = '/images/Abdi.jpeg'; }}
                 />
               </div>
 
