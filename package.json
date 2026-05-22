@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run generate:sitemap && npm run optimize:images",
+    "prebuild": "npm run validate:vercel-env && npm run generate:sitemap && npm run optimize:images",
     "build": "vite build",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "optimize:images": "node scripts/optimize-images.mjs",
+    "validate:vercel-env": "node scripts/validate-vercel-env.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
