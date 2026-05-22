@@ -93,8 +93,7 @@ function buildSitemap(siteUrl, routes) {
   const items = routes
     .map(route => `  <url>
     <loc>${siteUrl}${route.path}</loc>
-    <lastmod>${route.lastmod || new Date().toISOString()}</lastmod>
-    <changefreq>${route.changefreq}</changefreq>
+${route.lastmod ? `    <lastmod>${route.lastmod}</lastmod>\n` : ''}    <changefreq>${route.changefreq}</changefreq>
     <priority>${route.priority}</priority>
   </url>`)
     .join('\n');
