@@ -1,426 +1,393 @@
-// FAQ.jsx — Halaman Tanya Jawab AFKAR LAND
-// ─────────────────────────────────────────────────────────────────────────────
-// ✅ Dark theme selaras dengan About.jsx
-// ✅ FAQ dikategorikan, data dari Firestore via useSiteSettings
-// ✅ Fallback: data lengkap terstruktur dari dokumen FAQ resmi
-
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiPlus, FiMinus, FiArrowRight, FiMessageSquare } from 'react-icons/fi';
+import {
+  FiArrowRight,
+  FiCheckCircle,
+  FiMessageCircle,
+  FiMinus,
+  FiPlus,
+  FiSearch,
+} from 'react-icons/fi';
 import { useSiteSettings } from '../hooks/useSiteSettings';
+import { trackCtaClick, trackWhatsappClick } from '../lib/analytics';
 
-// ── Animasi ──────────────────────────────────────────────────────────────────
-const fadeUp = {
-  hidden:  { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
-};
-const stagger = {
-  hidden:  {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-// ── Fallback FAQ Terstruktur (kategori) ───────────────────────────────────────
-const FALLBACK_KATEGORIS = [
+const FAQ_ITEMS = [
   {
-    id: 'tentang',
-    label: 'Tentang Afkar Land',
-    emoji: '🏢',
-    faqs: [
-      {
-        pertanyaan: 'Apa itu Afkar Land?',
-        jawaban: 'Afkar Land adalah developer property berbasis syariah yang menghadirkan hunian dengan konsep transaksi halal, aman, dan nyaman — tanpa riba, tanpa sita, dan tanpa denda.',
-      },
-      {
-        pertanyaan: 'Di mana lokasi project Afkar Land?',
-        jawaban: 'Saat ini project Afkar Land berada di lokasi strategis yang dekat dengan akses utama, fasilitas umum, dan kawasan berkembang di Sulawesi Selatan.',
-      },
-      {
-        pertanyaan: 'Apa keunggulan membeli property di Afkar Land?',
-        jawaban: 'Tanpa riba, tanpa bank, tanpa BI Checking, tanpa sita, tanpa denda keterlambatan, proses lebih mudah, dan lingkungan islami yang nyaman.',
-      },
-      {
-        pertanyaan: 'Apa visi Afkar Land?',
-        jawaban: 'Membangun hunian berkah yang membantu masyarakat memiliki rumah dengan cara yang sesuai prinsip syariah.',
-      },
-    ],
+    question: 'Apa itu property syariah?',
+    answer:
+      'Property syariah adalah sistem kepemilikan properti yang dijalankan berdasarkan prinsip syariat Islam, dengan transaksi yang menghindari riba, gharar, dan akad yang tidak jelas. Umumnya menggunakan akad langsung antara developer dan pembeli tanpa bank konvensional.',
+    source: 'Ausen Property Syariah',
   },
   {
-    id: 'syariah',
-    label: 'Property Syariah',
-    emoji: '☪️',
-    faqs: [
-      {
-        pertanyaan: 'Apa itu property syariah?',
-        jawaban: 'Property syariah adalah sistem jual beli property yang menggunakan prinsip Islam dalam akad dan transaksinya — tanpa bunga, tanpa denda, dan tanpa unsur yang merugikan.',
-      },
-      {
-        pertanyaan: 'Apa bedanya property syariah dan konvensional?',
-        jawaban: 'Property syariah: tanpa bunga, tanpa bank, akad jelas, tanpa denda, tanpa sita. Property konvensional: menggunakan bunga, melibatkan bank, banyak biaya tambahan, ada denda dan risiko sita.',
-      },
-      {
-        pertanyaan: 'Apakah property syariah aman?',
-        jawaban: 'Ya, selama developer memiliki legalitas jelas, akad transparan, dan proses transaksi sesuai aturan. Afkar Land memenuhi semua kriteria tersebut.',
-      },
-      {
-        pertanyaan: 'Kenapa banyak orang memilih property syariah?',
-        jawaban: 'Karena lebih tenang secara finansial dan sesuai prinsip Islam, terutama bagi yang ingin menghindari riba.',
-      },
-    ],
+    question: 'Apa bedanya property syariah dengan KPR konvensional?',
+    answer:
+      'Perbedaan utamanya ada pada sistem transaksi dan akad. Pada property syariah, transaksi dilakukan dengan akad syariah dan biasanya tanpa bunga bank. Sedangkan KPR konvensional menggunakan sistem pinjaman berbunga dari bank.',
+    source: 'Ausen Property Syariah',
   },
   {
-    id: 'pembayaran',
-    label: 'Skema Pembayaran',
-    emoji: '💳',
-    faqs: [
-      {
-        pertanyaan: 'Bagaimana skema pembayaran di Afkar Land?',
-        jawaban: 'Umumnya menggunakan: Booking Fee → DP (Down Payment) → Cicilan langsung ke developer sesuai akad yang disepakati.',
-      },
-      {
-        pertanyaan: 'Apakah ada bunga?',
-        jawaban: 'Tidak ada bunga sama sekali. Seluruh transaksi dilakukan murni antara konsumen dan developer tanpa melibatkan bank.',
-      },
-      {
-        pertanyaan: 'Apakah cicilan tetap?',
-        jawaban: 'Ya, nominal cicilan tetap sampai lunas sesuai akad awal. Tidak ada kenaikan cicilan di tengah jalan.',
-      },
-      {
-        pertanyaan: 'Kalau telat bayar bagaimana?',
-        jawaban: 'Tidak ada denda keterlambatan. Biasanya akan dilakukan komunikasi dan musyawarah terlebih dahulu untuk mencari solusi terbaik.',
-      },
-      {
-        pertanyaan: 'Apakah ada BI Checking?',
-        jawaban: 'Tidak ada BI Checking. Karena tidak menggunakan fasilitas perbankan konvensional, riwayat kredit Anda tidak mempengaruhi persetujuan.',
-      },
-    ],
+    question: 'Apakah AFKAR LAND merupakan developer property syariah?',
+    answer:
+      'Ya, AFKAR LAND merupakan perusahaan pengembang property syariah yang menghadirkan hunian modern dengan konsep Islami, nyaman, dan berorientasi pada nilai keberkahan dalam transaksi maupun lingkungan hunian.',
   },
   {
-    id: 'legalitas',
-    label: 'Legalitas & Keamanan',
-    emoji: '🔒',
-    faqs: [
-      {
-        pertanyaan: 'Apakah legalitas tanah aman?',
-        jawaban: 'Ya, setiap project memiliki legalitas yang jelas (SHM/SHGB) dan dapat dicek langsung oleh calon pembeli.',
-      },
-      {
-        pertanyaan: 'Apakah rumah bisa disita?',
-        jawaban: 'Tidak. Tidak ada sistem sita seperti di perbankan konvensional. Jika ada kendala pembayaran, diselesaikan melalui musyawarah.',
-      },
-      {
-        pertanyaan: 'Bagaimana proses akad?',
-        jawaban: 'Akad dilakukan secara transparan dengan penjelasan detail mengenai harga, tenor, dan kewajiban kedua pihak. Tidak ada biaya tersembunyi.',
-      },
-      {
-        pertanyaan: 'Apakah bisa survei lokasi?',
-        jawaban: 'Tentu bisa. Konsumen dianjurkan survei langsung agar lebih yakin sebelum membeli. Tim kami siap menemani.',
-      },
-    ],
+    question: 'Apa konsep yang diusung AFKAR LAND?',
+    answer:
+      'AFKAR LAND mengusung konsep Modern Islamic Living, yaitu hunian modern yang dipadukan dengan lingkungan nyaman, privasi keluarga, nilai Islami, serta lokasi strategis untuk aktivitas sehari-hari.',
   },
   {
-    id: 'investasi',
-    label: 'Investasi & Umum',
-    emoji: '📈',
-    faqs: [
-      {
-        pertanyaan: 'Apakah cocok untuk investasi?',
-        jawaban: 'Ya, karena property cenderung naik setiap tahun dan kebutuhan hunian terus meningkat, terutama di wilayah Sulawesi yang sedang berkembang pesat.',
-      },
-      {
-        pertanyaan: 'Siapa saja yang cocok membeli property syariah?',
-        jawaban: 'Cocok untuk karyawan, pengusaha, freelancer, pasangan muda, investor, maupun orang tua yang ingin rumah halal untuk keluarga.',
-      },
-      {
-        pertanyaan: 'Apakah bisa untuk rumah pertama?',
-        jawaban: 'Sangat cocok, terutama bagi yang ingin memulai memiliki rumah tanpa sistem riba.',
-      },
-    ],
+    question: 'Apakah membeli rumah di AFKAR LAND harus melalui bank?',
+    answer:
+      'Tidak harus. Konsep property syariah umumnya memungkinkan transaksi langsung antara pembeli dan developer tanpa melibatkan bank konvensional.',
+    source: 'Ausen Property Syariah',
   },
   {
-    id: 'booking',
-    label: 'Promo & Booking',
-    emoji: '🎁',
-    faqs: [
-      {
-        pertanyaan: 'Apakah bisa booking dulu?',
-        jawaban: 'Bisa. Biasanya cukup dengan booking fee untuk mengamankan unit. Hubungi tim marketing kami untuk informasi lebih lanjut.',
-      },
-      {
-        pertanyaan: 'Apakah ada promo?',
-        jawaban: 'Promo mengikuti periode tertentu seperti diskon DP, free biaya tertentu, bonus furniture, atau cashback. Pantau terus info resmi kami.',
-      },
-      {
-        pertanyaan: 'Bagaimana cara konsultasi?',
-        jawaban: 'Bisa langsung menghubungi tim marketing resmi Afkar Land untuk konsultasi, survei lokasi, dan simulasi pembayaran via WhatsApp.',
-      },
-      {
-        pertanyaan: 'Kenapa harus beli sekarang?',
-        jawaban: 'Karena harga property cenderung naik terus sementara lahan semakin terbatas. Semakin cepat, semakin baik harganya.',
-      },
+    question: 'Apakah cicilan di property syariah berubah-ubah?',
+    answer:
+      'Biasanya tidak. Dalam banyak skema property syariah, nominal cicilan disepakati di awal akad sehingga lebih jelas dan transparan bagi pembeli.',
+  },
+  {
+    question: 'Apa kelebihan membeli rumah di developer property syariah?',
+    answer: 'Beberapa kelebihan yang biasanya dicari pembeli rumah syariah antara lain:',
+    points: [
+      'Transaksi lebih transparan',
+      'Menghindari riba',
+      'Akad lebih jelas',
+      'Skema pembayaran lebih tenang',
+      'Lingkungan hunian cenderung lebih Islami dan nyaman',
     ],
+    source: 'Rumah Halal Indonesia',
+  },
+  {
+    question: 'Apakah property syariah aman?',
+    answer:
+      'Aman selama memilih developer yang memiliki legalitas jelas, track record yang baik, dan akad yang transparan. Konsumen tetap perlu memeriksa legalitas proyek dan reputasi developer sebelum membeli.',
+    source: 'Royal Orchid Syariah',
+  },
+  {
+    question: 'Legalitas apa saja yang perlu dicek sebelum membeli rumah?',
+    answer: 'Beberapa legalitas penting yang perlu diperhatikan sebelum membeli rumah adalah:',
+    points: [
+      'Sertifikat tanah',
+      'PBG atau izin bangunan',
+      'Status lahan',
+      'Akad jual beli',
+      'Reputasi developer',
+    ],
+    source: 'Rumah Halal Indonesia',
+  },
+  {
+    question: 'Apakah property syariah cocok untuk investasi?',
+    answer:
+      'Ya. Property syariah banyak diminati karena kebutuhan hunian terus meningkat dan konsep hunian Islami semakin berkembang di Indonesia.',
+    source: 'Royal Orchid Syariah',
+  },
+  {
+    question: 'Siapa target hunian AFKAR LAND?',
+    answer:
+      'AFKAR LAND menghadirkan hunian untuk keluarga modern yang menginginkan rumah nyaman, strategis, bernilai investasi, dan tetap sesuai prinsip syariah.',
+  },
+  {
+    question: 'Apakah AFKAR LAND hanya fokus pada jual rumah?',
+    answer:
+      'Tidak. Selain membangun hunian, AFKAR LAND juga berfokus membangun kawasan dengan konsep lingkungan yang nyaman, tertata, dan memiliki value jangka panjang.',
+  },
+  {
+    question: 'Mengapa banyak orang mulai memilih property syariah?',
+    answer:
+      'Karena masyarakat mulai mencari sistem kepemilikan rumah yang lebih transparan, nyaman, dan sesuai prinsip Islam, terutama terkait transaksi tanpa riba.',
+    source: 'Royal Orchid Syariah',
+  },
+  {
+    question: 'Apa yang membuat AFKAR LAND berbeda?',
+    answer:
+      'AFKAR LAND berfokus pada pengembangan hunian modern Islami dengan konsep eksklusif, lokasi strategis, desain nyaman, dan pendekatan yang lebih dekat dengan kebutuhan keluarga masa kini.',
+  },
+  {
+    question: 'Bagaimana cara mendapatkan informasi project terbaru AFKAR LAND?',
+    answer:
+      'Anda bisa mengikuti media sosial resmi atau menghubungi tim marketing AFKAR LAND untuk mendapatkan update project terbaru, promo, progress pembangunan, dan informasi launching kawasan terbaru.',
   },
 ];
 
-// ── Helper: kelompokkan flat FAQ dari Firestore ke kategori ──────────────────
-// Kalau data Firestore punya field `kategori`, dikelompokkan otomatis.
-// Kalau tidak, semua masuk satu kelompok "Pertanyaan Umum".
-function groupFaqs(faqs) {
-  const hasKategori = faqs.some(f => f.kategori);
-  if (!hasKategori) {
-    return [{ id: 'umum', label: 'Pertanyaan Umum', emoji: '💬', faqs }];
-  }
-  const map = {};
-  faqs.forEach(f => {
-    const k = f.kategori || 'Lainnya';
-    if (!map[k]) map[k] = { id: k.toLowerCase().replace(/\s+/g, '-'), label: k, emoji: '💬', faqs: [] };
-    map[k].faqs.push(f);
-  });
-  return Object.values(map);
+const SOURCES = [
+  {
+    label: 'Ausen Property Syariah',
+    url: 'https://ausenproperty.com/faq-frequently-asked-questions/',
+  },
+  {
+    label: 'Rumah Halal Indonesia',
+    url: 'https://rumahhalal.co.id/',
+  },
+  {
+    label: 'Royal Orchid Syariah',
+    url: 'https://royalorchidsyariah.com/property-syariah/',
+  },
+  {
+    label: 'Diskusi publik pembiayaan syariah',
+    url: 'https://www.reddit.com/r/finansial/comments/13570j0',
+  },
+];
+
+function normalize(text) {
+  return String(text || '').toLowerCase();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+function AnswerContent({ faq }) {
+  return (
+    <div className="space-y-4 text-sm leading-7 text-white/70 md:text-[15px]">
+      <p>{faq.answer}</p>
+      {faq.points?.length ? (
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {faq.points.map((point) => (
+            <li
+              key={point}
+              className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.035] px-4 py-3"
+            >
+              <FiCheckCircle className="mt-1 h-4 w-4 flex-none text-red-400" />
+              <span>{point}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {faq.source ? (
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">
+          Referensi: {faq.source}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export default function FAQ() {
-  const { settings, loading } = useSiteSettings();
+  const { settings } = useSiteSettings();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [query, setQuery] = useState('');
 
-  const pageHero    = settings.pages?.faq || {};
-  const firestoreFaq = settings.faq && settings.faq.length > 0 ? settings.faq : null;
-  const kategoris   = firestoreFaq ? groupFaqs(firestoreFaq) : FALLBACK_KATEGORIS;
+  const page = settings?.pages?.faq || {};
+  const waNumber = settings?.contact?.waNumber || '6285705218281';
+  const whatsappUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
+    'Assalamualaikum, saya ingin konsultasi tentang project AFKAR LAND.'
+  )}`;
 
-  const [activeKategori, setActiveKategori] = useState(kategoris[0]?.id || 'tentang');
-  const [activeIndex,    setActiveIndex]    = useState(null);
+  const filteredFaqs = useMemo(() => {
+    const keyword = normalize(query).trim();
+    if (!keyword) return FAQ_ITEMS;
+    return FAQ_ITEMS.filter((faq) => {
+      const haystack = normalize(`${faq.question} ${faq.answer} ${(faq.points || []).join(' ')}`);
+      return haystack.includes(keyword);
+    });
+  }, [query]);
 
-  const currentFaqs = kategoris.find(k => k.id === activeKategori)?.faqs || [];
-
-  const handleKategori = (id) => {
-    setActiveKategori(id);
-    setActiveIndex(null);
-  };
-
-  const waNumber = settings.contact?.waNumber || '6285705218281';
+  const selectedIndex = Math.min(activeIndex, Math.max(filteredFaqs.length - 1, 0));
 
   return (
-    <div className="w-full bg-[#080808] font-body text-white overflow-hidden">
-
-      {/* ══════════════════════════════════════════
-          HERO
-      ══════════════════════════════════════════ */}
-      <section className="relative pt-36 pb-24 overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-900/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-red-900/5 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Hero image overlay */}
-        {pageHero.heroImage && (
-          <>
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${pageHero.heroImage})` }}
-            />
-            <div className="absolute inset-0 bg-[#080808]/80" />
-          </>
-        )}
-
-        <div className="container mx-auto px-6 md:px-12 text-center relative z-10">
-          <motion.div initial="hidden" animate="visible" variants={stagger}>
-
-            <motion.div variants={fadeUp} className="mb-6">
-              <span className="inline-block px-4 py-1.5 rounded-full border border-red-500/30 bg-red-500/10 text-red-500 font-bold tracking-widest text-xs uppercase">
-                Pusat Informasi
-              </span>
-            </motion.div>
-
-            <motion.h1
-              variants={fadeUp}
-              className="text-4xl md:text-6xl lg:text-7xl font-heading font-extrabold mb-6 leading-tight tracking-tight"
-            >
-              {pageHero.heroTitle ? (
-                pageHero.heroTitle
+    <div className="w-full overflow-hidden bg-[#080808] font-body text-white">
+      <section className="relative isolate min-h-[72vh] overflow-hidden bg-gradient-to-br from-[#080808] via-[#171112] to-[#330707] pt-32">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(216,13,13,0.28),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%)]" />
+        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-4 pb-20 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+            className="max-w-4xl"
+          >
+            <span className="inline-flex items-center rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.24em] text-red-200">
+              FAQ AFKAR LAND
+            </span>
+            <h1 className="mt-7 text-4xl font-black leading-tight tracking-tight text-white md:text-6xl">
+              {page.heroTitle && page.heroTitle !== 'FAQ' ? (
+                page.heroTitle
               ) : (
-                <>Tanya <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-red-300">Jawab</span></>
+                <>
+                  15 FAQ Tentang Property Syariah &{' '}
+                  <span className="bg-gradient-to-r from-white via-red-100 to-red-500 bg-clip-text text-transparent">
+                    AFKAR LAND
+                  </span>
+                </>
               )}
-            </motion.h1>
+            </h1>
+            <p className="mt-6 max-w-3xl text-base leading-8 text-white/72 md:text-lg">
+              {page.heroSubtitle ||
+                'Temukan jawaban ringkas tentang konsep property syariah, transaksi tanpa riba, legalitas, investasi, dan cara mendapatkan informasi project terbaru AFKAR LAND.'}
+            </p>
+          </motion.div>
 
-            <motion.p
-              variants={fadeUp}
-              className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto font-light leading-relaxed"
-            >
-              {pageHero.heroSubtitle || 'Temukan jawaban atas pertanyaan yang paling sering diajukan mengenai properti syariah kami.'}
-            </motion.p>
-
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.12, ease: 'easeOut' }}
+            className="max-w-3xl rounded-2xl border border-white/10 bg-white/[0.055] p-3 shadow-2xl shadow-black/25 backdrop-blur-xl"
+          >
+            <label className="flex items-center gap-3 rounded-xl bg-black/30 px-4 py-3">
+              <FiSearch className="h-5 w-5 text-red-300" />
+              <input
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setActiveIndex(0);
+                }}
+                type="search"
+                placeholder="Cari pertanyaan tentang akad, cicilan, legalitas, atau project"
+                className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white placeholder:text-white/45 outline-none"
+              />
+            </label>
           </motion.div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════
-          FAQ — KATEGORI + ACCORDION
-      ══════════════════════════════════════════ */}
-      <section className="py-8 pb-28">
-        <div className="container mx-auto px-6 md:px-12">
-          <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto">
-
-            {/* ── Sidebar Kategori ─────────────────────────────────────────── */}
-            <aside className="lg:w-64 shrink-0">
-              {loading ? (
-                <div className="space-y-2">
-                  {[1,2,3,4,5,6].map(i => (
-                    <div key={i} className="h-12 bg-white/5 rounded-xl animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <motion.div
-                  initial="hidden" animate="visible" variants={stagger}
-                  className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0"
-                >
-                  {kategoris.map((kat) => (
-                    <motion.button
-                      key={kat.id}
-                      variants={fadeUp}
-                      onClick={() => handleKategori(kat.id)}
-                      className={`shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200 w-full
-                        ${activeKategori === kat.id
-                          ? 'bg-red-600 text-white shadow-lg shadow-red-900/30'
-                          : 'bg-white/4 border border-white/6 text-gray-400 hover:bg-white/8 hover:text-white'
-                        }`}
-                    >
-                      <span className="text-lg shrink-0">{kat.emoji}</span>
-                      <span className="font-bold text-sm leading-tight">{kat.label}</span>
-                      <span className={`ml-auto text-xs font-extrabold shrink-0 ${activeKategori === kat.id ? 'text-white/70' : 'text-white/25'}`}>
-                        {kat.faqs.length}
-                      </span>
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
-            </aside>
-
-            {/* ── Accordion FAQ ─────────────────────────────────────────────── */}
-            <div className="flex-1 min-w-0">
-              {loading ? (
-                <div className="space-y-3">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className="h-16 bg-white/5 rounded-2xl animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeKategori}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-3"
+      <section className="relative bg-[#080808] py-16 md:py-24">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[300px_1fr] lg:px-8">
+          <aside className="hidden lg:block">
+            <div className="sticky top-28 rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+              <p className="mb-4 px-2 text-xs font-bold uppercase tracking-[0.24em] text-red-300">
+                Daftar FAQ
+              </p>
+              <div className="space-y-2">
+                {filteredFaqs.map((faq, index) => (
+                  <button
+                    key={faq.question}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                    className={`w-full rounded-xl px-3 py-3 text-left text-sm font-semibold transition ${
+                      selectedIndex === index
+                        ? 'bg-red-700 text-white shadow-lg shadow-red-950/25'
+                        : 'text-white/60 hover:bg-white/8 hover:text-white'
+                    }`}
                   >
-                    {/* Heading kategori aktif */}
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="text-2xl">
-                        {kategoris.find(k => k.id === activeKategori)?.emoji}
-                      </span>
-                      <h2 className="text-xl font-heading font-extrabold text-white">
-                        {kategoris.find(k => k.id === activeKategori)?.label}
-                      </h2>
-                      <div className="flex-1 h-px bg-white/6" />
-                    </div>
-
-                    {currentFaqs.map((faq, index) => (
-                      <div
-                        key={index}
-                        className={`rounded-2xl overflow-hidden border transition-all duration-300
-                          ${activeIndex === index
-                            ? 'border-red-500/30 bg-[#1a0a0a]'
-                            : 'border-white/6 bg-[#111] hover:border-white/12'
-                          }`}
-                      >
-                        <button
-                          onClick={() => setActiveIndex(activeIndex === index ? null : index)}
-                          className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none"
-                        >
-                          <span className={`font-bold text-base leading-snug pr-4 ${activeIndex === index ? 'text-white' : 'text-white/75'}`}>
-                            {faq.pertanyaan || faq.q}
-                          </span>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all shrink-0
-                            ${activeIndex === index
-                              ? 'bg-red-600 text-white'
-                              : 'bg-white/5 border border-white/10 text-gray-400'
-                            }`}>
-                            {activeIndex === index ? <FiMinus size={14}/> : <FiPlus size={14}/>}
-                          </div>
-                        </button>
-
-                        <AnimatePresence>
-                          {activeIndex === index && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.25 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="px-6 pb-6 pt-1 text-gray-400 leading-relaxed text-sm border-t border-white/5">
-                                {faq.jawaban || faq.a}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    ))}
-                  </motion.div>
-                </AnimatePresence>
-              )}
+                    <span className="mr-2 text-xs opacity-70">{String(index + 1).padStart(2, '0')}</span>
+                    {faq.question}
+                  </button>
+                ))}
+              </div>
             </div>
+          </aside>
 
+          <div className="space-y-4">
+            {filteredFaqs.length ? (
+              filteredFaqs.map((faq, index) => {
+                const isOpen = selectedIndex === index;
+                return (
+                  <motion.article
+                    key={faq.question}
+                    initial={{ opacity: 0, y: 18 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.18 }}
+                    transition={{ duration: 0.45, ease: 'easeOut' }}
+                    className={`overflow-hidden rounded-2xl border transition ${
+                      isOpen
+                        ? 'border-red-500/35 bg-[#151010] shadow-2xl shadow-red-950/20'
+                        : 'border-white/10 bg-white/[0.035] hover:border-red-300/25'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setActiveIndex(index)}
+                      className="flex w-full items-start justify-between gap-5 px-5 py-5 text-left md:px-7"
+                      aria-expanded={isOpen}
+                    >
+                      <span className="flex gap-4">
+                        <span className="mt-1 inline-flex h-8 w-8 flex-none items-center justify-center rounded-full bg-red-700 text-xs font-black text-white">
+                          {index + 1}
+                        </span>
+                        <span className="text-lg font-extrabold leading-7 text-white md:text-xl">
+                          {faq.question}
+                        </span>
+                      </span>
+                      <span className="mt-1 inline-flex h-9 w-9 flex-none items-center justify-center rounded-full border border-white/10 bg-white/5 text-white">
+                        {isOpen ? <FiMinus /> : <FiPlus />}
+                      </span>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isOpen ? (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.32, ease: 'easeOut' }}
+                        >
+                          <div className="border-t border-white/10 px-5 py-5 md:px-7">
+                            <AnswerContent faq={faq} />
+                          </div>
+                        </motion.div>
+                      ) : null}
+                    </AnimatePresence>
+                  </motion.article>
+                );
+              })
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-8 text-center">
+                <p className="text-lg font-bold text-white">FAQ tidak ditemukan.</p>
+                <p className="mt-2 text-sm text-white/60">
+                  Coba gunakan kata kunci lain atau hubungi tim AFKAR LAND untuk konsultasi langsung.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════
-          CTA — MASIH ADA PERTANYAAN?
-      ══════════════════════════════════════════ */}
-      <section className="py-24 border-t border-white/5 bg-[#080808]">
-        <div className="container mx-auto px-6 md:px-12">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="relative bg-gradient-to-br from-red-900 via-red-800 to-[#0A0A0A] rounded-3xl p-12 md:p-20 text-center overflow-hidden border border-red-500/30 shadow-2xl shadow-red-900/20"
-          >
-            {/* Tekstur grid */}
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{
-                backgroundImage: 'linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)',
-                backgroundSize: '40px 40px',
-              }}
-            />
-            <div className="relative z-10">
-              <FiMessageSquare className="text-red-300/40 w-12 h-12 mx-auto mb-6" />
-              <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-white mb-4">
-                Masih Ada Pertanyaan?
-              </h2>
-              <p className="text-red-100/80 mb-10 max-w-xl mx-auto font-light leading-relaxed">
-                Tim konsultan kami siap membantu Anda — mulai dari simulasi pembayaran, survei lokasi, hingga proses akad.
+      <section className="bg-[#0f0f0f] py-16">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
+          <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#7f1111] via-[#4b1010] to-[#141414] p-7 shadow-2xl shadow-red-950/25 md:p-10">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-red-100">
+                Konsultasi Project
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <h2 className="mt-4 text-3xl font-black leading-tight text-white md:text-4xl">
+                Masih punya pertanyaan tentang hunian syariah AFKAR LAND?
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-white/75 md:text-base">
+                Tim marketing dapat membantu menjelaskan ketersediaan unit, skema pembayaran, progress
+                pembangunan, dan jadwal survey lokasi.
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <a
-                  href={`https://wa.me/${waNumber}?text=${encodeURIComponent('Assalamu\'alaikum 👋\n\nSaya ingin bertanya lebih lanjut mengenai property syariah Afkar Land.\n\nMohon bantuannya, terima kasih 🙏')}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-red-700 px-8 py-4 rounded-xl font-bold hover:bg-gray-100 transition-all hover:-translate-y-1 shadow-xl shadow-black/20"
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackWhatsappClick('faq_consultation')}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-red-800 transition hover:bg-red-50"
                 >
-                  Hubungi via WhatsApp <FiArrowRight size={18} />
+                  <FiMessageCircle />
+                  Konsultasi via WhatsApp
                 </a>
                 <Link
-                  to="/kontak"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent border border-white/30 text-white px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-all"
+                  to="/proyek"
+                  onClick={() => trackCtaClick('faq_view_projects')}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 px-5 py-3 text-sm font-black text-white transition hover:bg-white/10"
                 >
-                  Ke Halaman Kontak
+                  Lihat Project
+                  <FiArrowRight />
                 </Link>
               </div>
             </div>
-          </motion.div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-6">
+            <h2 className="text-lg font-black text-white">Sumber Referensi</h2>
+            <p className="mt-2 text-sm leading-6 text-white/60">
+              Beberapa jawaban umum diringkas dari referensi publik dan disesuaikan dengan konteks
+              AFKAR LAND.
+            </p>
+            <div className="mt-5 space-y-3">
+              {SOURCES.map((source) => (
+                <a
+                  key={source.url}
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm font-bold text-white/75 transition hover:border-red-300/35 hover:text-white"
+                >
+                  {source.label}
+                  <FiArrowRight className="h-4 w-4 flex-none" />
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
-
     </div>
   );
 }
