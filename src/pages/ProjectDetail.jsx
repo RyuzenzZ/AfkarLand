@@ -11,6 +11,8 @@ import toast from 'react-hot-toast';
 import { createLead } from '../services/firestoreService';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import OptimizedImage from '../components/ui/OptimizedImage';
+import { trackEvent, trackLeadSubmit, trackWhatsappClick } from '../lib/analytics';
 
 // ─────────────────────────────────────────────────────────────
 // CANVAS 1 — DATA LAYER LENGKAP
@@ -110,6 +112,7 @@ const progressDefault = [
 
 
 function triggerDownload(url, fileName, name) {
+  trackEvent('download_brochure', { category: 'project', label: name, file_name: fileName });
   const link = document.createElement('a');
   link.href = url;
   link.download = fileName;
@@ -373,9 +376,11 @@ function GallerySection({ images, projectName }) {
               style={{ width: 'clamp(56px, 10vw, 80px)', height: 'clamp(40px, 7vw, 56px)' }}
               aria-label={`Lihat foto ${i + 1}`}
             >
-              <img
+              <OptimizedImage
                 src={img}
                 alt=""
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             </button>
@@ -448,7 +453,10 @@ function MarketingCard({ mk, isSelected, onSelect, projectName }) {
             className="w-full space-y-2 overflow-hidden"
           >
             <a href={`https://wa.me/${mk.wa}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
+              onClick={e => {
+                e.stopPropagation();
+                trackWhatsappClick('project_marketing_card', { project_name: projectName, marketing_name: mk.name });
+              }}
               className="flex items-center justify-center gap-1.5 w-full py-2.5 bg-brand-primary hover:bg-[#C9A84C] text-white hover:text-black font-bold text-xs rounded-xl transition-all duration-300"
             >
               <FiMessageCircle size={12} /> Hubungi WhatsApp
@@ -530,6 +538,7 @@ function StickyFloatingCTA({ project, selectedMk }) {
         >
           {/* WA */}
           <a href={`https://wa.me/${targetMk.wa}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
+            onClick={() => trackWhatsappClick('project_sticky_cta', { project_name: project.name, marketing_name: targetMk.name })}
             className="flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-lg shadow-green-900/30 transition-all duration-300 hover:-translate-y-0.5 group"
           >
             <FiMessageCircle size={14} />
@@ -653,6 +662,10 @@ export default function ProjectDetail() {
         marketingDipilih: targetMk?.name || 'Tidak dipilih',
         sumber: 'Halaman Detail Proyek v2',
       });
+      trackLeadSubmit('project_consultation_form', {
+        project_name: proj.name,
+        marketing_name: targetMk?.name || 'Tidak dipilih',
+      });
       toast.success('✅ Konsultasi terkirim! Menghubungkan ke WhatsApp marketing...');
       // SMART ROUTING: Redirect ke WA marketing yang dipilih
       const msg = encodeURIComponent(
@@ -680,7 +693,16 @@ export default function ProjectDetail() {
 
       {/* ══ HERO: Cinematic Banner ══ */}
       <section className="relative h-[65vh] min-h-[480px]">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${proj.image}')` }}>
+        <div className="absolute inset-0">
+          <OptimizedImage
+            src={proj.image}
+            alt={proj.name}
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+            sizes="100vw"
+            className="h-full w-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-black/40 to-black/20" />
         </div>
         <div className="absolute inset-0 flex flex-col justify-end">

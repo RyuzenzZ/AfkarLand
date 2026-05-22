@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  collection, onSnapshot, query, orderBy
+  collection, onSnapshot, query, orderBy, where, Timestamp
 } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import {
@@ -39,16 +39,25 @@ const groupByMonth = (docs, months) => {
   return months.map(m => ({ bulan: m, jumlah: counts[m] }));
 };
 
-// Bantu: 6 label bulan terakhir
-const getLast6Months = () => {
+// Bantu: label bulan terakhir berdasarkan periode
+const getLastMonths = (count = 6) => {
   const result = [];
   const now = new Date();
-  for (let i = 5; i >= 0; i--) {
+  for (let i = count - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     result.push(`${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`);
   }
   return result;
 };
+
+const getStartDate = (period) => {
+  const now = new Date();
+  if (period === '12bulan') return new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  if (period === '30hari') return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+  return new Date(now.getFullYear(), now.getMonth() - 5, 1);
+};
+
+const getMonthCount = (period) => (period === '12bulan' ? 12 : 6);
 
 const StatCard = ({ label, value, icon, color, change }) => (
   <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
@@ -78,27 +87,33 @@ const ChartCard = ({ title, children, action }) => (
 );
 
 export default function ManageAnalytics() {
-  const [data, setData]     = useState({ leads: [], messages: [], applications: [], articles: [], bookings: [] });
+  const [data, setData]     = useState({ leads: [], messages: [], applications: [], articles: [], bookings: [], web_vitals: [] });
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('6bulan');
 
-  const months6 = getLast6Months();
+  const months = getLastMonths(getMonthCount(period));
 
   useEffect(() => {
     let loaded = 0;
-    const total = 5;
+    const total = 6;
     const check = () => { loaded++; if (loaded >= total) setLoading(false); };
 
-    const colls = ['leads','messages','applications','articles','bookings'];
+    setLoading(true);
+    const startDate = Timestamp.fromDate(getStartDate(period));
+    const colls = ['leads','messages','applications','articles','bookings','web_vitals'];
     const unsubs = colls.map(col => {
-      const q = query(collection(db, col), orderBy('createdAt', 'desc'));
+      const q = query(
+        collection(db, col),
+        where('createdAt', '>=', startDate),
+        orderBy('createdAt', 'desc')
+      );
       return onSnapshot(q,
         snap => { setData(d => ({ ...d, [col]: snap.docs.map(x => ({ id: x.id, ...x.data() })) })); check(); },
         ()   => check()
       );
     });
     return () => unsubs.forEach(u => u());
-  }, []);
+  }, [period]);
 
   // Hitung persentase perubahan bulan ini vs bulan lalu
   const calcChange = (docs) => {
@@ -110,7 +125,7 @@ export default function ManageAnalytics() {
   };
 
   // Data chart gabungan per bulan
-  const combinedChart = months6.map(m => ({
+  const combinedChart = months.map(m => ({
     bulan: m,
     Leads:    0,
     Pesan:    0,
@@ -136,12 +151,29 @@ export default function ManageAnalytics() {
   ].filter(p => p.value > 0);
 
   // Artikel per bulan
-  const artikelChart = groupByMonth(data.articles, months6);
+  const artikelChart = groupByMonth(data.articles, months);
 
   // Top proyek dari leads
   const proyekCount = {};
   data.leads.forEach(l => { if (l.proyek) proyekCount[l.proyek] = (proyekCount[l.proyek] || 0) + 1; });
   const proyekChart = Object.entries(proyekCount).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value).slice(0, 5);
+
+  const latestVitals = ['LCP', 'INP', 'CLS'].map((name) => {
+    const latest = data.web_vitals
+      .filter(metric => metric.name === name)
+      .sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.toMillis?.() || b.createdAt?.seconds || 0;
+        return bTime - aTime;
+      })[0];
+    const suffix = name === 'CLS' ? '' : ' ms';
+    return {
+      name,
+      value: latest ? `${latest.value}${suffix}` : '-',
+      rating: latest?.rating || 'waiting',
+      pagePath: latest?.pagePath || 'Belum ada data',
+    };
+  });
 
   const STAT_CARDS = [
     { label: 'Total Leads',      value: data.leads.length,        icon: <FiUsers size={18}/>,         color: 'bg-blue-50 text-blue-600',    change: calcChange(data.leads) },
@@ -170,15 +202,58 @@ export default function ManageAnalytics() {
           <h1 className="text-3xl font-heading font-bold text-gray-900">Analytics</h1>
           <p className="text-gray-500 mt-1 text-sm">Pantau performa website & aktivitas AFKAR LAND secara menyeluruh.</p>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-gray-400">Data diperbarui</div>
-          <div className="text-xs font-bold text-gray-700">{new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' })}</div>
+        <div className="flex items-center gap-3">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 outline-none transition-colors focus:border-red-300"
+          >
+            <option value="30hari">30 hari terakhir</option>
+            <option value="6bulan">6 bulan terakhir</option>
+            <option value="12bulan">12 bulan terakhir</option>
+          </select>
+          <div className="hidden text-right sm:block">
+            <div className="text-xs text-gray-400">Data diperbarui</div>
+            <div className="text-xs font-bold text-gray-700">{new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' })}</div>
+          </div>
         </div>
       </div>
 
       {/* STAT CARDS */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         {STAT_CARDS.map((s, i) => <StatCard key={i} {...s}/>)}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="font-heading font-bold text-gray-800 text-sm">Core Web Vitals Website</h3>
+            <p className="text-xs text-gray-400 mt-1">LCP, INP, dan CLS dikirim dari halaman publik ke koleksi web_vitals.</p>
+          </div>
+          <span className="text-xs font-bold text-gray-400">{data.web_vitals.length} sampel</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {latestVitals.map(metric => (
+            <div key={metric.name} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-black text-gray-500">{metric.name}</span>
+                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                  metric.rating === 'good'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : metric.rating === 'needs-improvement'
+                      ? 'bg-amber-100 text-amber-700'
+                      : metric.rating === 'poor'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {metric.rating}
+                </span>
+              </div>
+              <div className="text-2xl font-black text-gray-900">{metric.value}</div>
+              <div className="mt-1 truncate text-xs text-gray-400">{metric.pagePath}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* CHART ROW 1 */}

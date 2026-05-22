@@ -1,55 +1,81 @@
-// LOGIKA: Layout wrapper semua halaman admin AFKAR LAND
-// Desain: background konten PUTIH CLEAN, sidebar hitam terpisah
-// Built with Webapp GASP Builder Era v2.0 Masterpiece Edition by @damarmahendra
-
-import React, { useState } from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, Outlet } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FiArrowRight, FiBell, FiLock, FiMenu } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
-import { FiMenu, FiBell } from 'react-icons/fi';
 
 export default function AdminLayout() {
   const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const sessionToastShown = useRef(false);
 
-  // LOGIKA: Loading state
+  useEffect(() => {
+    if (!loading && !user && !sessionToastShown.current) {
+      sessionToastShown.current = true;
+      toast.error('Sesi admin tidak aktif. Silakan login kembali.', { duration: 3000 });
+    }
+  }, [loading, user]);
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm font-medium tracking-widest uppercase">Memuat sistem...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <div className="relative flex h-14 w-14 items-center justify-center">
+            <div className="absolute inset-0 rounded-full border border-red-100" />
+            <div className="h-10 w-10 rounded-full border-4 border-red-600 border-t-transparent animate-spin" />
+          </div>
+          <p className="text-xs font-bold tracking-[0.28em] text-gray-400 uppercase">Memuat sistem admin</p>
+        </motion.div>
       </div>
     );
   }
 
-  // LOGIKA: Guard — tidak ada sesi aktif
   if (!user) {
     return (
-      <div className="min-h-screen bg-red-50 flex items-center justify-center p-6">
-        <div className="max-w-md bg-white p-10 rounded-3xl shadow-xl border-2 border-red-500 text-center">
-          <div className="text-5xl mb-4">🔐</div>
-          <h1 className="text-2xl font-black text-red-600 mb-3">Sesi Habis</h1>
-          <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-            Sesi login Anda tidak ditemukan. Silakan login kembali untuk mengakses panel admin AFKAR LAND.
+      <div className="relative min-h-screen overflow-hidden bg-[#0b0b0c] flex items-center justify-center p-6 text-white">
+        <div
+          className="absolute inset-0 opacity-[0.055]"
+          style={{
+            backgroundImage:
+              'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
+            backgroundSize: '58px 58px',
+          }}
+        />
+        <div className="absolute left-1/2 top-1/2 h-[30rem] w-[30rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-600/12 blur-3xl" />
+
+        <motion.div
+          initial={{ opacity: 0, y: 18, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="relative z-10 w-full max-w-md rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center shadow-2xl shadow-black/40 backdrop-blur-xl"
+        >
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-600 shadow-lg shadow-red-950/40">
+            <FiLock size={28} />
+          </div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.28em] text-red-300">Session Expired</p>
+          <h1 className="text-2xl font-black tracking-tight">Sesi Admin Tidak Aktif</h1>
+          <p className="mt-3 text-sm leading-relaxed text-white/55">
+            Untuk menjaga keamanan panel, silakan login kembali sebelum mengakses dashboard admin AFKAR LAND.
           </p>
           <Link
             to="/admin/login"
-            className="inline-block bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-xl transition-colors"
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-red-950/35 transition-all hover:bg-red-500"
           >
-            Login Kembali
+            Login Kembali <FiArrowRight size={16} />
           </Link>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    // LOGIKA: Background utama PUTIH — sidebar hitam di kiri, konten putih di kanan
     <div className="flex min-h-screen bg-gray-50 font-body">
-
-      {/* Overlay gelap saat sidebar mobile terbuka */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-30 md:hidden"
@@ -57,22 +83,19 @@ export default function AdminLayout() {
         />
       )}
 
-      {/* Sidebar — fixed kiri, lebar 256px */}
       <div className={`fixed top-0 left-0 h-full z-40 transform transition-transform duration-300
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+      >
         <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
 
-      {/* Area konten utama — putih, geser kanan sejauh sidebar */}
       <main className="flex-1 md:ml-64 min-h-screen overflow-y-auto bg-gray-50">
-
-        {/* ── TOPBAR MOBILE — putih bersih ── */}
-        <div className="md:hidden flex items-center justify-between gap-4 px-5 py-4
-                        bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+        <div className="md:hidden flex items-center justify-between gap-4 px-5 py-4 bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
               className="p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+              aria-label="Buka menu admin"
             >
               <FiMenu size={20} />
             </button>
@@ -80,18 +103,24 @@ export default function AdminLayout() {
               AFKAR <span className="text-red-600">LAND</span>
             </span>
           </div>
-          {/* Bell notifikasi mobile */}
-          <button className="relative p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+          <Link
+            to="/admin/notifications"
+            className="relative p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+            aria-label="Notifikasi"
+          >
             <FiBell size={18} />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          </button>
+          </Link>
         </div>
 
-        {/* ── KONTEN HALAMAN ── */}
-        <div className="p-6 md:p-10">
+        <motion.div
+          className="p-6 md:p-10"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+        >
           <Outlet />
-        </div>
-
+        </motion.div>
       </main>
     </div>
   );

@@ -1,12 +1,274 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-primary: #DC2626; /* Merah Premium */
-  --color-brand-secondary: #000000;
-  --color-brand-accent: #B91C1C; 
+  --color-brand-primary: #D80D0D; /* Merah utama AFKAR */
+  --color-brand-secondary: #090909;
+  --color-brand-accent: #FFFFFF;
+  --color-brand-gold: #FFFFFF;
+  --color-brand-gold-light: #FFFFFF;
   --color-brand-surface: #FFFFFF;
   --color-brand-text: #1A1A1A;
   /* Menggunakan Montserrat untuk Judul, dan Inter untuk Teks Paragraf */
   --font-heading: "Montserrat", sans-serif;
   --font-body: "Inter", sans-serif;
+}
+
+:root {
+  --afkar-red: #D80D0D;
+  --afkar-red-dark: #A90000;
+  --afkar-white: #FFFFFF;
+  --afkar-soft-red: #FEE2E2;
+  --afkar-black: #090909;
+  --afkar-charcoal: #111111;
+  --afkar-cream: #FAFAF8;
+}
+
+html {
+  background: #080808;
+}
+
+html[data-theme='light'] {
+  background: #ffffff;
+}
+
+.public-site,
+.public-main,
+.public-footer {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
+
+.public-main [class*='bg-red-600'],
+.public-main [class*='bg-brand-primary'],
+.public-footer [class*='hover:bg-red-600']:hover {
+  background-color: var(--afkar-red) !important;
+}
+
+.public-main [class*='hover:bg-red-700']:hover,
+.public-main [class*='hover:bg-brand-primary']:hover {
+  background-color: var(--afkar-red-dark) !important;
+}
+
+.public-main [class*='text-red-500'],
+.public-main [class*='text-brand-primary'],
+.public-footer [class*='text-brand-primary'],
+.public-footer [class*='hover:text-brand-primary']:hover {
+  color: var(--afkar-red) !important;
+}
+
+.public-main [class*='text-red-600'] {
+  color: var(--afkar-red) !important;
+}
+
+.public-main [class*='border-red-500'],
+.public-main [class*='border-brand-primary'],
+.public-main [class*='hover:border-red-500']:hover,
+.public-footer [class*='hover:border-red-600']:hover {
+  border-color: rgba(216, 13, 13, 0.58) !important;
+}
+
+.public-main [class*='bg-red-500/10'],
+.public-main [class*='bg-red-600/10'],
+.public-main [class*='bg-brand-primary/5'] {
+  background-color: rgba(216, 13, 13, 0.10) !important;
+}
+
+.public-main [class*='shadow-red-900'] {
+  --tw-shadow-color: rgba(216, 13, 13, 0.28) !important;
+}
+
+.public-main [class*='from-red-500'] {
+  --tw-gradient-from: var(--afkar-red) !important;
+  --tw-gradient-to: rgba(216, 13, 13, 0) !important;
+}
+
+.public-main [class*='to-red-300'] {
+  --tw-gradient-to: var(--afkar-soft-red) !important;
+}
+
+.public-main [class*='text-[#C9A84C]'],
+.public-main [class*='text-[#D99A00]'],
+.public-main [class*='text-[#F5B21A]'],
+.public-main [class*='hover:text-[#C9A84C]']:hover,
+.public-main [class*='hover:text-[#D99A00]']:hover,
+.public-main [class*='hover:text-[#F5B21A]']:hover {
+  color: var(--afkar-red) !important;
+}
+
+.public-main [class*='bg-[#C9A84C]'],
+.public-main [class*='bg-[#D99A00]'],
+.public-main [class*='bg-[#F5B21A]'],
+.public-main [class*='hover:bg-[#C9A84C]']:hover,
+.public-main [class*='hover:bg-[#D99A00]']:hover,
+.public-main [class*='hover:bg-[#F5B21A]']:hover {
+  background-color: var(--afkar-red) !important;
+  color: #ffffff !important;
+}
+
+.public-main [class*='border-[#C9A84C]'],
+.public-main [class*='border-[#D99A00]'],
+.public-main [class*='border-[#F5B21A]'],
+.public-main [class*='hover:border-[#C9A84C]']:hover,
+.public-main [class*='hover:border-[#D99A00]']:hover,
+.public-main [class*='hover:border-[#F5B21A]']:hover {
+  border-color: rgba(216, 13, 13, 0.58) !important;
+}
+
+.public-main [class*='via-red-800'],
+.public-main [class*='via-red-900'] {
+  --tw-gradient-via: var(--afkar-red-dark) !important;
+}
+
+.public-main [class*='from-red-900'],
+.public-main [class*='from-red-800'] {
+  --tw-gradient-from: var(--afkar-red-dark) !important;
+}
+
+html[data-theme='light'] .public-site {
+  background: #ffffff;
+  color: #111827;
+}
+
+html[data-theme='light'] .public-main {
+  background: #ffffff;
+}
+
+html[data-theme='light'] .public-main > div,
+html[data-theme='light'] .public-main [class*='bg-[#080808]'],
+html[data-theme='light'] .public-main [class*='bg-[#0a0a0a]'],
+html[data-theme='light'] .public-main [class*='bg-black'] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+}
+
+html[data-theme='light'] .public-main [class*='bg-[#111]'],
+html[data-theme='light'] .public-main [class*='bg-[#1a1a1a]'],
+html[data-theme='light'] .public-main [class*='bg-[#0f0f0f]'],
+html[data-theme='light'] .public-main [class*='bg-[#1a0a0a]'],
+html[data-theme='light'] .public-main [class*='bg-[#0A0A0A]'],
+html[data-theme='light'] .public-main [class*='bg-white/[0.013]'],
+html[data-theme='light'] .public-main [class*='bg-white/4'] {
+  background-color: #f8fafc !important;
+  color: #111827 !important;
+}
+
+html[data-theme='light'] .public-main [class*='border-white'],
+html[data-theme='light'] .public-main [class*='border-gray-900'],
+html[data-theme='light'] .public-main [class*='border-gray-800'] {
+  border-color: rgba(17, 24, 39, 0.12) !important;
+}
+
+html[data-theme='light'] .public-main h1,
+html[data-theme='light'] .public-main h2,
+html[data-theme='light'] .public-main h3,
+html[data-theme='light'] .public-main h4,
+html[data-theme='light'] .public-main h5,
+html[data-theme='light'] .public-main h6,
+html[data-theme='light'] .public-main strong {
+  color: #111827 !important;
+}
+
+html[data-theme='light'] .public-main [class*='text-gray-300'],
+html[data-theme='light'] .public-main [class*='text-gray-400'],
+html[data-theme='light'] .public-main [class*='text-gray-500'],
+html[data-theme='light'] .public-main [class*='text-white/70'],
+html[data-theme='light'] .public-main [class*='text-white/80'],
+html[data-theme='light'] .public-main [class*='text-white/75'],
+html[data-theme='light'] .public-main [class*='text-white/60'],
+html[data-theme='light'] .public-main [class*='text-white/55'],
+html[data-theme='light'] .public-main [class*='text-white/50'],
+html[data-theme='light'] .public-main [class*='text-white/45'],
+html[data-theme='light'] .public-main [class*='text-white/40'],
+html[data-theme='light'] .public-main [class*='text-white/35'],
+html[data-theme='light'] .public-main [class*='text-white/30'],
+html[data-theme='light'] .public-main [class*='text-white/25'] {
+  color: #4b5563 !important;
+}
+
+html[data-theme='light'] .public-main [class*='text-white']:not([class*='bg-red']):not([class*='bg-brand']) {
+  color: #111827 !important;
+}
+
+html[data-theme='light'] .public-main [class*='bg-white/5'],
+html[data-theme='light'] .public-main [class*='bg-white/10'],
+html[data-theme='light'] .public-main [class*='bg-white/15'] {
+  background-color: rgba(17, 24, 39, 0.04) !important;
+}
+
+html[data-theme='light'] .public-main [class*='shadow-black'] {
+  --tw-shadow-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme='light'] .public-main [class*='from-[#080808]'],
+html[data-theme='light'] .public-main [class*='from-[#0A0A0A]'] {
+  --tw-gradient-from: rgba(255, 255, 255, 0.86) !important;
+  --tw-gradient-to: rgba(255, 255, 255, 0) !important;
+}
+
+html[data-theme='light'] .public-main [class*='via-[#080808]'],
+html[data-theme='light'] .public-main [class*='via-[#0A0A0A]'] {
+  --tw-gradient-via: rgba(255, 255, 255, 0.58) !important;
+}
+
+html[data-theme='light'] .public-main [class*='to-[#080808]'],
+html[data-theme='light'] .public-main [class*='to-[#0A0A0A]'] {
+  --tw-gradient-to: #ffffff !important;
+}
+
+html[data-theme='light'] .public-main [class*='from-red-900'],
+html[data-theme='light'] .public-main [class*='from-red-800'],
+html[data-theme='light'] .public-main [class*='to-[#0A0A0A]'][class*='from-red'],
+html[data-theme='light'] .public-main [class*='to-[#080808]'][class*='from-red'] {
+  background-color: var(--afkar-red-dark) !important;
+}
+
+html[data-theme='light'] .public-main [class*='from-red-900'] :is(h1,h2,h3,h4,h5,h6,p,span,strong,div),
+html[data-theme='light'] .public-main [class*='from-red-800'] :is(h1,h2,h3,h4,h5,h6,p,span,strong,div),
+html[data-theme='light'] .public-main [class*='bg-red-600'] :is(span,svg),
+html[data-theme='light'] .public-main [class*='bg-red-700'] :is(span,svg) {
+  color: #ffffff !important;
+}
+
+html[data-theme='light'] .public-main [class*='from-red-900'] a[class*='bg-white'],
+html[data-theme='light'] .public-main [class*='from-red-800'] a[class*='bg-white'] {
+  color: #b91c1c !important;
+}
+
+html[data-theme='light'] .public-main a[class*='bg-transparent'][class*='text-white'],
+html[data-theme='light'] .public-main button[class*='bg-transparent'][class*='text-white'] {
+  color: #111827 !important;
+  border-color: rgba(17, 24, 39, 0.22) !important;
+}
+
+html[data-theme='light'] .public-main [class*='from-red-900'] a[class*='bg-transparent'][class*='text-white'],
+html[data-theme='light'] .public-main [class*='from-red-800'] a[class*='bg-transparent'][class*='text-white'] {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.42) !important;
+}
+
+html[data-theme='light'] .public-main [class*='bg-red-600'],
+html[data-theme='light'] .public-main [class*='bg-red-700'],
+html[data-theme='light'] .public-main [class*='bg-brand-primary'] {
+  color: #ffffff !important;
+}
+
+html[data-theme='light'] .public-main [class*='bg-red-600'][class*='text-white'],
+html[data-theme='light'] .public-main [class*='bg-red-700'][class*='text-white'],
+html[data-theme='light'] .public-main [class*='bg-brand-primary'][class*='text-white'] {
+  color: #ffffff !important;
+}
+
+html[data-theme='light'] .public-footer {
+  background-color: #f8fafc !important;
+  color: #4b5563 !important;
+  border-color: rgba(17, 24, 39, 0.12) !important;
+}
+
+html[data-theme='light'] .public-footer h3,
+html[data-theme='light'] .public-footer [class*='text-white'] {
+  color: #111827 !important;
+}
+
+html[data-theme='light'] .public-footer [class*='bg-white/5'] {
+  background-color: rgba(17, 24, 39, 0.05) !important;
+  border-color: rgba(17, 24, 39, 0.1) !important;
 }

@@ -1,0 +1,431 @@
+import React, {
+  Fragment,
+  createElement,
+  createContext,
+  forwardRef,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { gsap } from 'gsap';
+
+const MOTION_PROPS = new Set([
+  'initial',
+  'animate',
+  'exit',
+  'variants',
+  'transition',
+  'whileInView',
+  'viewport',
+  'whileHover',
+  'whileTap',
+  'layout',
+  'custom',
+]);
+
+const VariantContext = createContext(null);
+const PresenceContext = createContext({ exiting: false });
+const motionComponentCache = new Map();
+
+function isMotionValue(value) {
+  return value && typeof value.get === 'function' && typeof value.on === 'function';
+}
+
+function createMotionValue(initialValue) {
+  let value = initialValue;
+  const listeners = new Set();
+
+  return {
+    get: () => value,
+    set: (nextValue) => {
+      value = nextValue;
+      listeners.forEach(listener => listener(value));
+    },
+    on: (eventName, listener) => {
+      if (eventName !== 'change') return () => {};
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+}
+
+function resolveVariant(value, variants) {
+  if (typeof value === 'string') return variants?.[value] || {};
+  if (Array.isArray(value)) return value.reduce((acc, item) => ({ ...acc, ...resolveVariant(item, variants) }), {});
+  return value || {};
+}
+
+function splitAnimationConfig(config = {}, fallbackTransition = {}) {
+  const { transition, ...target } = config;
+  return { target, transition: transition || fallbackTransition || {} };
+}
+
+function toGsapEase(ease) {
+  if (Array.isArray(ease)) return 'power2.out';
+  if (ease === 'easeOut') return 'power2.out';
+  if (ease === 'easeIn') return 'power2.in';
+  if (ease === 'easeInOut') return 'power2.inOut';
+  if (ease === 'linear') return 'none';
+  return ease || 'power2.out';
+}
+
+function toGsapVars(target, transition = {}) {
+  const vars = { ...target };
+  if (transition.duration !== undefined) vars.duration = transition.duration;
+  else vars.duration = 0.45;
+  if (transition.delay !== undefined) vars.delay = transition.delay;
+  if (transition.ease !== undefined) vars.ease = toGsapEase(transition.ease);
+  else vars.ease = 'power2.out';
+  if (transition.repeat !== undefined) vars.repeat = transition.repeat === Infinity ? -1 : transition.repeat;
+  if (transition.yoyo !== undefined) vars.yoyo = transition.yoyo;
+
+  const keyframes = [];
+  Object.keys(vars).forEach((key) => {
+    if (Array.isArray(vars[key])) {
+      const values = vars[key];
+      delete vars[key];
+      values.forEach((value, index) => {
+        keyframes[index] = { ...(keyframes[index] || {}), [key]: value };
+      });
+    }
+  });
+  if (keyframes.length) vars.keyframes = keyframes;
+
+  return vars;
+}
+
+function resolveStyle(style) {
+  if (!style) return style;
+  const next = { ...style };
+  Object.keys(next).forEach((key) => {
+    if (isMotionValue(next[key])) next[key] = next[key].get();
+  });
+  return next;
+}
+
+function subscribeStyleMotionValues(element, style) {
+  if (!element || !style) return () => {};
+  const unsubs = [];
+
+  Object.entries(style).forEach(([key, value]) => {
+    if (!isMotionValue(value)) return;
+    unsubs.push(value.on('change', nextValue => {
+      gsap.set(element, { [key]: nextValue });
+    }));
+  });
+
+  return () => unsubs.forEach(unsub => unsub());
+}
+
+function MotionComponent(tag) {
+  return forwardRef(function Component(props, ref) {
+    const localRef = useRef(null);
+    const tweenRef = useRef(null);
+    const parentVariant = useContext(VariantContext);
+    const presence = useContext(PresenceContext);
+    const [inView, setInView] = useState(false);
+    const [activeVariant, setActiveVariant] = useState(null);
+    const childIndex = useMemo(
+      () => (parentVariant?.registerChild ? parentVariant.registerChild() : 0),
+      []
+    );
+    const registeredChildren = useRef(0);
+    const mergedRef = (node) => {
+      localRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    };
+
+    const {
+      initial,
+      animate: animateProp,
+      variants,
+      transition,
+      whileInView,
+      viewport,
+      whileHover,
+      whileTap,
+      style,
+      onMouseEnter,
+      onMouseLeave,
+      onPointerDown,
+      onPointerUp,
+      onPointerCancel,
+      ...rest
+    } = props;
+
+    const domProps = {};
+    Object.entries(rest).forEach(([key, value]) => {
+      if (!MOTION_PROPS.has(key)) domProps[key] = value;
+    });
+
+    const inheritedInitial = initial ?? (variants ? parentVariant?.initial : undefined);
+    const inheritedAnimate = animateProp ?? (variants ? parentVariant?.animate : undefined);
+    const inheritedStagger = variants ? parentVariant?.staggerChildren || 0 : 0;
+
+    const animateNode = (node, target, localTransition = {}) => {
+      tweenRef.current?.kill?.();
+      const delayedTransition = {
+        ...localTransition,
+        delay: (localTransition.delay || 0) + (inheritedStagger * childIndex),
+      };
+      tweenRef.current = gsap.to(node, toGsapVars(target, delayedTransition));
+      return tweenRef.current;
+    };
+
+    useEffect(() => {
+      const node = localRef.current;
+      if (!node) return undefined;
+      const resolvedInitial = resolveVariant(inheritedInitial, variants);
+      if (inheritedInitial !== false && Object.keys(resolvedInitial).length) {
+        const { target } = splitAnimationConfig(resolvedInitial);
+        gsap.set(node, target);
+      }
+      return subscribeStyleMotionValues(node, style);
+    }, []);
+
+    useEffect(() => {
+      const node = localRef.current;
+      if (!node) return;
+      const resolvedAnimate = resolveVariant(inheritedAnimate, variants);
+      if (!Object.keys(resolvedAnimate).length) return;
+      const { target, transition: localTransition } = splitAnimationConfig(resolvedAnimate, transition);
+      animateNode(node, target, localTransition);
+      setActiveVariant(inheritedAnimate);
+    }, [inheritedAnimate, variants, transition]);
+
+    useEffect(() => {
+      const node = localRef.current;
+      if (!node || !whileInView) return undefined;
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          setInView(true);
+          if (viewport?.once) observer.disconnect();
+        },
+        { threshold: viewport?.amount || 0.15 }
+      );
+      observer.observe(node);
+      return () => observer.disconnect();
+    }, [whileInView, viewport]);
+
+    useEffect(() => {
+      const node = localRef.current;
+      if (!node || !inView || !whileInView) return;
+      const { target, transition: localTransition } = splitAnimationConfig(resolveVariant(whileInView, variants), transition);
+      animateNode(node, target, localTransition);
+      setActiveVariant(whileInView);
+    }, [inView, whileInView, variants, transition]);
+
+    useEffect(() => {
+      const node = localRef.current;
+      if (!node || !presence.exiting || !props.exit) return;
+      const { target, transition: localTransition } = splitAnimationConfig(resolveVariant(props.exit, variants), transition);
+      animateNode(node, target, localTransition);
+    }, [presence.exiting, props.exit, variants, transition]);
+
+    const handleMouseEnter = (event) => {
+      onMouseEnter?.(event);
+      if (whileHover && localRef.current) {
+        gsap.to(localRef.current, toGsapVars(resolveVariant(whileHover, variants), transition));
+      }
+    };
+
+    const handleMouseLeave = (event) => {
+      onMouseLeave?.(event);
+      if ((whileHover || whileTap) && localRef.current) {
+        gsap.to(localRef.current, { scale: 1, y: 0, x: 0, duration: 0.18, ease: 'power2.out' });
+      }
+    };
+
+    const handlePointerDown = (event) => {
+      onPointerDown?.(event);
+      if (whileTap && localRef.current) {
+        gsap.to(localRef.current, toGsapVars(resolveVariant(whileTap, variants), { duration: 0.12 }));
+      }
+    };
+
+    const handlePointerUp = (event) => {
+      onPointerUp?.(event);
+      if (whileTap && localRef.current) {
+        gsap.to(localRef.current, { scale: 1, duration: 0.12, ease: 'power2.out' });
+      }
+    };
+
+    const handlePointerCancel = (event) => {
+      onPointerCancel?.(event);
+      if (whileTap && localRef.current) {
+        gsap.to(localRef.current, { scale: 1, duration: 0.12, ease: 'power2.out' });
+      }
+    };
+
+    const element = createElement(tag, {
+      ...domProps,
+      ref: mergedRef,
+      style: resolveStyle(style),
+      onMouseEnter: handleMouseEnter,
+      onMouseLeave: handleMouseLeave,
+      onPointerDown: handlePointerDown,
+      onPointerUp: handlePointerUp,
+      onPointerCancel: handlePointerCancel,
+    });
+
+    if (variants || initial || animateProp || whileInView) {
+      const activeConfig = resolveVariant(activeVariant || inheritedAnimate, variants);
+      const activeTransition = activeConfig.transition || {};
+
+      return (
+        <VariantContext.Provider value={{
+          initial: inheritedInitial,
+          animate: activeVariant || inheritedAnimate || inheritedInitial,
+          staggerChildren: activeTransition.staggerChildren || 0,
+          registerChild: () => registeredChildren.current++,
+        }}>
+          {element}
+        </VariantContext.Provider>
+      );
+    }
+
+    return element;
+  });
+}
+
+export const motion = new Proxy({}, {
+  get: (_, tag) => {
+    if (typeof tag === 'symbol') return undefined;
+    if (!motionComponentCache.has(tag)) {
+      motionComponentCache.set(tag, MotionComponent(tag));
+    }
+    return motionComponentCache.get(tag);
+  },
+});
+
+export function AnimatePresence({ children }) {
+  const [presentChildren, setPresentChildren] = useState(children);
+  const [exiting, setExiting] = useState(false);
+  const presentKeyRef = useRef(
+    React.isValidElement(children) ? (children.key || children.type) : children ? 'present' : 'empty'
+  );
+
+  useEffect(() => {
+    const nextKey = React.isValidElement(children)
+      ? (children.key || children.type)
+      : children ? 'present' : 'empty';
+
+    if (children) {
+      if (presentKeyRef.current !== nextKey || exiting) {
+        presentKeyRef.current = nextKey;
+        setPresentChildren(children);
+      }
+      setExiting(false);
+      return undefined;
+    }
+
+    if (!presentChildren) return undefined;
+
+    setExiting(true);
+    const timer = setTimeout(() => {
+      setPresentChildren(null);
+      setExiting(false);
+      presentKeyRef.current = 'empty';
+    }, 720);
+
+    return () => clearTimeout(timer);
+  }, [children, exiting, presentChildren]);
+
+  if (!presentChildren) return null;
+
+  return (
+    <PresenceContext.Provider value={{ exiting }}>
+      <Fragment>{presentChildren}</Fragment>
+    </PresenceContext.Provider>
+  );
+}
+
+export function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(query.matches);
+    update();
+    query.addEventListener?.('change', update);
+    return () => query.removeEventListener?.('change', update);
+  }, []);
+
+  return reduced;
+}
+
+export function useMotionValue(initialValue) {
+  return useMemo(() => createMotionValue(initialValue), []);
+}
+
+function interpolate(inputValue, inputRange, outputRange) {
+  const startInput = inputRange[0];
+  const endInput = inputRange[inputRange.length - 1];
+  const startOutput = outputRange[0];
+  const endOutput = outputRange[outputRange.length - 1];
+  const progress = endInput === startInput ? 0 : (inputValue - startInput) / (endInput - startInput);
+
+  if (typeof startOutput === 'number' && typeof endOutput === 'number') {
+    return startOutput + (endOutput - startOutput) * progress;
+  }
+
+  return progress >= 1 ? endOutput : startOutput;
+}
+
+export function useTransform(input, transformerOrRange, outputRange) {
+  const transformer = Array.isArray(transformerOrRange)
+    ? value => interpolate(value, transformerOrRange, outputRange || [])
+    : transformerOrRange;
+  const value = useMotionValue(transformer(input.get()));
+
+  useEffect(() => {
+    return input.on('change', nextValue => value.set(transformer(nextValue)));
+  }, [input, transformer, value]);
+
+  return value;
+}
+
+export function animate(value, target, options = {}) {
+  if (!isMotionValue(value)) {
+    const tween = gsap.to(value, toGsapVars(target, options));
+    return { stop: () => tween.kill() };
+  }
+
+  const state = { value: value.get() };
+  const tween = gsap.to(state, {
+    value: target,
+    duration: options.duration ?? 0.4,
+    ease: toGsapEase(options.ease),
+    onUpdate: () => value.set(state.value),
+  });
+
+  return { stop: () => tween.kill() };
+}
+
+export function useScroll() {
+  const progress = useMotionValue(0);
+
+  useEffect(() => {
+    const update = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      progress.set(max > 0 ? window.scrollY / max : 0);
+    };
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, [progress]);
+
+  return { scrollYProgress: progress };
+}
+
+export function useSpring(value) {
+  return value;
+}

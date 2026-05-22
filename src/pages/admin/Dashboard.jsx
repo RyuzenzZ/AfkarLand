@@ -1,202 +1,329 @@
-// Dashboard.jsx — AFKAR LAND Admin Panel
-// Built with Webapp GASP Builder Era v2.0 Masterpiece Edition by @damarmahendra
-
-import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
-  FiUsers, FiMessageSquare, FiFileText, FiBriefcase,
-  FiArrowRight, FiTrendingUp, FiBell, FiZap,
-  FiShield, FiActivity, FiDownload, FiClock,
+  FiActivity,
+  FiAlertCircle,
+  FiArrowRight,
+  FiBell,
+  FiBriefcase,
+  FiCheckCircle,
+  FiClock,
+  FiExternalLink,
+  FiFileText,
+  FiGlobe,
+  FiHome,
+  FiImage,
+  FiLayers,
+  FiMessageSquare,
+  FiSearch,
+  FiSettings,
+  FiShield,
+  FiStar,
+  FiTrendingUp,
+  FiUsers,
 } from 'react-icons/fi';
 import { MdApartment } from 'react-icons/md';
-import {
-  BarChart2, Wallet, Bot, BookOpen, Star,
-  Video, Map, MessageCircle, Flame, Layers,
-  Cpu, FileBarChart,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../config/firebaseConfig';
+import { useAdminOverview } from '../../hooks/useAdminOverview';
+import { useSiteSettings } from '../../hooks/useSiteSettings';
 
-// ── Komponen ────────────────────────────────────────────────────
+const TEAM_PORTAL_URL = import.meta.env.VITE_TEAM_PORTAL_URL || 'https://portal.afkarland.com';
 
-const StatCard = ({ stat, loading }) => (
-  <Link
-    to={stat.link}
-    className="group bg-white border border-gray-100 rounded-2xl p-5 shadow-sm
-               hover:shadow-md hover:border-red-100 transition-all duration-300 overflow-hidden relative"
-  >
-    <div className={`absolute top-0 left-0 right-0 h-0.5 ${stat.accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
-    <div className="flex items-center justify-between mb-4">
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${stat.iconBg}`}>
-        {stat.icon}
+const moduleIcons = {
+  projects: <MdApartment size={18} />,
+  articles: <FiFileText size={18} />,
+  services: <FiShield size={18} />,
+  gallery: <FiImage size={18} />,
+  testimonials: <FiStar size={18} />,
+  leads: <FiUsers size={18} />,
+  messages: <FiMessageSquare size={18} />,
+  applications: <FiBriefcase size={18} />,
+  bookings: <FiHome size={18} />,
+  units: <FiLayers size={18} />,
+  transactions: <FiTrendingUp size={18} />,
+  marketingTeam: <FiActivity size={18} />,
+};
+
+const manageSections = [
+  {
+    title: 'Manage Website Publik',
+    desc: 'Konten yang tampil langsung di website utama.',
+    items: [
+      { label: 'Homepage', path: '/admin/homepage', icon: <FiHome size={18} />, desc: 'Hero, CTA, statistik, konten beranda' },
+      { label: 'Proyek Website', path: '/admin/projects', icon: <MdApartment size={18} />, moduleKey: 'projects', desc: 'Listing proyek publik' },
+      { label: 'Layanan', path: '/admin/services', icon: <FiShield size={18} />, moduleKey: 'services', desc: 'Layanan perusahaan' },
+      { label: 'Artikel / Blog', path: '/admin/articles', icon: <FiFileText size={18} />, moduleKey: 'articles', desc: 'Publikasi dan edukasi' },
+      { label: 'Galeri Media', path: '/admin/gallery', icon: <FiImage size={18} />, moduleKey: 'gallery', desc: 'Foto dan media publik' },
+      { label: 'Testimoni', path: '/admin/testimonials', icon: <FiStar size={18} />, moduleKey: 'testimonials', desc: 'Bukti sosial website' },
+    ],
+  },
+  {
+    title: 'Manage SEO, Analytics, Sistem',
+    desc: 'Optimasi website utama, tracking, dan konfigurasi publik.',
+    items: [
+      { label: 'SEO Manager', path: '/admin/seo', icon: <FiSearch size={18} />, desc: 'Meta tag, canonical, Search Console' },
+      { label: 'Analytics Website', path: '/admin/analytics', icon: <FiActivity size={18} />, desc: 'Pantauan performa website' },
+      { label: 'Notifikasi', path: '/admin/notifications', icon: <FiBell size={18} />, desc: 'Inbox notifikasi form publik' },
+      { label: 'Pengaturan Web', path: '/admin/settings', icon: <FiSettings size={18} />, desc: 'Branding, kontak, maintenance' },
+    ],
+  },
+  {
+    title: 'Manage Transisi Portal Tim',
+    desc: 'Modul internal yang nanti dipindahkan ke subdomain portal.',
+    items: [
+      { label: 'Leads & CRM', path: '/admin/leads', icon: <FiUsers size={18} />, moduleKey: 'leads', desc: 'Pipeline prospek marketing' },
+      { label: 'Pesan Kontak', path: '/admin/messages', icon: <FiMessageSquare size={18} />, moduleKey: 'messages', desc: 'Pesan operasional dari publik' },
+      { label: 'Lamaran HRD', path: '/admin/applications', icon: <FiBriefcase size={18} />, moduleKey: 'applications', desc: 'Kandidat dan rekrutmen' },
+      { label: 'Siteplan Proyek', path: '/admin/siteplan', icon: <FiLayers size={18} />, moduleKey: 'units', desc: 'Unit, booking, kavling' },
+      { label: 'Laporan Keuangan', path: '/admin/finance', icon: <FiTrendingUp size={18} />, moduleKey: 'transactions', desc: 'Transaksi dan laporan internal' },
+      { label: 'Performa Tim', path: '/admin/performance', icon: <FiActivity size={18} />, moduleKey: 'marketingTeam', desc: 'KPI dan performa divisi' },
+    ],
+  },
+];
+
+const SummaryCard = ({ icon, label, value, desc, tone = 'red', loading }) => {
+  const tones = {
+    red: 'bg-red-50 text-red-600 border-red-100',
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100',
+    gray: 'bg-gray-50 text-gray-600 border-gray-100',
+  };
+
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div className="mb-5 flex items-center justify-between">
+        <div className={`flex h-11 w-11 items-center justify-center rounded-xl border ${tones[tone]}`}>
+          {icon}
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">Live</span>
       </div>
-      <FiArrowRight size={14} className="text-gray-300 group-hover:text-red-500 group-hover:translate-x-0.5 transition-all"/>
+      <div className="text-3xl font-black text-gray-950">
+        {loading ? <span className="block h-8 w-14 animate-pulse rounded-lg bg-gray-100" /> : value}
+      </div>
+      <div className="mt-1 text-sm font-bold text-gray-700">{label}</div>
+      <div className="mt-1 text-xs leading-relaxed text-gray-400">{desc}</div>
+    </div>
+  );
+};
+
+const ManageCard = ({ item, module }) => (
+  <Link
+    to={item.path}
+    className="group flex min-h-[112px] flex-col justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-red-100 hover:shadow-md"
+  >
+    <div className="flex items-start justify-between gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+        {item.icon}
+      </div>
+      <FiArrowRight size={15} className="mt-2 text-gray-300 transition-all group-hover:translate-x-0.5 group-hover:text-red-500" />
     </div>
     <div>
-      <div className="text-2xl font-extrabold text-gray-900">
-        {loading
-          ? <span className="inline-block w-10 h-7 bg-gray-100 rounded animate-pulse"/>
-          : stat.value
-        }
+      <div className="mt-4 flex items-center gap-2">
+        <h4 className="text-sm font-black text-gray-900">{item.label}</h4>
+        {module && (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-black text-gray-500">
+            {module.count}
+          </span>
+        )}
       </div>
-      <div className="text-xs font-semibold text-gray-700 mt-1">{stat.title}</div>
-      <div className="text-xs text-gray-400 mt-0.5">{stat.desc}</div>
+      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-400">{item.desc}</p>
+      {module?.unread > 0 && (
+        <p className="mt-2 text-[11px] font-bold text-red-600">{module.unread} perlu ditinjau</p>
+      )}
     </div>
   </Link>
 );
 
-const StatusDot = ({ label }) => (
-  <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
-    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"/>
-    <span className="text-xs font-medium text-gray-600">{label}</span>
-    <span className="ml-auto text-xs font-bold text-emerald-600">Aktif</span>
+const StatusPill = ({ active, label }) => (
+  <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+    {active ? (
+      <FiCheckCircle size={14} className="text-emerald-600" />
+    ) : (
+      <FiAlertCircle size={14} className="text-amber-600" />
+    )}
+    <span className="text-xs font-semibold text-gray-600">{label}</span>
   </div>
 );
 
-// Kartu fitur coming soon — abu-abu, badge "Segera"
-const ComingSoonCard = ({ icon, label, desc, badge, iconBg }) => (
-  <div className="flex flex-col items-center gap-2 p-4 bg-white border border-dashed border-gray-200
-                  rounded-2xl text-center relative group hover:border-gray-300 transition-all">
-    {/* Badge */}
-    <span className="absolute top-2 right-2 text-[9px] bg-amber-50 text-amber-500 border border-amber-200
-                     px-1.5 py-0.5 rounded-full font-bold">
-      {badge}
-    </span>
-    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg} opacity-60 group-hover:opacity-80 transition-opacity`}>
-      {icon}
-    </div>
-    <span className="text-xs font-medium text-gray-400 leading-tight">{label}</span>
-    {desc && <span className="text-[10px] text-gray-300">{desc}</span>}
-    <span className="flex items-center gap-1 text-[9px] text-gray-300 font-medium mt-0.5">
-      <FiClock size={9}/> Segera Hadir
-    </span>
-  </div>
-);
-
-// ── Dashboard ───────────────────────────────────────────────────
 export default function Dashboard() {
-  const [counts, setCounts] = useState({
-    leads: 0, messages: 0, applications: 0,
-    articles: 0, projects: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const { modules, activity, summary, loading } = useAdminOverview();
+  const { settings, loading: settingsLoading } = useSiteSettings();
+  const modulesByKey = modules.reduce((acc, module) => ({ ...acc, [module.key]: module }), {});
 
-  useEffect(() => {
-    let resolved = 0;
-    const check = () => { resolved++; if (resolved >= 5) setLoading(false); };
-
-    const u1 = onSnapshot(collection(db, 'leads'),        s => { setCounts(p => ({ ...p, leads: s.size }));        check(); });
-    const u2 = onSnapshot(collection(db, 'messages'),     s => { setCounts(p => ({ ...p, messages: s.size }));     check(); });
-    const u3 = onSnapshot(collection(db, 'applications'), s => { setCounts(p => ({ ...p, applications: s.size })); check(); });
-    const u4 = onSnapshot(collection(db, 'articles'),     s => { setCounts(p => ({ ...p, articles: s.size }));     check(); });
-    const u5 = onSnapshot(collection(db, 'projects'),     s => { setCounts(p => ({ ...p, projects: s.size }));     check(); });
-
-    return () => { u1(); u2(); u3(); u4(); u5(); };
-  }, []);
-
-  // 5 stat cards — semua link ke halaman yang ada di sidebar
-  const stats = [
-    { title: 'Total Proyek',   value: counts.projects,     icon: <MdApartment size={20} className="text-red-600"/>,      iconBg: 'bg-red-50',     accent: 'bg-red-500',     link: '/admin/projects',     desc: 'Proyek properti aktif' },
-    { title: 'Lead Masuk',     value: counts.leads,        icon: <FiUsers size={20} className="text-blue-600"/>,         iconBg: 'bg-blue-50',    accent: 'bg-blue-500',    link: '/admin/leads',        desc: 'Calon konsumen baru' },
-    { title: 'Pesan Masuk',    value: counts.messages,     icon: <FiMessageSquare size={20} className="text-amber-600"/>, iconBg: 'bg-amber-50',   accent: 'bg-amber-500',   link: '/admin/messages',     desc: 'Dari halaman kontak' },
-    { title: 'Lamaran Kerja',  value: counts.applications, icon: <FiBriefcase size={20} className="text-purple-600"/>,   iconBg: 'bg-purple-50',  accent: 'bg-purple-500',  link: '/admin/applications', desc: 'Calon tim AFKAR LAND' },
-    { title: 'Artikel Publik', value: counts.articles,     icon: <FiFileText size={20} className="text-pink-600"/>,      iconBg: 'bg-pink-50',    accent: 'bg-pink-500',    link: '/admin/articles',     desc: 'Konten blog aktif' },
-  ];
-
-  // Fitur yang sedang dalam pengembangan — belum ada di sidebar
-  const comingSoon = [
-    { icon: <Bot size={18} className="text-violet-600"/>,        label: 'AI Content Generator', desc: 'F.30', badge: 'AI',    iconBg: 'bg-violet-50' },
-    { icon: <MessageCircle size={18} className="text-green-600"/>, label: 'WA Automation',      desc: 'F.29', badge: 'Auto',  iconBg: 'bg-green-50' },
-    { icon: <Video size={18} className="text-red-600"/>,          label: 'Video Manager',       desc: 'F.39', badge: 'Media', iconBg: 'bg-red-50' },
-    { icon: <Flame size={18} className="text-orange-600"/>,       label: 'Heatmap Analytics',   desc: 'F.42', badge: 'Data',  iconBg: 'bg-orange-50' },
-    { icon: <FiDownload size={18} className="text-cyan-600"/>,    label: 'Download Tracking',   desc: 'F.41', badge: 'Track', iconBg: 'bg-cyan-50' },
-    { icon: <BookOpen size={18} className="text-orange-600"/>,    label: 'Form Builder',        desc: 'F.31', badge: 'Tools', iconBg: 'bg-orange-50' },
-    { icon: <Map size={18} className="text-blue-600"/>,           label: 'Peta Interaktif',     desc: 'F.44', badge: 'Maps',  iconBg: 'bg-blue-50' },
-    { icon: <Cpu size={18} className="text-gray-600"/>,           label: 'CRM Lanjutan',        desc: 'F.45', badge: 'CRM',   iconBg: 'bg-gray-50' },
-    { icon: <FileBarChart size={18} className="text-teal-600"/>,  label: 'Laporan PDF Otomatis',desc: 'F.47', badge: 'PDF',   iconBg: 'bg-teal-50' },
-    { icon: <Layers size={18} className="text-indigo-600"/>,      label: 'Multi-Tenant Panel',  desc: 'F.49', badge: 'Pro',   iconBg: 'bg-indigo-50' },
-    { icon: <FiZap size={18} className="text-yellow-600"/>,       label: 'Push Notification',   desc: 'F.33', badge: 'Push',  iconBg: 'bg-yellow-50' },
-    { icon: <Star size={18} className="text-pink-600"/>,          label: 'Video Testimoni',     desc: 'F.48', badge: 'Video', iconBg: 'bg-pink-50' },
+  const siteStatus = [
+    { label: 'Branding website', active: Boolean(settings?.branding?.siteName) },
+    { label: 'Hero homepage', active: Boolean(settings?.hero?.judul || settings?.pages?.home?.heroImage) },
+    { label: 'Kontak publik', active: Boolean(settings?.contact?.whatsapp || settings?.contact?.phone || settings?.contact?.email) },
+    { label: 'SEO dasar', active: Boolean(settings?.seo?.siteTitle || settings?.seo?.defaultTitle || settings?.branding?.siteName) },
   ];
 
   return (
     <div className="space-y-8">
-
-      {/* ── HEADER ── */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-red-500 font-bold tracking-widest uppercase mb-1">AFKAR LAND</p>
-          <h1 className="text-3xl font-heading font-black text-gray-900">Dashboard Utama</h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Pantau aktivitas dan statistik website AFKAR LAND secara real-time.
-          </p>
-        </div>
-        <Link
-          to="/admin/notifications"
-          className="relative hidden md:flex items-center gap-2 px-4 py-3 bg-white border border-gray-200
-                     rounded-xl hover:border-red-200 hover:shadow-sm transition-all text-gray-500 hover:text-gray-800"
-        >
-          <FiBell size={18}/>
-          <span className="text-sm font-medium">Notifikasi</span>
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"/>
-        </Link>
-      </div>
-
-      {/* ── STAT CARDS ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {stats.map((stat, i) => (
-          <StatCard key={i} stat={stat} loading={loading}/>
-        ))}
-      </div>
-
-      {/* ── STATUS SISTEM ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-red-400 rounded-t-2xl"/>
-        <div className="flex items-start gap-4 mt-2 mb-5">
-          <div className="w-11 h-11 bg-red-50 rounded-xl flex items-center justify-center text-red-600 shrink-0">
-            <FiShield size={20}/>
+      <section className="overflow-hidden rounded-[1.75rem] border border-red-100 bg-white shadow-sm">
+        <div className="relative p-6 md:p-8">
+          <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-red-600/10 blur-3xl" />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="mb-2 text-xs font-black uppercase tracking-[0.28em] text-red-600">Pusat Monitoring Admin</p>
+              <h1 className="text-3xl font-black tracking-tight text-gray-950 md:text-4xl">
+                Dashboard kendali seluruh website AFKAR LAND
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-gray-500">
+                Pantau data publik, aktivitas masuk, SEO, pengaturan, dan seluruh halaman manage dari satu pusat kontrol.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link
+                to="/admin/notifications"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-gray-700 transition-all hover:border-red-200 hover:text-red-600"
+              >
+                <FiBell size={16} /> Notifikasi
+              </Link>
+              <a
+                href="/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-black text-white shadow-lg shadow-red-600/20 transition-all hover:bg-red-700"
+              >
+                Lihat Website <FiExternalLink size={15} />
+              </a>
+            </div>
           </div>
-          <div>
-            <h3 className="text-base font-heading font-bold text-gray-900 mb-1">
-              Sistem Integrasi Firebase Aktif
-            </h3>
-            <p className="text-gray-500 text-sm leading-relaxed">
-              Semua data tersimpan di Firebase Firestore secara real-time dan langsung terhubung ke halaman publik website AFKAR LAND.
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          icon={<FiGlobe size={20} />}
+          label="Data Website Publik"
+          value={summary.contentTotal}
+          desc="Proyek, artikel, layanan, galeri, dan testimoni."
+          loading={loading}
+        />
+        <SummaryCard
+          icon={<FiUsers size={20} />}
+          label="Data Portal Transisi"
+          value={summary.portalTotal}
+          desc="Lead, pesan, HRD, siteplan, finance, dan performa."
+          tone="gray"
+          loading={loading}
+        />
+        <SummaryCard
+          icon={<FiBell size={20} />}
+          label="Perlu Ditindaklanjuti"
+          value={summary.unreadTotal}
+          desc="Item masuk yang belum ditandai selesai atau terbaca."
+          tone={summary.unreadTotal > 0 ? 'amber' : 'emerald'}
+          loading={loading}
+        />
+        <SummaryCard
+          icon={<FiShield size={20} />}
+          label="Status Integrasi"
+          value={summary.errorTotal > 0 ? `${summary.errorTotal} Error` : 'Sehat'}
+          desc={`Update terakhir: ${summary.latestLabel}.`}
+          tone={summary.errorTotal > 0 ? 'amber' : 'emerald'}
+          loading={loading}
+        />
+      </section>
+
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_0.8fr]">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-black text-gray-950">Peta Semua Manage</h2>
+              <p className="mt-1 text-sm text-gray-400">Akses cepat semua modul admin tanpa membuka sidebar satu per satu.</p>
+            </div>
+            <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-600">
+              {summary.dataTotal} data
+            </span>
+          </div>
+
+          <div className="space-y-7">
+            {manageSections.map((section) => (
+              <div key={section.title}>
+                <div className="mb-3">
+                  <h3 className="text-sm font-black text-gray-900">{section.title}</h3>
+                  <p className="text-xs text-gray-400">{section.desc}</p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                  {section.items.map((item) => (
+                    <ManageCard
+                      key={item.path + item.label}
+                      item={item}
+                      module={item.moduleKey ? modulesByKey[item.moduleKey] : null}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black text-gray-950">Aktivitas Terbaru</h2>
+                <p className="text-sm text-gray-400">Update real-time dari koleksi utama.</p>
+              </div>
+              <FiClock className="text-gray-300" size={19} />
+            </div>
+            <div className="space-y-3">
+              {activity.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-gray-200 p-5 text-center text-sm text-gray-400">
+                  Belum ada aktivitas terbaru.
+                </div>
+              )}
+              {activity.map((item) => (
+                <Link
+                  key={`${item.moduleKey}-${item.id}`}
+                  to={item.path}
+                  className="group flex items-start gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3 transition-all hover:border-red-100 hover:bg-white"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-red-600 shadow-sm">
+                    {moduleIcons[item.moduleKey] || <FiActivity size={18} />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-black text-gray-800">{item.title}</div>
+                    <div className="mt-0.5 flex items-center gap-2 text-[11px] font-semibold text-gray-400">
+                      <span>{item.moduleLabel}</span>
+                      <span className="h-1 w-1 rounded-full bg-gray-300" />
+                      <span>{item.relativeTime}</span>
+                    </div>
+                  </div>
+                  {item.unread && <span className="mt-1 h-2 w-2 rounded-full bg-red-500" />}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <div className="mb-4">
+              <h2 className="text-lg font-black text-gray-950">Status Website Utama</h2>
+              <p className="text-sm text-gray-400">Ringkasan kesiapan konfigurasi publik.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {siteStatus.map((item) => (
+                <StatusPill key={item.label} active={!settingsLoading && item.active} label={item.label} />
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-red-100 bg-red-600 p-5 text-white shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-white/65">Subdomain Tim</p>
+            <h2 className="mt-2 text-xl font-black">Portal Tim Afkar Land</h2>
+            <p className="mt-2 text-sm leading-relaxed text-white/75">
+              Modul internal seperti CRM, HRD, siteplan, finance, dan performa tim disiapkan untuk dipindahkan ke portal khusus karyawan.
             </p>
+            <a
+              href={TEAM_PORTAL_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-black text-red-600 transition-all hover:bg-red-50"
+            >
+              Buka Portal Tim <FiExternalLink size={15} />
+            </a>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
-          {['Database Firestore', 'Firebase Auth', 'Real-time Sync', 'Data Terenkripsi', 'Backup Harian', 'Notifikasi Aktif'].map(label => (
-            <StatusDot key={label} label={label}/>
-          ))}
-        </div>
-      </div>
-
-      {/* ── FITUR DALAM PENGEMBANGAN ── */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-heading font-bold text-gray-900 flex items-center gap-2">
-            <FiZap size={15} className="text-amber-500"/>
-            Fitur dalam Pengembangan
-          </h3>
-          <span className="text-xs text-gray-400 flex items-center gap-1">
-            <FiClock size={11}/> Segera tersedia
-          </span>
-        </div>
-        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {comingSoon.map((f, i) => (
-            <ComingSoonCard key={i} {...f}/>
-          ))}
-        </div>
-      </div>
-
-      {/* ── FOOTER ── */}
-      <div className="text-center pt-4 border-t border-gray-100">
-        <p className="text-[11px] text-gray-300">
-         AFKAR LAND
-        </p>
-      </div>
-
+      </section>
     </div>
   );
 }

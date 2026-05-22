@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
   FiArrowRight, FiShield, FiHome, FiHeart, FiCheckCircle, 
   FiTarget, FiTrendingUp, FiLayers, FiUsers, FiAward, 
   FiDownload, FiStar, FiMapPin, FiMessageSquare, FiMonitor, FiShare2
 } from 'react-icons/fi';
+import OptimizedImage from '../components/ui/OptimizedImage';
+import { trackCtaClick, trackEvent } from '../lib/analytics';
 
 // ── Real-time settings dari admin ──────────────────────────────
 import { useSiteSettings } from '../hooks/useSiteSettings';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
@@ -72,7 +78,7 @@ const duplicatedTestimonials = [...testimonials, ...testimonials];
 
 // Default fallback values — termasuk konten dari ManageHomepage
 const DEFAULTS = {
-  heroImage:  '/images/Hero.jpg',
+  heroImage:  '/images/MasagenaParallax.jpg',
   badge:      'Developer Property Syariah Terpercaya',
   judul:      'Hunian Syariah Modern\nuntuk Masa Depan Keluarga Anda',
   subjudul:   'AFKAR LAND menghadirkan kawasan property syariah premium tanpa riba, tanpa bank, tanpa bunga, dan tanpa sita dengan konsep hunian modern islami di Indonesia Timur.',
@@ -98,13 +104,149 @@ const DEFAULTS = {
 };
 
 export default function Home() {
+  const heroSectionRef = useRef(null);
+  const heroImageRef = useRef(null);
+  const heroContentRef = useRef(null);
+  const heroStatsRef = useRef(null);
+  const heroOverlayRef = useRef(null);
+  const testimonialTrackRef = useRef(null);
   const [activeDivision, setActiveDivision] = useState(null);
 
   // ── Baca pengaturan real-time dari Firestore via admin ─────
   const { settings } = useSiteSettings();
+  const heroImage  = settings?.pages?.home?.heroImage  || DEFAULTS.heroImage;
+
+  useEffect(() => {
+    if (!testimonialTrackRef.current) return undefined;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return undefined;
+
+    let tween;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!tween) return;
+        if (entry.isIntersecting) tween.resume();
+        else tween.pause();
+      },
+      { threshold: 0.12 }
+    );
+
+    const context = gsap.context(() => {
+      tween = gsap.to(testimonialTrackRef.current, {
+        xPercent: -50,
+        duration: 35,
+        ease: 'none',
+        repeat: -1,
+      });
+      observer.observe(testimonialTrackRef.current);
+    }, testimonialTrackRef);
+
+    return () => {
+      observer.disconnect();
+      context.revert();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!heroSectionRef.current || !heroImageRef.current) return undefined;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+    let mobileCleanup;
+
+    const context = gsap.context(() => {
+      gsap.set(heroContentRef.current, { autoAlpha: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 56, scale: 1 });
+      gsap.set(heroStatsRef.current, { autoAlpha: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 28, scale: 1 });
+      gsap.set(heroOverlayRef.current, { opacity: reduceMotion ? 1 : 0.22 });
+      gsap.set(heroImageRef.current, { scale: isDesktop ? 1.08 : 1.02, y: isDesktop ? -24 : 0 });
+
+      if (reduceMotion) return;
+
+      if (!isDesktop) {
+        let revealed = false;
+        const revealHero = () => {
+          if (revealed) return;
+          revealed = true;
+          gsap.timeline({ defaults: { ease: 'power3.out' } })
+            .to(heroOverlayRef.current, { opacity: 1, duration: 0.45 }, 0)
+            .to(heroImageRef.current, { scale: 1, duration: 0.75 }, 0)
+            .to(heroContentRef.current, { autoAlpha: 1, y: 0, duration: 0.65 }, 0.08)
+            .to(heroStatsRef.current, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.18);
+        };
+
+        window.addEventListener('scroll', revealHero, { passive: true, once: true });
+        window.addEventListener('touchmove', revealHero, { passive: true, once: true });
+        window.addEventListener('wheel', revealHero, { passive: true, once: true });
+
+        mobileCleanup = () => {
+          window.removeEventListener('scroll', revealHero);
+          window.removeEventListener('touchmove', revealHero);
+          window.removeEventListener('wheel', revealHero);
+        };
+        return;
+      }
+
+      gsap.fromTo(
+        heroImageRef.current,
+        { scale: 1.08, y: -24 },
+        { scale: 1.04, y: 0, duration: 1.2, ease: 'power3.out' }
+      );
+
+      gsap.to(heroImageRef.current, {
+        y: 150,
+        scale: 1.01,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: heroSectionRef.current,
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 0.75,
+        },
+      });
+
+      gsap.to(heroOverlayRef.current, {
+        opacity: 1,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: heroSectionRef.current,
+          start: 'top+=80 top',
+          end: 'top+=300 top',
+          scrub: 0.6,
+        },
+      });
+
+      gsap.to(heroContentRef.current, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.85,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: heroSectionRef.current,
+          start: 'top+=140 top',
+          toggleActions: 'play none none reverse',
+        },
+      });
+
+      gsap.to(heroStatsRef.current, {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.75,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: heroSectionRef.current,
+          start: 'top+=260 top',
+          toggleActions: 'play none none reverse',
+        },
+      });
+    }, heroSectionRef);
+
+    return () => {
+      mobileCleanup?.();
+      context.revert();
+    };
+  }, [heroImage]);
 
   // Ambil nilai dari admin, fallback ke default jika belum diisi
-  const heroImage  = settings?.pages?.home?.heroImage  || DEFAULTS.heroImage;
   const hero       = settings?.hero   || {};
   const badge      = hero.badge        || DEFAULTS.badge;
   const judul      = hero.judul        || DEFAULTS.judul;
@@ -136,23 +278,33 @@ export default function Home() {
       {/* ==========================================
           1. HERO SECTION — gambar & teks dari admin
       ========================================== */}
-      <section className="relative h-screen min-h-[900px] flex items-center justify-center overflow-hidden">
+      <section ref={heroSectionRef} className="relative min-h-[100svh] lg:min-h-[900px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           {/* ✅ Hero image real-time dari admin */}
-          <img
+          <OptimizedImage
+            ref={heroImageRef}
             src={heroImage}
             alt="AFKAR LAND"
-            className="w-full h-full object-cover opacity-40 scale-105 animate-[pulse_20s_ease-in-out_infinite_alternate]"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            sizes="100vw"
+            className="h-[105%] lg:h-[118%] w-full object-cover opacity-100 lg:will-change-transform"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/80 via-[#080808]/50 to-[#080808]" />
-          <div className="absolute inset-0 bg-red-900/10 mix-blend-overlay" />
+          <div
+            ref={heroOverlayRef}
+            className="absolute inset-0 bg-gradient-to-b from-[#080808]/72 via-[#080808]/45 to-[#080808]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#080808]/36 via-transparent to-[#080808]/12" />
+          <div className="absolute inset-0 bg-[#D80D0D]/5 mix-blend-multiply" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#080808] to-transparent" />
         </div>
 
-        <div className="container relative z-10 mx-auto px-6 md:px-12 mt-10">
+        <div ref={heroContentRef} className="container relative z-10 mx-auto px-6 md:px-12 mt-10 lg:will-change-transform opacity-0">
           <motion.div initial="hidden" animate="visible" variants={stagger} className="max-w-4xl mx-auto text-center">
             <motion.div variants={fadeUp} className="mb-6">
               <div className="inline-block text-3xl font-heading font-extrabold tracking-[0.2em] mb-2">
-                AFKAR <span className="text-red-600">LAND</span>
+                AFKAR <span className="text-[#D80D0D]">LAND</span>
               </div>
               {/* ✅ Badge dari admin */}
               <div className="flex items-center justify-center gap-2 text-red-500 font-bold tracking-widest text-[10px] uppercase">
@@ -187,6 +339,7 @@ export default function Home() {
             <motion.div variants={fadeUp}>
               <Link
                 to={ctaUtamaLink}
+                onClick={() => trackCtaClick('home_hero_primary', { target_url: ctaUtamaLink, text: ctaUtama })}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-900/30 hover:-translate-y-1"
               >
                 {ctaUtama} <FiArrowRight size={18} />
@@ -195,9 +348,9 @@ export default function Home() {
           </motion.div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8 }}
-          className="absolute bottom-10 left-0 right-0 z-20 px-6 hidden md:block"
+        <div
+          ref={heroStatsRef}
+          className="absolute bottom-10 left-0 right-0 z-20 px-6 hidden md:block lg:will-change-transform opacity-0"
         >
           <div className="container mx-auto max-w-5xl">
             <div className="grid grid-cols-4 gap-4">
@@ -214,7 +367,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </section>
 
       {/* ==========================================
@@ -266,8 +419,8 @@ export default function Home() {
             
             <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="relative">
               <div className="grid grid-cols-2 gap-4">
-                <img src="/images/Masagena.jpg" alt="Premium House" className="rounded-3xl w-full h-64 object-cover mt-8 border border-white/5" />
-                <img src="/images/Masagena1.jpg" alt="Islamic Environment" className="rounded-3xl w-full h-80 object-cover border border-white/5" />
+                <img src="/images/Masagena.jpg" alt="Premium House" loading="lazy" decoding="async" className="rounded-3xl w-full h-64 object-cover mt-8 border border-white/5" />
+                <img src="/images/Masagena1.jpg" alt="Islamic Environment" loading="lazy" decoding="async" className="rounded-3xl w-full h-80 object-cover border border-white/5" />
               </div>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-red-600 rounded-full flex items-center justify-center border-8 border-[#080808] shadow-2xl z-10">
                 <FiHome className="text-white w-8 h-8" />
@@ -290,7 +443,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="lg:col-span-5">
               <div className="relative rounded-3xl overflow-hidden group h-full border border-white/5 bg-[#1a1a1a] min-h-[600px]">
-                <img src="/images/ustadz.png" alt="Ustadz Haris Amrin" className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700 absolute inset-0" />
+                <img src="/images/ustadz.png" alt="Ustadz Haris Amrin" loading="lazy" decoding="async" className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700 absolute inset-0" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent" />
                 <div className="absolute bottom-0 left-0 w-full p-8 relative z-10 h-full flex flex-col justify-end">
                   <div className="mb-4">
@@ -307,7 +460,7 @@ export default function Home() {
 
             <div className="lg:col-span-7 flex flex-col gap-6">
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex flex-col sm:flex-row gap-6 items-center flex-1 transition-colors hover:border-red-500/30 group">
-                <img src="/images/nia.png" alt="Nia Kartika Putri" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
+                <img src="/images/nia.png" alt="Nia Kartika Putri" loading="lazy" decoding="async" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
                 <div className="text-center sm:text-left">
                   <h3 className="text-xl font-bold text-white mb-1">Nia Kartika Putri</h3>
                   <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-3">Project Management</p>
@@ -318,7 +471,7 @@ export default function Home() {
               </motion.div>
 
               <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} transition={{ delay: 0.1 }} className="bg-[#1a1a1a] rounded-3xl p-8 border border-white/5 flex flex-col sm:flex-row gap-6 items-center flex-1 transition-colors hover:border-red-500/30 group">
-                <img src="/images/Abdi.jpeg" alt="Abdi Negara" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
+                <img src="/images/Abdi.jpeg" alt="Abdi Negara" loading="lazy" decoding="async" className="w-24 h-24 rounded-full border-2 border-red-500/50 object-cover shrink-0 group-hover:border-red-500 transition-colors" />
                 <div className="text-center sm:text-left">
                   <h3 className="text-xl font-bold text-white mb-1">Abdi Negara</h3>
                   <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mb-3">HRD (Human Resources Development)</p>
@@ -397,6 +550,8 @@ export default function Home() {
                             <img 
                               src={member.img} 
                               alt={member.name} 
+                              loading="lazy"
+                              decoding="async"
                               className="w-24 h-24 rounded-full object-cover border-2 border-white/10 group-hover:border-red-500 relative z-10 transition-colors duration-300" 
                             />
                           </div>
@@ -505,7 +660,14 @@ export default function Home() {
                 className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden group hover:border-red-500/50 transition-colors flex flex-col h-full"
               >
                 <div className="aspect-[4/3] overflow-hidden relative">
-                  <img src={proj.img} alt={proj.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <OptimizedImage
+                    src={proj.img}
+                    alt={proj.name}
+                    loading="lazy"
+                    decoding="async"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#111] to-transparent" />
                   <div className="absolute top-4 left-4">
                     <span className="bg-[#C9A84C] text-black text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
@@ -518,7 +680,11 @@ export default function Home() {
                   <p className="text-gray-500 text-xs leading-relaxed mb-6 flex-1">{proj.desc}</p>
                   
                   <div className="flex flex-col gap-2 mt-auto">
-                    <Link to={`/proyek/${proj.slug}`} className="w-full text-center py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors">
+                    <Link
+                      to={`/proyek/${proj.slug}`}
+                      onClick={() => trackEvent('view_project', { category: 'project', label: proj.name, project_slug: proj.slug })}
+                      className="w-full text-center py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors"
+                    >
                       Lihat Detail
                     </Link>
                     <a 
@@ -603,10 +769,9 @@ export default function Home() {
           <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-[#080808] to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-[#080808] to-transparent z-10 pointer-events-none" />
 
-          <motion.div
+          <div
+            ref={testimonialTrackRef}
             className="flex gap-6 w-max"
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ ease: "linear", duration: 35, repeat: Infinity }}
           >
             {duplicatedTestimonials.map((t, i) => (
               <div key={i} className="w-[300px] md:w-[420px] bg-[#111] p-8 rounded-3xl border border-white/5 shrink-0 whitespace-normal flex flex-col justify-between">
@@ -629,7 +794,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -655,12 +820,14 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   to={ctaUtamaLink}
+                  onClick={() => trackCtaClick('home_bottom_primary', { target_url: ctaUtamaLink, text: ctaUtama })}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-red-600 px-8 py-4 rounded-xl font-bold hover:bg-gray-100 transition-all hover:-translate-y-1"
                 >
                   {ctaUtama} <FiArrowRight size={18} />
                 </Link>
                 <Link
                   to={ctaKeduaLink}
+                  onClick={() => trackCtaClick('home_bottom_secondary', { target_url: ctaKeduaLink, text: ctaKedua })}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent border border-white/30 text-white px-8 py-4 rounded-xl font-bold hover:bg-white/10 transition-all"
                 >
                   {ctaKedua}

@@ -18,7 +18,7 @@ export default function Footer() {
   ].filter(s => footer[s.key]);
 
   return (
-    <footer className="bg-[#0A0A0A] text-gray-400 pt-16 pb-8 border-t border-gray-900">
+    <footer className="public-footer bg-[#090909] text-gray-400 pt-16 pb-8 border-t border-white/10">
       <div className="container mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
 
@@ -28,7 +28,7 @@ export default function Footer() {
               {logoUrl
                 ? <img src={logoUrl} alt={branding.logoAlt || siteName} className="h-8 object-contain"/>
                 : <span className="text-3xl font-heading font-extrabold text-white tracking-tight">
-                    {siteName.split(' ')[0]} <span className="text-brand-primary">{siteName.split(' ').slice(1).join(' ')}</span>
+                    {siteName.split(' ')[0]} <span className="text-[#D80D0D]">{siteName.split(' ').slice(1).join(' ')}</span>
                   </span>
               }
             </Link>
@@ -37,7 +37,7 @@ export default function Footer() {
               <div className="flex gap-3">
                 {socials.map(s => (
                   <a key={s.key} href={footer[s.key]} target="_blank" rel="noreferrer"
-                    className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-red-600 hover:border-red-600 text-gray-400 hover:text-white transition-all"
+                    className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#D80D0D] hover:border-white/30 text-gray-400 hover:text-white transition-all"
                     aria-label={s.label}>
                     {s.icon}
                   </a>
@@ -52,7 +52,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               {navLinks.map(link => (
                 <li key={link.path}>
-                  <Link to={link.path} className="hover:text-brand-primary transition-colors">{link.label}</Link>
+                  <Link to={link.path} className="hover:text-white transition-colors">{link.label}</Link>
                 </li>
               ))}
             </ul>
@@ -64,19 +64,19 @@ export default function Footer() {
             <ul className="space-y-4 text-sm">
               {footer.address && (
                 <li className="flex items-start gap-3">
-                  <FiMapPin className="text-brand-primary mt-1 shrink-0" size={18}/>
+                  <FiMapPin className="text-[#D80D0D] mt-1 shrink-0" size={18}/>
                   <span>{footer.address}</span>
                 </li>
               )}
               {footer.phone && (
                 <li className="flex items-center gap-3">
-                  <FiPhone className="text-brand-primary shrink-0" size={18}/>
+                  <FiPhone className="text-[#D80D0D] shrink-0" size={18}/>
                   <a href={`tel:${footer.phone.replace(/\D/g,'')}`} className="hover:text-white transition-colors">{footer.phone}</a>
                 </li>
               )}
               {footer.email && (
                 <li className="flex items-center gap-3">
-                  <FiMail className="text-brand-primary shrink-0" size={18}/>
+                  <FiMail className="text-[#D80D0D] shrink-0" size={18}/>
                   <a href={`mailto:${footer.email}`} className="hover:text-white transition-colors">{footer.email}</a>
                 </li>
               )}
@@ -85,7 +85,7 @@ export default function Footer() {
 
         </div>
 
-        <div className="pt-8 border-t border-gray-800 text-center text-xs">
+        <div className="pt-8 border-t border-white/10 text-center text-xs">
           <p>{footer.copyright || `© ${new Date().getFullYear()} AFKAR LAND. All rights reserved.`}</p>
         </div>
       </div>

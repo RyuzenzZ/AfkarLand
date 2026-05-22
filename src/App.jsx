@@ -1,72 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-
-// 0. Komponen Animasi Intro
+import { useSEO } from './hooks/useSEO';
+import { initWebVitalsTracking } from './lib/analytics';
 import Loader from './components/ui/Loader';
-
-// 0b. Komponen ScrollToTop
 import ScrollToTop from './components/ui/ScrollToTop';
 
-// 1. Layout
-import MainLayout  from './components/layout/MainLayout';
-import AdminLayout from './components/layout/AdminLayout';
+const MainLayout = lazy(() => import('./components/layout/MainLayout'));
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
 
-// 2. Halaman Publik
-import Home          from './pages/Home';
-import About         from './pages/About';
-import Career        from './pages/Career';
-import Projects      from './pages/Projects';
-import ProjectDetail from './pages/ProjectDetail';
-import Blog          from './pages/Blog';
-import BlogDetail    from './pages/BlogDetail';
-import Contact       from './pages/Contact';
-import FAQ           from './pages/FAQ';
-import NotFound      from './pages/NotFound';
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Career = lazy(() => import('./pages/Career'));
+const Projects = lazy(() => import('./pages/Projects'));
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogDetail = lazy(() => import('./pages/BlogDetail'));
+const Contact = lazy(() => import('./pages/Contact'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-// 3. Auth
-import Login from './pages/admin/Login';
+const Login = lazy(() => import('./pages/admin/Login'));
+const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
+const ManageHomepage = lazy(() => import('./pages/admin/ManageHomepage'));
+const ManageProjects = lazy(() => import('./pages/admin/ManageProjects'));
+const ManageArticles = lazy(() => import('./pages/admin/ManageArticles'));
+const ManageGallery = lazy(() => import('./pages/admin/ManageGallery'));
+const ManageTestimonials = lazy(() => import('./pages/admin/ManageTestimonials'));
+const ManageServices = lazy(() => import('./pages/admin/ManageServices'));
+const ManageLeads = lazy(() => import('./pages/admin/ManageLeads'));
+const ManageMessages = lazy(() => import('./pages/admin/ManageMessages'));
+const ManageApplications = lazy(() => import('./pages/admin/ManageApplications'));
+const ManageSiteplan = lazy(() => import('./pages/admin/ManageSiteplan'));
+const ManageFinance = lazy(() => import('./pages/admin/ManageFinance'));
+const ManagePerformance = lazy(() => import('./pages/admin/ManagePerformance'));
+const ManageSEO = lazy(() => import('./pages/admin/ManageSEO'));
+const ManageAnalytics = lazy(() => import('./pages/admin/ManageAnalytics'));
+const ManageNotifications = lazy(() => import('./pages/admin/ManageNotifications'));
+const Settings = lazy(() => import('./pages/admin/Settings'));
 
-// 4. Dashboard
-import Dashboard from './pages/admin/Dashboard';
-
-// 5. Konten Website
-import ManageHomepage     from './pages/admin/ManageHomepage';
-import ManageProjects     from './pages/admin/ManageProjects';
-import ManageArticles     from './pages/admin/ManageArticles';
-import ManageGallery      from './pages/admin/ManageGallery';
-import ManageTestimonials from './pages/admin/ManageTestimonials';
-import ManageServices     from './pages/admin/ManageServices';   // ← BARU: Layanan Perusahaan
-
-// 6. CRM & Leads
-import ManageLeads        from './pages/admin/ManageLeads';
-import ManageMessages     from './pages/admin/ManageMessages';
-import ManageApplications from './pages/admin/ManageApplications';
-
-// 7. Operasional Proyek
-import ManageSiteplan     from './pages/admin/ManageSiteplan';   // ← BARU: Siteplan & Booking Unit
-
-// 8. Keuangan & Performa
-import ManageFinance      from './pages/admin/ManageFinance';    // ← BARU: Catatan Keuangan
-import ManagePerformance  from './pages/admin/ManagePerformance'; // ← BARU: Leaderboard Marketing
-
-// 9. Optimasi & Analitik
-import ManageSEO       from './pages/admin/ManageSEO';
-import ManageAnalytics from './pages/admin/ManageAnalytics';
-
-// 10. Notifikasi
-import ManageNotifications from './pages/admin/ManageNotifications';
-
-// 11. Sistem
-import Settings from './pages/admin/Settings';
+const RouteFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 export default function App() {
   const [showIntro, setShowIntro] = useState(true);
+  useSEO();
 
   useEffect(() => {
-    // LOGIKA: Sembunyikan Loader setelah 3.5 detik
     const timer = setTimeout(() => setShowIntro(false), 3500);
+    initWebVitalsTracking();
     return () => clearTimeout(timer);
   }, []);
 
@@ -80,66 +66,49 @@ export default function App() {
 
       <ScrollToTop />
 
-      <Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/tentang-kami" element={<About />} />
+            <Route path="/karir" element={<Career />} />
+            <Route path="/proyek" element={<Projects />} />
+            <Route path="/proyek/:slug" element={<ProjectDetail />} />
+            <Route path="/artikel" element={<Blog />} />
+            <Route path="/artikel/:slug" element={<BlogDetail />} />
+            <Route path="/kontak" element={<Contact />} />
+            <Route path="/faq" element={<FAQ />} />
+          </Route>
 
-        {/* ── A. HALAMAN PUBLIK ─────────────────────────────── */}
-        <Route element={<MainLayout />}>
-          <Route path="/"              element={<Home />} />
-          <Route path="/tentang-kami"  element={<About />} />
-          <Route path="/karir"         element={<Career />} />
-          <Route path="/proyek"        element={<Projects />} />
-          <Route path="/proyek/:slug"  element={<ProjectDetail />} />
-          <Route path="/artikel"       element={<Blog />} />
-          <Route path="/artikel/:slug" element={<BlogDetail />} />
-          <Route path="/kontak"        element={<Contact />} />
-          <Route path="/faq"           element={<FAQ />} />
-        </Route>
+          <Route path="/admin/login" element={<Login />} />
 
-        {/* ── B. LOGIN ADMIN ────────────────────────────────── */}
-        <Route path="/admin/login" element={<Login />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="notifications" element={<ManageNotifications />} />
 
-        {/* ── C. PANEL ADMIN ────────────────────────────────── */}
-        <Route path="/admin" element={<AdminLayout />}>
+            <Route path="homepage" element={<ManageHomepage />} />
+            <Route path="projects" element={<ManageProjects />} />
+            <Route path="articles" element={<ManageArticles />} />
+            <Route path="gallery" element={<ManageGallery />} />
+            <Route path="testimonials" element={<ManageTestimonials />} />
+            <Route path="services" element={<ManageServices />} />
 
-          {/* LOGIKA: Redirect /admin → /admin/dashboard otomatis */}
-          <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="leads" element={<ManageLeads />} />
+            <Route path="messages" element={<ManageMessages />} />
+            <Route path="applications" element={<ManageApplications />} />
+            <Route path="siteplan" element={<ManageSiteplan />} />
+            <Route path="finance" element={<ManageFinance />} />
+            <Route path="performance" element={<ManagePerformance />} />
 
-          <Route path="dashboard"     element={<Dashboard />} />
-          <Route path="notifications" element={<ManageNotifications />} />
+            <Route path="seo" element={<ManageSEO />} />
+            <Route path="analytics" element={<ManageAnalytics />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
 
-          {/* Konten Website */}
-          <Route path="homepage"      element={<ManageHomepage />} />
-          <Route path="projects"      element={<ManageProjects />} />
-          <Route path="articles"      element={<ManageArticles />} />
-          <Route path="gallery"       element={<ManageGallery />} />
-          <Route path="testimonials"  element={<ManageTestimonials />} />
-          <Route path="services"      element={<ManageServices />} />     {/* ← BARU */}
-
-          {/* CRM & Leads */}
-          <Route path="leads"         element={<ManageLeads />} />
-          <Route path="messages"      element={<ManageMessages />} />
-          <Route path="applications"  element={<ManageApplications />} />
-
-          {/* Operasional Proyek */}
-          <Route path="siteplan"      element={<ManageSiteplan />} />     {/* ← BARU */}
-
-          {/* Keuangan & Performa */}
-          <Route path="finance"       element={<ManageFinance />} />      {/* ← BARU */}
-          <Route path="performance"   element={<ManagePerformance />} />  {/* ← BARU */}
-
-          {/* Optimasi & Analitik */}
-          <Route path="seo"           element={<ManageSEO />} />
-          <Route path="analytics"     element={<ManageAnalytics />} />
-
-          {/* Sistem */}
-          <Route path="settings"      element={<Settings />} />
-
-        </Route>
-
-        {/* ── D. 404 ────────────────────────────────────────── */}
-        <Route path="*" element={<NotFound />} />
-
-      </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }

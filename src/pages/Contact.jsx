@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import { trackCtaClick, trackEvent, trackWhatsappClick } from '../lib/analytics';
 
 // --- INTERNAL SVG ICONS (To avoid unresolved dependency issues) ---
 const IconMapPin = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
@@ -49,6 +50,7 @@ export default function Contact() {
         sumber: 'Halaman Kontak',
         createdAt: serverTimestamp(),
       });
+      trackEvent('contact_form_submit', { category: 'contact', label: 'contact_page_form' });
       toast.success('Pesan Anda berhasil dikirim! Tim kami akan segera merespon.', {
         style: { borderRadius: '10px', background: '#111', color: '#fff' }
       });
@@ -89,12 +91,14 @@ export default function Contact() {
             </motion.p>
             
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row justify-center gap-4">
-              <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" 
+              <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer"
+                onClick={() => trackWhatsappClick('contact_hero_whatsapp')}
                 className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-900/30"
               >
                 <IconMessage /> Chat WhatsApp
               </a>
-              <a href="#maps-form" 
+              <a href="#maps-form"
+                onClick={() => trackCtaClick('contact_hero_location')}
                 className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#111] border border-white/10 text-white font-bold rounded-xl hover:bg-white/5 transition-all"
               >
                 Lihat Lokasi
@@ -301,6 +305,7 @@ export default function Contact() {
           
           <motion.a initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
             href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer"
+            onClick={() => trackWhatsappClick('contact_bottom_whatsapp')}
             className="inline-flex items-center justify-center gap-4 bg-white text-red-700 px-10 py-5 rounded-[1.25rem] font-black text-xl hover:bg-gray-100 transition-all hover:-translate-y-1 shadow-2xl shadow-black/20"
           >
             <IconMessage /> Chat Sekarang
