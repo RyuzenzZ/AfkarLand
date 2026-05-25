@@ -51,7 +51,10 @@ export default function App() {
   useSEO();
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowIntro(false), 3500);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    const introDuration = reduceMotion ? 800 : isMobile ? 1800 : 2400;
+    const timer = setTimeout(() => setShowIntro(false), introDuration);
     initWebVitalsTracking();
     return () => clearTimeout(timer);
   }, []);

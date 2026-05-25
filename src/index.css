@@ -354,3 +354,27 @@ html[data-theme='light'] .public-footer [class*='bg-white/5'] {
   background-color: rgba(17, 24, 39, 0.05) !important;
   border-color: rgba(17, 24, 39, 0.1) !important;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .public-main [class*='blur-[100px]'],
+  .public-main [class*='blur-[120px]'],
+  .public-main [class*='blur-3xl'] {
+    filter: blur(40px) !important;
+  }
+
+  .public-main [class*='backdrop-blur-xl'],
+  .public-main [class*='backdrop-blur-md'] {
+    backdrop-filter: blur(8px) !important;
+  }
+}

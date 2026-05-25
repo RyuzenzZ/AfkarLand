@@ -119,7 +119,8 @@ export default function Home() {
   useEffect(() => {
     if (!testimonialTrackRef.current) return undefined;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) return undefined;
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    if (reduceMotion || isMobile) return undefined;
 
     let tween;
     const observer = new IntersectionObserver(
@@ -158,7 +159,7 @@ export default function Home() {
       gsap.set(heroContentRef.current, { autoAlpha: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 56, scale: 1 });
       gsap.set(heroStatsRef.current, { autoAlpha: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 28, scale: 1 });
       gsap.set(heroOverlayRef.current, { opacity: reduceMotion ? 1 : 0.22 });
-      gsap.set(heroImageRef.current, { scale: isDesktop ? 1.08 : 1.02, y: isDesktop ? -24 : 0 });
+      gsap.set(heroImageRef.current, { scale: isDesktop ? 1.08 : 1, y: isDesktop ? -24 : 0 });
 
       if (reduceMotion) return;
 
@@ -169,7 +170,7 @@ export default function Home() {
           revealed = true;
           gsap.timeline({ defaults: { ease: 'power3.out' } })
             .to(heroOverlayRef.current, { opacity: 1, duration: 0.45 }, 0)
-            .to(heroImageRef.current, { scale: 1, duration: 0.75 }, 0)
+            .to(heroImageRef.current, { scale: 1, duration: 0.35 }, 0)
             .to(heroContentRef.current, { autoAlpha: 1, y: 0, duration: 0.65 }, 0.08)
             .to(heroStatsRef.current, { autoAlpha: 1, y: 0, duration: 0.6 }, 0.18);
         };

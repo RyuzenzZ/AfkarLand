@@ -16,6 +16,7 @@ export default function Loader() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
 
     const context = gsap.context(() => {
       if (reduceMotion) {
@@ -101,13 +102,13 @@ export default function Loader() {
           duration: 0.7,
         }, '-=0.2')
         .to(haloRef.current, {
-          scale: 1.08,
-          opacity: 0.72,
-          duration: 1.8,
-          repeat: -1,
-          yoyo: true,
+          scale: isMobile ? 1.02 : 1.08,
+          opacity: isMobile ? 0.56 : 0.72,
+          duration: 1.2,
           ease: 'sine.inOut',
         });
+
+      if (isMobile) return;
 
       gsap.to(logoShellRef.current, {
         boxShadow: '0 30px 110px rgba(216,13,13,0.44)',

@@ -28,6 +28,61 @@ const MOTION_PROPS = new Set([
 const VariantContext = createContext(null);
 const PresenceContext = createContext({ exiting: false });
 const motionComponentCache = new Map();
+const motionProfileSubscribers = new Set();
+let cachedMotionProfile = getMotionProfile();
+let motionProfileCleanup = null;
+
+function getMotionProfile() {
+  if (typeof window === 'undefined') {
+    return { reduced: false, mobile: false, coarse: false };
+  }
+
+  return {
+    reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    mobile: window.matchMedia('(max-width: 767px)').matches,
+    coarse: window.matchMedia('(pointer: coarse)').matches,
+  };
+}
+
+function useMotionProfile() {
+  const [profile, setProfile] = useState(cachedMotionProfile);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const notify = () => {
+      cachedMotionProfile = getMotionProfile();
+      motionProfileSubscribers.forEach((listener) => listener(cachedMotionProfile));
+    };
+
+    if (!motionProfileCleanup) {
+      const queries = [
+        window.matchMedia('(prefers-reduced-motion: reduce)'),
+        window.matchMedia('(max-width: 767px)'),
+        window.matchMedia('(pointer: coarse)'),
+      ];
+
+      queries.forEach((query) => query.addEventListener?.('change', notify));
+      window.addEventListener('resize', notify);
+      motionProfileCleanup = () => {
+        queries.forEach((query) => query.removeEventListener?.('change', notify));
+        window.removeEventListener('resize', notify);
+        motionProfileCleanup = null;
+      };
+      notify();
+    }
+
+    motionProfileSubscribers.add(setProfile);
+    setProfile(cachedMotionProfile);
+
+    return () => {
+      motionProfileSubscribers.delete(setProfile);
+      if (!motionProfileSubscribers.size) motionProfileCleanup?.();
+    };
+  }, []);
+
+  return profile;
+}
 
 function isMotionValue(value) {
   return value && typeof value.get === 'function' && typeof value.on === 'function';
@@ -96,6 +151,44 @@ function toGsapVars(target, transition = {}) {
   return vars;
 }
 
+function clampDistance(value, max = 18) {
+  if (typeof value !== 'number') return value;
+  if (Math.abs(value) <= max) return value;
+  return value < 0 ? -max : max;
+}
+
+function optimizeTargetForMotion(target, profile) {
+  if (!target || (!profile.reduced && !profile.mobile)) return target;
+  const next = { ...target };
+
+  if (profile.reduced) {
+    delete next.filter;
+    delete next.rotate;
+    delete next.rotateX;
+    delete next.rotateY;
+    return next;
+  }
+
+  next.x = clampDistance(next.x);
+  next.y = clampDistance(next.y);
+  next.xPercent = clampDistance(next.xPercent, 16);
+  next.yPercent = clampDistance(next.yPercent, 16);
+  if (typeof next.scale === 'number' && next.scale < 0.98) next.scale = 0.98;
+  delete next.filter;
+  return next;
+}
+
+function optimizeTransitionForMotion(transition = {}, profile) {
+  if (!profile.reduced && !profile.mobile) return transition;
+  if (profile.reduced) return { ...transition, duration: 0, delay: 0 };
+
+  return {
+    ...transition,
+    duration: Math.min(transition.duration ?? 0.32, 0.32),
+    delay: Math.min(transition.delay ?? 0, 0.08),
+  };
+}
+
 function resolveStyle(style) {
   if (!style) return style;
   const next = { ...style };
@@ -123,6 +216,7 @@ function MotionComponent(tag) {
   return forwardRef(function Component(props, ref) {
     const localRef = useRef(null);
     const tweenRef = useRef(null);
+    const motionProfile = useMotionProfile();
     const parentVariant = useContext(VariantContext);
     const presence = useContext(PresenceContext);
     const [inView, setInView] = useState(false);
@@ -167,11 +261,19 @@ function MotionComponent(tag) {
 
     const animateNode = (node, target, localTransition = {}) => {
       tweenRef.current?.kill?.();
+      const optimizedTarget = optimizeTargetForMotion(target, motionProfile);
+      const optimizedTransition = optimizeTransitionForMotion(localTransition, motionProfile);
       const delayedTransition = {
-        ...localTransition,
-        delay: (localTransition.delay || 0) + (inheritedStagger * childIndex),
+        ...optimizedTransition,
+        delay: motionProfile.mobile || motionProfile.reduced
+          ? (optimizedTransition.delay || 0)
+          : (optimizedTransition.delay || 0) + (inheritedStagger * childIndex),
       };
-      tweenRef.current = gsap.to(node, toGsapVars(target, delayedTransition));
+      if (motionProfile.reduced) {
+        gsap.set(node, optimizedTarget);
+        return null;
+      }
+      tweenRef.current = gsap.to(node, toGsapVars(optimizedTarget, delayedTransition));
       return tweenRef.current;
     };
 
@@ -179,12 +281,12 @@ function MotionComponent(tag) {
       const node = localRef.current;
       if (!node) return undefined;
       const resolvedInitial = resolveVariant(inheritedInitial, variants);
-      if (inheritedInitial !== false && Object.keys(resolvedInitial).length) {
+      if (!motionProfile.reduced && inheritedInitial !== false && Object.keys(resolvedInitial).length) {
         const { target } = splitAnimationConfig(resolvedInitial);
-        gsap.set(node, target);
+        gsap.set(node, optimizeTargetForMotion(target, motionProfile));
       }
       return subscribeStyleMotionValues(node, style);
-    }, []);
+    }, [motionProfile.reduced, motionProfile.mobile]);
 
     useEffect(() => {
       const node = localRef.current;
@@ -199,6 +301,10 @@ function MotionComponent(tag) {
     useEffect(() => {
       const node = localRef.current;
       if (!node || !whileInView) return undefined;
+      if (motionProfile.reduced) {
+        setInView(true);
+        return undefined;
+      }
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (!entry.isIntersecting) return;
@@ -209,7 +315,7 @@ function MotionComponent(tag) {
       );
       observer.observe(node);
       return () => observer.disconnect();
-    }, [whileInView, viewport]);
+    }, [motionProfile.reduced, whileInView, viewport]);
 
     useEffect(() => {
       const node = localRef.current;
@@ -222,28 +328,35 @@ function MotionComponent(tag) {
     useEffect(() => {
       const node = localRef.current;
       if (!node || !presence.exiting || !props.exit) return;
+      if (motionProfile.reduced) return;
       const { target, transition: localTransition } = splitAnimationConfig(resolveVariant(props.exit, variants), transition);
       animateNode(node, target, localTransition);
     }, [presence.exiting, props.exit, variants, transition]);
 
     const handleMouseEnter = (event) => {
       onMouseEnter?.(event);
-      if (whileHover && localRef.current) {
-        gsap.to(localRef.current, toGsapVars(resolveVariant(whileHover, variants), transition));
+      if (whileHover && localRef.current && !motionProfile.coarse && !motionProfile.reduced) {
+        gsap.to(
+          localRef.current,
+          toGsapVars(
+            optimizeTargetForMotion(resolveVariant(whileHover, variants), motionProfile),
+            optimizeTransitionForMotion(transition, motionProfile)
+          )
+        );
       }
     };
 
     const handleMouseLeave = (event) => {
       onMouseLeave?.(event);
-      if ((whileHover || whileTap) && localRef.current) {
+      if ((whileHover || whileTap) && localRef.current && !motionProfile.reduced) {
         gsap.to(localRef.current, { scale: 1, y: 0, x: 0, duration: 0.18, ease: 'power2.out' });
       }
     };
 
     const handlePointerDown = (event) => {
       onPointerDown?.(event);
-      if (whileTap && localRef.current) {
-        gsap.to(localRef.current, toGsapVars(resolveVariant(whileTap, variants), { duration: 0.12 }));
+      if (whileTap && localRef.current && !motionProfile.reduced) {
+        gsap.to(localRef.current, toGsapVars(optimizeTargetForMotion(resolveVariant(whileTap, variants), motionProfile), { duration: 0.1 }));
       }
     };
 
@@ -410,14 +523,25 @@ export function useScroll() {
   const progress = useMotionValue(0);
 
   useEffect(() => {
+    let frame = 0;
     const update = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        progress.set(max > 0 ? window.scrollY / max : 0);
+      });
+    };
+    const updateNow = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       progress.set(max > 0 ? window.scrollY / max : 0);
     };
-    update();
+
+    updateNow();
     window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
     return () => {
+      if (frame) window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
     };
