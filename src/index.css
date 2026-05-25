@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-primary: #D80D0D; /* Merah utama AFKAR */
+  --color-brand-primary: #B91C1C; /* Merah utama AFKAR */
   --color-brand-secondary: #090909;
   --color-brand-accent: #FFFFFF;
   --color-brand-gold: #FFFFFF;
@@ -14,8 +14,9 @@
 }
 
 :root {
-  --afkar-red: #D80D0D;
-  --afkar-red-dark: #A90000;
+  --afkar-red: #B91C1C;
+  --afkar-red-dark: #7F1D1D;
+  --afkar-red-deep: #5F1414;
   --afkar-white: #FFFFFF;
   --afkar-soft-red: #FEE2E2;
   --afkar-black: #090909;
@@ -63,22 +64,22 @@ html[data-theme='light'] {
 .public-main [class*='border-brand-primary'],
 .public-main [class*='hover:border-red-500']:hover,
 .public-footer [class*='hover:border-red-600']:hover {
-  border-color: rgba(216, 13, 13, 0.58) !important;
+  border-color: rgba(185, 28, 28, 0.48) !important;
 }
 
 .public-main [class*='bg-red-500/10'],
 .public-main [class*='bg-red-600/10'],
 .public-main [class*='bg-brand-primary/5'] {
-  background-color: rgba(216, 13, 13, 0.10) !important;
+  background-color: rgba(185, 28, 28, 0.10) !important;
 }
 
 .public-main [class*='shadow-red-900'] {
-  --tw-shadow-color: rgba(216, 13, 13, 0.28) !important;
+  --tw-shadow-color: rgba(185, 28, 28, 0.22) !important;
 }
 
 .public-main [class*='from-red-500'] {
   --tw-gradient-from: var(--afkar-red) !important;
-  --tw-gradient-to: rgba(216, 13, 13, 0) !important;
+  --tw-gradient-to: rgba(185, 28, 28, 0) !important;
 }
 
 .public-main [class*='to-red-300'] {
@@ -110,7 +111,7 @@ html[data-theme='light'] {
 .public-main [class*='hover:border-[#C9A84C]']:hover,
 .public-main [class*='hover:border-[#D99A00]']:hover,
 .public-main [class*='hover:border-[#F5B21A]']:hover {
-  border-color: rgba(216, 13, 13, 0.58) !important;
+  border-color: rgba(185, 28, 28, 0.48) !important;
 }
 
 .public-main [class*='via-red-800'],
@@ -147,6 +148,9 @@ html[data-theme='light'] .public-main [class*='bg-[#151010]'],
 html[data-theme='light'] .public-main [class*='bg-[#1a0a0a]'],
 html[data-theme='light'] .public-main [class*='bg-[#0A0A0A]'],
 html[data-theme='light'] .public-main [class*='bg-white/[0.013]'],
+html[data-theme='light'] .public-main [class*='bg-white/[0.01]'],
+html[data-theme='light'] .public-main [class*='bg-white/[0.035]'],
+html[data-theme='light'] .public-main [class*='bg-white/[0.055]'],
 html[data-theme='light'] .public-main [class*='bg-white/4'] {
   background-color: #f8fafc !important;
   color: #111827 !important;
@@ -185,6 +189,17 @@ html[data-theme='light'] .public-main [class*='text-white/25'] {
   color: #4b5563 !important;
 }
 
+html[data-theme='light'] .public-main [class*='text-red-100'],
+html[data-theme='light'] .public-main [class*='text-red-200'],
+html[data-theme='light'] .public-main [class*='text-red-300'],
+html[data-theme='light'] .public-main [class*='text-red-400'],
+html[data-theme='light'] .public-main [class*='text-red-500'],
+html[data-theme='light'] .public-main [class*='text-red-600'],
+html[data-theme='light'] .public-main [class*='text-red-700'],
+html[data-theme='light'] .public-footer [class*='text-[#D80D0D]'] {
+  color: #991b1b !important;
+}
+
 html[data-theme='light'] .public-main [class*='text-white']:not([class*='bg-red']):not([class*='bg-brand']) {
   color: #111827 !important;
 }
@@ -193,6 +208,25 @@ html[data-theme='light'] .public-main [class*='bg-white/5'],
 html[data-theme='light'] .public-main [class*='bg-white/10'],
 html[data-theme='light'] .public-main [class*='bg-white/15'] {
   background-color: rgba(17, 24, 39, 0.04) !important;
+}
+
+html[data-theme='light'] .public-main [class*='bg-red-500/5'],
+html[data-theme='light'] .public-main [class*='bg-red-500/10'],
+html[data-theme='light'] .public-main [class*='bg-red-500/15'],
+html[data-theme='light'] .public-main [class*='bg-red-600/10'],
+html[data-theme='light'] .public-main [class*='bg-red-900/5'],
+html[data-theme='light'] .public-main [class*='bg-red-900/10'],
+html[data-theme='light'] .public-main [class*='bg-red-900/20'] {
+  background-color: rgba(153, 27, 27, 0.07) !important;
+}
+
+html[data-theme='light'] .public-main [class*='border-red-500/10'],
+html[data-theme='light'] .public-main [class*='border-red-500/20'],
+html[data-theme='light'] .public-main [class*='border-red-500/25'],
+html[data-theme='light'] .public-main [class*='border-red-500/30'],
+html[data-theme='light'] .public-main [class*='border-red-300'],
+html[data-theme='light'] .public-main [class*='border-red-400'] {
+  border-color: rgba(153, 27, 27, 0.22) !important;
 }
 
 html[data-theme='light'] .public-main [class*='shadow-black'] {
@@ -292,6 +326,12 @@ html[data-theme='light'] .public-main [class*='via-red-900'],
 html[data-theme='light'] .public-main [class*='via-red-800'],
 html[data-theme='light'] .public-main [class*='via-[#4b1010]'] {
   --tw-gradient-via: #991b1b !important;
+}
+
+html[data-theme='light'] .public-main [class*='to-red-300'],
+html[data-theme='light'] .public-main [class*='to-red-500'],
+html[data-theme='light'] .public-main [class*='to-red-900'] {
+  --tw-gradient-to: #dc2626 !important;
 }
 
 html[data-theme='light'] .public-main input::placeholder,

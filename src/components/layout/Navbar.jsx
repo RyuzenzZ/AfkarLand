@@ -37,7 +37,9 @@ export default function Navbar() {
       );
 
       gsap.to(logoRef.current, {
-        boxShadow: '0 0 24px rgba(255,255,255,0.34), 0 0 34px rgba(216,13,13,0.36)',
+        boxShadow: isLight
+          ? '0 10px 28px rgba(15,23,42,0.12), 0 0 18px rgba(185,28,28,0.18)'
+          : '0 0 24px rgba(255,255,255,0.34), 0 0 34px rgba(216,13,13,0.36)',
         duration: 2.2,
         repeat: -1,
         yoyo: true,
@@ -46,31 +48,60 @@ export default function Navbar() {
     }, brandRef);
 
     return () => context.revert();
-  }, []);
+  }, [isLight]);
 
   const renderSiteName = () => {
     const parts = siteName.split(' ');
-    if (parts.length < 2) return <span className="text-white">{siteName}</span>;
+    if (parts.length < 2) {
+      return <span className={isLight ? 'text-[#991b1b]' : 'text-white'}>{siteName}</span>;
+    }
     return (
       <>
-        <span className="text-white drop-shadow-[0_0_14px_rgba(255,255,255,0.24)]">
+        <span className={isLight ? 'text-[#991b1b]' : 'text-white drop-shadow-[0_0_14px_rgba(255,255,255,0.24)]'}>
           {parts[0]}
         </span>
-        <span className="rounded-md bg-white px-1.5 py-0.5 text-[#D80D0D] shadow-[0_0_24px_rgba(255,255,255,0.24)]">
+        <span className={isLight
+          ? 'rounded-md bg-[#991b1b] px-1.5 py-0.5 text-white shadow-[0_10px_24px_rgba(153,27,27,0.18)]'
+          : 'rounded-md bg-white px-1.5 py-0.5 text-[#D80D0D] shadow-[0_0_24px_rgba(255,255,255,0.24)]'
+        }>
           {parts.slice(1).join(' ')}
         </span>
       </>
     );
   };
 
+  const headerClass = isLight
+    ? `${isScrolled ? 'bg-white/95 py-4 shadow-lg shadow-slate-900/10' : 'bg-white/90 py-5 shadow-sm shadow-slate-900/5'} border-b border-slate-200/80 backdrop-blur-xl`
+    : isScrolled
+      ? 'bg-[#7f1d1d] shadow-lg shadow-red-950/20 py-4'
+      : 'bg-gradient-to-r from-[#7f1d1d] via-[#991b1b] to-[#111111] py-6';
+
+  const navLinkClass = isLight
+    ? 'text-sm font-bold text-slate-700 hover:text-[#991b1b] transition-colors uppercase tracking-wider relative group'
+    : 'text-sm font-bold text-white hover:text-red-100 transition-colors uppercase tracking-wider relative group';
+
+  const underlineClass = isLight ? 'bg-[#991b1b]' : 'bg-white';
+
+  const mobileIconClass = isLight
+    ? 'md:hidden text-slate-800 hover:text-[#991b1b] transition-colors'
+    : 'md:hidden text-white hover:text-red-100 transition-colors';
+
+  const mobileMenuClass = isLight
+    ? 'md:hidden bg-white absolute top-full left-0 w-full shadow-2xl border-t border-slate-200 overflow-hidden'
+    : 'md:hidden bg-[#7f1d1d] absolute top-full left-0 w-full shadow-2xl border-t border-white/20 overflow-hidden';
+
   const ThemeToggle = ({ mobile = false }) => (
     <button
       type="button"
       onClick={toggleTheme}
       className={
-        mobile
-          ? 'flex items-center justify-center gap-2 mt-3 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/70 text-white font-bold text-base py-3 rounded-xl transition-all duration-300'
-          : 'flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur-sm transition-all duration-300 hover:border-white/70 hover:bg-white/25'
+        isLight
+          ? mobile
+            ? 'flex items-center justify-center gap-2 mt-3 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 font-bold text-base py-3 rounded-xl transition-all duration-300'
+            : 'flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-800 transition-all duration-300 hover:border-[#991b1b]/30 hover:bg-red-50 hover:text-[#991b1b]'
+          : mobile
+            ? 'flex items-center justify-center gap-2 mt-3 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/70 text-white font-bold text-base py-3 rounded-xl transition-all duration-300'
+            : 'flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white backdrop-blur-sm transition-all duration-300 hover:border-white/70 hover:bg-white/25'
       }
       aria-label={isLight ? 'Aktifkan tampilan dark' : 'Aktifkan tampilan light'}
       title={isLight ? 'Dark mode' : 'Light mode'}
@@ -81,11 +112,7 @@ export default function Navbar() {
   );
 
   return (
-    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-      isScrolled
-        ? 'bg-[#A90000] shadow-lg shadow-red-950/20 py-4'
-        : 'bg-gradient-to-r from-[#D80D0D] via-[#C70D0D] to-[#A90000] py-6'
-    }`}>
+    <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${headerClass}`}>
       <div className="container mx-auto px-6 md:px-12 flex justify-between items-center">
 
         {/* LOGO */}
@@ -115,10 +142,10 @@ export default function Navbar() {
             <Link
               key={link.path}
               to={link.path}
-              className="text-sm font-bold text-white hover:text-red-100 transition-colors uppercase tracking-wider relative group"
+              className={navLinkClass}
             >
               {link.label}
-              <span className={`absolute -bottom-1 left-0 h-0.5 bg-white transition-all duration-300 ${
+              <span className={`absolute -bottom-1 left-0 h-0.5 ${underlineClass} transition-all duration-300 ${
                 location.pathname === link.path ? 'w-full' : 'w-0 group-hover:w-full'
               }`} />
             </Link>
@@ -126,7 +153,10 @@ export default function Navbar() {
           <ThemeToggle />
           <Link
             to="/admin/login"
-            className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/70 text-white text-sm font-bold px-4 py-2 rounded-full transition-all duration-300 uppercase tracking-wider backdrop-blur-sm"
+            className={isLight
+              ? 'flex items-center gap-2 bg-[#991b1b] hover:bg-[#7f1d1d] border border-[#991b1b] text-white text-sm font-bold px-4 py-2 rounded-full transition-all duration-300 uppercase tracking-wider shadow-sm shadow-red-900/10'
+              : 'flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/70 text-white text-sm font-bold px-4 py-2 rounded-full transition-all duration-300 uppercase tracking-wider backdrop-blur-sm'
+            }
           >
             <FiLock size={14} /><span>Login</span>
           </Link>
@@ -134,7 +164,7 @@ export default function Navbar() {
 
         {/* HAMBURGER MOBILE */}
         <button
-          className="md:hidden text-white hover:text-red-100 transition-colors"
+          className={mobileIconClass}
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle Menu"
         >
@@ -149,16 +179,17 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[#A90000] absolute top-full left-0 w-full shadow-2xl border-t border-white/20 overflow-hidden"
+            className={mobileMenuClass}
           >
             <div className="flex flex-col px-6 py-6 gap-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-white font-bold text-lg py-3 border-b border-white/10 transition-colors ${
-                    location.pathname === link.path ? 'text-red-100' : 'hover:text-red-100'
-                  }`}
+                  className={isLight
+                    ? `font-bold text-lg py-3 border-b border-slate-100 transition-colors ${location.pathname === link.path ? 'text-[#991b1b]' : 'text-slate-800 hover:text-[#991b1b]'}`
+                    : `text-white font-bold text-lg py-3 border-b border-white/10 transition-colors ${location.pathname === link.path ? 'text-red-100' : 'hover:text-red-100'}`
+                  }
                 >
                   {link.label}
                 </Link>
@@ -166,7 +197,10 @@ export default function Navbar() {
               <ThemeToggle mobile />
               <Link
                 to="/admin/login"
-                className="flex items-center justify-center gap-2 mt-4 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/70 text-white font-bold text-base py-3 rounded-xl transition-all duration-300"
+                className={isLight
+                  ? 'flex items-center justify-center gap-2 mt-4 bg-[#991b1b] hover:bg-[#7f1d1d] border border-[#991b1b] text-white font-bold text-base py-3 rounded-xl transition-all duration-300'
+                  : 'flex items-center justify-center gap-2 mt-4 bg-white/15 hover:bg-white/25 border border-white/30 hover:border-white/70 text-white font-bold text-base py-3 rounded-xl transition-all duration-300'
+                }
               >
                 <FiLock size={16} /><span>Login Admin</span>
               </Link>
