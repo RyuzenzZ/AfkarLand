@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
@@ -15,39 +15,46 @@ import { trackCtaClick, trackWhatsappClick } from '../lib/analytics';
 const FAQ_ITEMS = [
   {
     question: 'Apa itu property syariah?',
+    category: 'Property Syariah',
     answer:
       'Property syariah adalah sistem kepemilikan properti yang dijalankan berdasarkan prinsip syariat Islam, dengan transaksi yang menghindari riba, gharar, dan akad yang tidak jelas. Umumnya menggunakan akad langsung antara developer dan pembeli tanpa bank konvensional.',
     source: 'Ausen Property Syariah',
   },
   {
     question: 'Apa bedanya property syariah dengan KPR konvensional?',
+    category: 'Property Syariah',
     answer:
       'Perbedaan utamanya ada pada sistem transaksi dan akad. Pada property syariah, transaksi dilakukan dengan akad syariah dan biasanya tanpa bunga bank. Sedangkan KPR konvensional menggunakan sistem pinjaman berbunga dari bank.',
     source: 'Ausen Property Syariah',
   },
   {
     question: 'Apakah AFKAR LAND merupakan developer property syariah?',
+    category: 'AFKAR LAND',
     answer:
       'Ya, AFKAR LAND merupakan perusahaan pengembang property syariah yang menghadirkan hunian modern dengan konsep Islami, nyaman, dan berorientasi pada nilai keberkahan dalam transaksi maupun lingkungan hunian.',
   },
   {
     question: 'Apa konsep yang diusung AFKAR LAND?',
+    category: 'AFKAR LAND',
     answer:
       'AFKAR LAND mengusung konsep Modern Islamic Living, yaitu hunian modern yang dipadukan dengan lingkungan nyaman, privasi keluarga, nilai Islami, serta lokasi strategis untuk aktivitas sehari-hari.',
   },
   {
     question: 'Apakah membeli rumah di AFKAR LAND harus melalui bank?',
+    category: 'Pembayaran',
     answer:
       'Tidak harus. Konsep property syariah umumnya memungkinkan transaksi langsung antara pembeli dan developer tanpa melibatkan bank konvensional.',
     source: 'Ausen Property Syariah',
   },
   {
     question: 'Apakah cicilan di property syariah berubah-ubah?',
+    category: 'Pembayaran',
     answer:
       'Biasanya tidak. Dalam banyak skema property syariah, nominal cicilan disepakati di awal akad sehingga lebih jelas dan transparan bagi pembeli.',
   },
   {
     question: 'Apa kelebihan membeli rumah di developer property syariah?',
+    category: 'Property Syariah',
     answer: 'Beberapa kelebihan yang biasanya dicari pembeli rumah syariah antara lain:',
     points: [
       'Transaksi lebih transparan',
@@ -60,12 +67,14 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Apakah property syariah aman?',
+    category: 'Legalitas',
     answer:
       'Aman selama memilih developer yang memiliki legalitas jelas, track record yang baik, dan akad yang transparan. Konsumen tetap perlu memeriksa legalitas proyek dan reputasi developer sebelum membeli.',
     source: 'Royal Orchid Syariah',
   },
   {
     question: 'Legalitas apa saja yang perlu dicek sebelum membeli rumah?',
+    category: 'Legalitas',
     answer: 'Beberapa legalitas penting yang perlu diperhatikan sebelum membeli rumah adalah:',
     points: [
       'Sertifikat tanah',
@@ -78,33 +87,39 @@ const FAQ_ITEMS = [
   },
   {
     question: 'Apakah property syariah cocok untuk investasi?',
+    category: 'Investasi',
     answer:
       'Ya. Property syariah banyak diminati karena kebutuhan hunian terus meningkat dan konsep hunian Islami semakin berkembang di Indonesia.',
     source: 'Royal Orchid Syariah',
   },
   {
     question: 'Siapa target hunian AFKAR LAND?',
+    category: 'AFKAR LAND',
     answer:
       'AFKAR LAND menghadirkan hunian untuk keluarga modern yang menginginkan rumah nyaman, strategis, bernilai investasi, dan tetap sesuai prinsip syariah.',
   },
   {
     question: 'Apakah AFKAR LAND hanya fokus pada jual rumah?',
+    category: 'AFKAR LAND',
     answer:
       'Tidak. Selain membangun hunian, AFKAR LAND juga berfokus membangun kawasan dengan konsep lingkungan yang nyaman, tertata, dan memiliki value jangka panjang.',
   },
   {
     question: 'Mengapa banyak orang mulai memilih property syariah?',
+    category: 'Property Syariah',
     answer:
       'Karena masyarakat mulai mencari sistem kepemilikan rumah yang lebih transparan, nyaman, dan sesuai prinsip Islam, terutama terkait transaksi tanpa riba.',
     source: 'Royal Orchid Syariah',
   },
   {
     question: 'Apa yang membuat AFKAR LAND berbeda?',
+    category: 'AFKAR LAND',
     answer:
       'AFKAR LAND berfokus pada pengembangan hunian modern Islami dengan konsep eksklusif, lokasi strategis, desain nyaman, dan pendekatan yang lebih dekat dengan kebutuhan keluarga masa kini.',
   },
   {
     question: 'Bagaimana cara mendapatkan informasi project terbaru AFKAR LAND?',
+    category: 'Project',
     answer:
       'Anda bisa mengikuti media sosial resmi atau menghubungi tim marketing AFKAR LAND untuk mendapatkan update project terbaru, promo, progress pembangunan, dan informasi launching kawasan terbaru.',
   },
@@ -131,6 +146,65 @@ const SOURCES = [
 
 function normalize(text) {
   return String(text || '').toLowerCase();
+}
+
+function normalizeAdminFaqs(faqs = []) {
+  if (!Array.isArray(faqs)) return [];
+
+  return faqs
+    .map((faq, index) => {
+      const question = faq.question || faq.pertanyaan || faq.q || '';
+      const answer = faq.answer || faq.jawaban || faq.a || '';
+      if (!question.trim() || !answer.trim()) return null;
+
+      return {
+        question,
+        answer,
+        category: faq.category || faq.kategori || 'Pertanyaan Umum',
+        source: faq.source || faq.sumber || '',
+        order: Number.isFinite(Number(faq.order)) ? Number(faq.order) : index,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order);
+}
+
+function buildAnswerText(faq) {
+  const points = faq.points?.length ? ` ${faq.points.join('. ')}.` : '';
+  return `${faq.answer}${points}`.replace(/\s+/g, ' ').trim();
+}
+
+function upsertFaqSchema(faqs, siteUrl) {
+  if (typeof document === 'undefined') return undefined;
+
+  const id = 'afkar-faq-schema';
+  const baseUrl = (siteUrl || 'https://afkarland.com').replace(/\/$/, '');
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: buildAnswerText(faq),
+      },
+    })),
+    url: `${baseUrl}/faq`,
+  };
+
+  let element = document.getElementById(id);
+  if (!element) {
+    element = document.createElement('script');
+    element.id = id;
+    element.type = 'application/ld+json';
+    document.head.appendChild(element);
+  }
+  element.textContent = JSON.stringify(schema);
+
+  return () => {
+    document.getElementById(id)?.remove();
+  };
 }
 
 function AnswerContent({ faq }) {
@@ -162,22 +236,41 @@ function AnswerContent({ faq }) {
 export default function FAQ() {
   const { settings } = useSiteSettings();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeCategory, setActiveCategory] = useState('Semua');
   const [query, setQuery] = useState('');
 
   const page = settings?.pages?.faq || {};
   const waNumber = settings?.contact?.waNumber || '6285705218281';
+  const schemaSiteUrl = import.meta.env.VITE_SITE_URL || 'https://afkarland.com';
+  const adminFaqs = useMemo(() => normalizeAdminFaqs(settings?.faq), [settings?.faq]);
+  const allFaqs = adminFaqs.length ? adminFaqs : FAQ_ITEMS;
+  const categories = useMemo(
+    () => ['Semua', ...Array.from(new Set(allFaqs.map((faq) => faq.category || 'Pertanyaan Umum')))],
+    [allFaqs]
+  );
   const whatsappUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(
     'Assalamualaikum, saya ingin konsultasi tentang project AFKAR LAND.'
   )}`;
 
+  useEffect(() => upsertFaqSchema(allFaqs, schemaSiteUrl), [allFaqs, schemaSiteUrl]);
+
+  useEffect(() => {
+    if (!categories.includes(activeCategory)) {
+      setActiveCategory('Semua');
+      setActiveIndex(0);
+    }
+  }, [activeCategory, categories]);
+
   const filteredFaqs = useMemo(() => {
     const keyword = normalize(query).trim();
-    if (!keyword) return FAQ_ITEMS;
-    return FAQ_ITEMS.filter((faq) => {
+    return allFaqs.filter((faq) => {
+      const matchCategory = activeCategory === 'Semua' || faq.category === activeCategory;
+      if (!matchCategory) return false;
+      if (!keyword) return true;
       const haystack = normalize(`${faq.question} ${faq.answer} ${(faq.points || []).join(' ')}`);
       return haystack.includes(keyword);
     });
-  }, [query]);
+  }, [activeCategory, allFaqs, query]);
 
   const selectedIndex = Math.min(activeIndex, Math.max(filteredFaqs.length - 1, 0));
 
@@ -217,7 +310,7 @@ export default function FAQ() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.12, ease: 'easeOut' }}
-            className="max-w-3xl rounded-2xl border border-white/10 bg-white/[0.055] p-3 shadow-2xl shadow-black/25 backdrop-blur-xl"
+            className="max-w-4xl rounded-2xl border border-white/10 bg-white/[0.055] p-3 shadow-2xl shadow-black/25 backdrop-blur-xl"
           >
             <label className="flex items-center gap-3 rounded-xl bg-black/30 px-4 py-3">
               <FiSearch className="h-5 w-5 text-red-300" />
@@ -232,6 +325,25 @@ export default function FAQ() {
                 className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white placeholder:text-white/45 outline-none"
               />
             </label>
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => {
+                    setActiveCategory(category);
+                    setActiveIndex(0);
+                  }}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.16em] transition ${
+                    activeCategory === category
+                      ? 'border-red-400 bg-red-700 text-white shadow-lg shadow-red-950/20'
+                      : 'border-white/10 bg-white/[0.04] text-white/65 hover:border-red-300/35 hover:text-white'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
