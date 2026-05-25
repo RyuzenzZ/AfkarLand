@@ -18,14 +18,12 @@ const FAQ_ITEMS = [
     category: 'Property Syariah',
     answer:
       'Property syariah adalah sistem kepemilikan properti yang dijalankan berdasarkan prinsip syariat Islam, dengan transaksi yang menghindari riba, gharar, dan akad yang tidak jelas. Umumnya menggunakan akad langsung antara developer dan pembeli tanpa bank konvensional.',
-    source: 'Ausen Property Syariah',
   },
   {
     question: 'Apa bedanya property syariah dengan KPR konvensional?',
     category: 'Property Syariah',
     answer:
       'Perbedaan utamanya ada pada sistem transaksi dan akad. Pada property syariah, transaksi dilakukan dengan akad syariah dan biasanya tanpa bunga bank. Sedangkan KPR konvensional menggunakan sistem pinjaman berbunga dari bank.',
-    source: 'Ausen Property Syariah',
   },
   {
     question: 'Apakah AFKAR LAND merupakan developer property syariah?',
@@ -44,7 +42,6 @@ const FAQ_ITEMS = [
     category: 'Pembayaran',
     answer:
       'Tidak harus. Konsep property syariah umumnya memungkinkan transaksi langsung antara pembeli dan developer tanpa melibatkan bank konvensional.',
-    source: 'Ausen Property Syariah',
   },
   {
     question: 'Apakah cicilan di property syariah berubah-ubah?',
@@ -63,14 +60,12 @@ const FAQ_ITEMS = [
       'Skema pembayaran lebih tenang',
       'Lingkungan hunian cenderung lebih Islami dan nyaman',
     ],
-    source: 'Rumah Halal Indonesia',
   },
   {
     question: 'Apakah property syariah aman?',
     category: 'Legalitas',
     answer:
       'Aman selama memilih developer yang memiliki legalitas jelas, track record yang baik, dan akad yang transparan. Konsumen tetap perlu memeriksa legalitas proyek dan reputasi developer sebelum membeli.',
-    source: 'Royal Orchid Syariah',
   },
   {
     question: 'Legalitas apa saja yang perlu dicek sebelum membeli rumah?',
@@ -83,14 +78,12 @@ const FAQ_ITEMS = [
       'Akad jual beli',
       'Reputasi developer',
     ],
-    source: 'Rumah Halal Indonesia',
   },
   {
     question: 'Apakah property syariah cocok untuk investasi?',
     category: 'Investasi',
     answer:
       'Ya. Property syariah banyak diminati karena kebutuhan hunian terus meningkat dan konsep hunian Islami semakin berkembang di Indonesia.',
-    source: 'Royal Orchid Syariah',
   },
   {
     question: 'Siapa target hunian AFKAR LAND?',
@@ -109,7 +102,6 @@ const FAQ_ITEMS = [
     category: 'Property Syariah',
     answer:
       'Karena masyarakat mulai mencari sistem kepemilikan rumah yang lebih transparan, nyaman, dan sesuai prinsip Islam, terutama terkait transaksi tanpa riba.',
-    source: 'Royal Orchid Syariah',
   },
   {
     question: 'Apa yang membuat AFKAR LAND berbeda?',
@@ -122,25 +114,6 @@ const FAQ_ITEMS = [
     category: 'Project',
     answer:
       'Anda bisa mengikuti media sosial resmi atau menghubungi tim marketing AFKAR LAND untuk mendapatkan update project terbaru, promo, progress pembangunan, dan informasi launching kawasan terbaru.',
-  },
-];
-
-const SOURCES = [
-  {
-    label: 'Ausen Property Syariah',
-    url: 'https://ausenproperty.com/faq-frequently-asked-questions/',
-  },
-  {
-    label: 'Rumah Halal Indonesia',
-    url: 'https://rumahhalal.co.id/',
-  },
-  {
-    label: 'Royal Orchid Syariah',
-    url: 'https://royalorchidsyariah.com/property-syariah/',
-  },
-  {
-    label: 'Diskusi publik pembiayaan syariah',
-    url: 'https://www.reddit.com/r/finansial/comments/13570j0',
   },
 ];
 
@@ -161,7 +134,6 @@ function normalizeAdminFaqs(faqs = []) {
         question,
         answer,
         category: faq.category || faq.kategori || 'Pertanyaan Umum',
-        source: faq.source || faq.sumber || '',
         order: Number.isFinite(Number(faq.order)) ? Number(faq.order) : index,
       };
     })
@@ -224,11 +196,6 @@ function AnswerContent({ faq }) {
           ))}
         </ul>
       ) : null}
-      {faq.source ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-300">
-          Referensi: {faq.source}
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -243,7 +210,7 @@ export default function FAQ() {
   const waNumber = settings?.contact?.waNumber || '6285705218281';
   const schemaSiteUrl = import.meta.env.VITE_SITE_URL || 'https://afkarland.com';
   const adminFaqs = useMemo(() => normalizeAdminFaqs(settings?.faq), [settings?.faq]);
-  const allFaqs = adminFaqs.length ? adminFaqs : FAQ_ITEMS;
+  const allFaqs = adminFaqs.length >= 15 ? adminFaqs : FAQ_ITEMS;
   const categories = useMemo(
     () => ['Semua', ...Array.from(new Set(allFaqs.map((faq) => faq.category || 'Pertanyaan Umum')))],
     [allFaqs]
@@ -441,7 +408,7 @@ export default function FAQ() {
       </section>
 
       <section className="bg-[#0f0f0f] py-16">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_360px] lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#7f1111] via-[#4b1010] to-[#141414] p-7 shadow-2xl shadow-red-950/25 md:p-10">
             <div className="max-w-2xl">
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-red-100">
@@ -474,28 +441,6 @@ export default function FAQ() {
                   <FiArrowRight />
                 </Link>
               </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-6">
-            <h2 className="text-lg font-black text-white">Sumber Referensi</h2>
-            <p className="mt-2 text-sm leading-6 text-white/60">
-              Beberapa jawaban umum diringkas dari referensi publik dan disesuaikan dengan konteks
-              AFKAR LAND.
-            </p>
-            <div className="mt-5 space-y-3">
-              {SOURCES.map((source) => (
-                <a
-                  key={source.url}
-                  href={source.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm font-bold text-white/75 transition hover:border-red-300/35 hover:text-white"
-                >
-                  {source.label}
-                  <FiArrowRight className="h-4 w-4 flex-none" />
-                </a>
-              ))}
             </div>
           </div>
         </div>
