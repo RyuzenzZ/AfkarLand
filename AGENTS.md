@@ -1,199 +1,267 @@
-# AGENTS.md — AfkarGroupIndonesia
-<!-- version: 1.0.0 -->
-<!-- Last updated: 2026-05-22 -->
+# AGENTS.md - AfkarGroupIndonesia
+<!-- version: 1.1.0 -->
+<!-- Last updated: 2026-05-25 -->
 
-Last reviewed: 2026-05-22
+Last reviewed: 2026-05-25
 
-**Project:** AfkarGroupIndonesia · **App:** AFKAR LAND · **Environment:** dev · **Maintainer:** repository maintainers (see GitHub)
+Project: AfkarGroupIndonesia
+App: AFKAR LAND
+Environment: dev, Vercel production
+Maintainer: repository maintainers
 
 ---
 
 ## Scope
 
 | Boundary | Rule |
-|----------|------|
-| **Reads** | `src/`, `public/`, `src/components/`, `src/pages/`, `src/hooks/`, `src/context/`, `src/services/`, `src/utils/`, `src/config/`, `.env.example` |
-| **Writes** | Hanya path yang dibutuhkan oleh perubahan yang sedang dikerjakan; jaga diff tetap minimal. Update `package.json` dan lockfile ketika dependensi berubah. |
-| **Executes** | `npm`, `npx`, `node` di root project; `vite`, `firebase` CLI untuk keperluan dev/build/deploy. |
-| **Off-limits** | File `.env` asli / Firebase credentials, production Firestore rules langsung dari terminal, destructive Firestore ops tanpa konfirmasi eksplisit, penghapusan rute admin yang masih aktif. |
+| --- | --- |
+| Reads | `src/`, `public/`, `src/components/`, `src/pages/`, `src/hooks/`, `src/context/`, `src/services/`, `src/utils/`, `src/config/`, `.env.example`, `package.json`, `vite.config.js`, documentation files. |
+| Writes | Only edit paths required by the current task. Keep diffs minimal. Update `package.json` and lockfile only when dependencies change. |
+| Executes | `npm`, `npx`, `node` in project root. Use `vite`, `vercel`, and `firebase` CLI only for dev/build/deploy needs. |
+| Off-limits | Real `.env` files, Firebase credentials outside approved config flow, production Firestore rules from terminal, destructive Firestore operations without explicit confirmation, and deletion of active admin routes without confirmation. |
 
 ---
 
-## Stack Teknologi
+## Tech Stack
 
-| Layer | Teknologi |
-|-------|-----------|
-| **UI Framework** | React 18 (functional components, hooks) |
-| **Styling** | Tailwind CSS v3 (utility-first, class-based) |
-| **Router** | React Router DOM v6 (`Link`, `useNavigate`, `Outlet`) |
-| **Backend/DB** | Firebase Firestore (realtime `onSnapshot`, `writeBatch`, `updateDoc`) |
-| **Auth** | Firebase Authentication |
-| **Icons** | `react-icons/fi` (Feather Icons) + `lucide-react` |
-| **Toast** | `react-hot-toast` |
-| **Animasi** | GSAP via internal adapter `src/lib/gsapMotion.jsx` *(lihat DESIGN.md)* |
-| **Build Tool** | Vite |
-
----
-
-## Model Configuration
-
-- **Primary:** Gunakan named model (contoh: `claude-sonnet-4-20250514`). Hindari `Auto` atau unversioned `latest` ketika reproducibility penting.
-- **Catatan:** Semua data real-time diambil langsung dari Firestore via `onSnapshot` — tidak ada LLM di pipeline data.
+| Layer | Technology |
+| --- | --- |
+| UI Framework | React 19 functional components and hooks |
+| Styling | Tailwind CSS 4 with Vite plugin |
+| Router | React Router DOM 7 |
+| Backend/DB | Firebase Firestore 12 |
+| Auth | Firebase Authentication |
+| Icons | `react-icons/fi` and `lucide-react` |
+| Toast | `react-hot-toast` |
+| Animations | GSAP through internal adapter `src/lib/gsapMotion.jsx` |
+| Build Tool | Vite 8 |
+| Performance | `web-vitals`, sitemap/image optimization scripts |
+| Charts | `recharts`, lazy loaded through route splitting where possible |
 
 ---
 
-## Execution Sequence (complex tasks)
+## Execution Sequence For Complex Tasks
 
-Untuk pekerjaan multi-step, nyatakan di awal:
+For multi-step work, state these at the start:
 
-1. Rules mana dalam file ini yang berlaku (dan Sign terkait jika ada).
-2. Batas **Scope** yang aktif saat ini.
-3. **Validation commands** yang akan dijalankan:
-   - `npm run dev` — pastikan dev server berjalan tanpa error
-   - `npm run build` — pastikan build produksi clean (tidak ada TypeScript/ESLint error jika dikonfigurasi)
-   - Uji manual di browser untuk komponen baru
+1. The active rules from this file.
+2. The current scope of files being read or edited.
+3. The validation commands to run:
+   - `npm run lint`
+   - `npm run build`
+   - `npm run dev` or local route check when visual behavior is affected
+   - Manual browser check for new UI or animation changes
 
-Pada thread panjang, *"Remember: apply all AGENTS.md rules"* me-refresh instruksi ini.
+On long threads, the phrase "Remember: apply all AGENTS.md rules" refreshes these instructions.
 
 ---
 
 ## Context Budget
 
-Gunakan referensi berikut untuk navigasi cepat:
+Use these references before editing:
 
-- Komponen UI baru → baca `src/components/ui/` dulu sebelum membuat yang baru (hindari duplikasi).
-- Semua akses Firestore → hanya lewat `src/services/` atau `src/hooks/`, **bukan** langsung di dalam komponen halaman.
-- Routing → semua route didefinisikan terpusat (cek `App.jsx` atau file router utama).
-- Animasi & Parallax → baca **DESIGN.md § Sistem Animasi** sebelum mengimplementasikan efek baru.
+- New reusable UI component: inspect `src/components/ui/` first.
+- Firestore access: prefer `src/services/` or `src/hooks/`; avoid direct Firestore reads/writes inside page components unless the current codebase already uses that pattern and the change is tightly scoped.
+- Routing: all app routes are defined in `src/App.jsx`.
+- Animation and parallax: read `DESIGN.md` section "Sistem Animasi" before adding or changing animation patterns.
+- Public theme and light/dark fixes: inspect `src/index.css`, `MainLayout`, and the affected public page before changing global overrides.
 
 ---
 
-## Konvensi Kode
+## Code Conventions
 
-### Struktur Komponen
+### Import Order
 
 ```jsx
-// Urutan import yang benar:
-// 1. React & hooks
+// 1. React and hooks
 // 2. Firebase imports
 // 3. React Router
-// 4. Komponen UI internal
-// 5. Icons (react-icons/fi, lucide-react)
-// 6. Utilities & services
-// 7. Toast
+// 4. Internal UI/layout components
+// 5. Icons from react-icons/fi or lucide-react
+// 6. Utilities, hooks, services
+// 7. Toast or other UI feedback helpers
 ```
 
-### Naming Conventions
+### Naming
 
-| Entitas | Konvensi | Contoh |
-|---------|----------|--------|
-| Komponen | PascalCase | `NotifItem`, `ManageLeads` |
-| Hooks custom | `use` + PascalCase | `useNotifications`, `useAuth` |
+| Entity | Convention | Example |
+| --- | --- | --- |
+| Components | PascalCase | `NotifItem`, `ManageLeads` |
+| Custom hooks | `use` + PascalCase | `useNotifications`, `useAuth` |
 | Service functions | camelCase | `getLeads`, `updateBookingStatus` |
 | Firestore collections | lowercase plural | `leads`, `messages`, `bookings` |
-| Tailwind class groups | urut: layout → spacing → color → effect | `flex items-center gap-3 px-4 py-2 bg-gray-900 rounded-xl` |
+| Tailwind class groups | layout, spacing, color, effect | `flex items-center gap-3 px-4 py-2 bg-gray-900 rounded-xl` |
 
-### Firestore Rules
+---
 
-- Setiap koleksi Firestore yang diakses **harus** memiliki field `createdAt` (timestamp) untuk ordering.
-- Field `notifRead` dan `notifHidden` adalah soft-delete pattern — **jangan** hardDelete data notifikasi, gunakan `notifHidden: true`.
-- Semua write batch harus menggunakan `writeBatch` dari Firestore untuk atomisitas.
+## Firestore Rules And Patterns
+
+- Collections that are ordered by time must have `createdAt`.
+- `notifRead` and `notifHidden` are the notification soft-delete pattern.
+- Do not hard-delete notifications; use `notifHidden: true`.
+- Use `writeBatch` for atomic multi-document updates.
+- Firestore batch limit is 500 operations. Split large operations into multiple batches.
+- Wrap realtime `onSnapshot` listeners in `useEffect` and clean up with `unsubscribe`.
+- Use named Firebase imports for tree-shaking. Do not use `import *` from Firebase packages.
 
 ---
 
 ## Always Do
 
-- **WAJIB cek komponen yang sudah ada** di `src/components/ui/` sebelum membuat komponen baru yang serupa. DRY principle.
-- **WAJIB gunakan `react-hot-toast`** untuk semua feedback aksi user (success/error), konsisten dengan pola yang ada.
-- **WAJIB wrap Firestore listeners** dalam `useEffect` dengan cleanup `unsubscribe` untuk mencegah memory leak.
-- **WAJIB gunakan Tailwind utility classes** — jangan inline styles kecuali untuk nilai dinamis yang tidak bisa dicapai dengan Tailwind (contoh: `style={{ height: scrollProgress + '%' }}`).
-- **Sebelum menambah animasi baru**, baca `DESIGN.md § Sistem Animasi` untuk memastikan konsistensi dengan design system.
-- **Sebelum menghapus atau mengubah route admin**, konfirmasi ke maintainer karena ada cross-link antar halaman (contoh: booking redirect ke siteplan).
+- Check existing components in `src/components/ui/` before creating new reusable UI.
+- Use `react-hot-toast` for user action feedback.
+- Keep route changes intentional and documented.
+- Use Tailwind utility classes. Inline styles are allowed only for dynamic values that Tailwind cannot express cleanly.
+- Respect dark/light theme behavior on public pages.
+- Keep animation purposeful, short, and GPU-friendly.
+- Validate with `npm run lint` and `npm run build` after code changes.
+- Keep `.env` and production secrets out of Git.
 
 ## Never Do
 
-- **JANGAN** akses Firestore langsung dari komponen halaman — selalu lewat hooks atau services.
-- **JANGAN** hardcode Firebase credentials di luar `src/config/firebaseConfig.js`.
-- **JANGAN** gunakan `deleteDoc` untuk notifikasi — gunakan soft-delete (`notifHidden: true`).
-- **JANGAN** buat komponen baru dengan nama yang sama tapi path berbeda — cek dulu seluruh `src/components/`.
-- **JANGAN** gunakan `import *` dari Firebase — selalu named imports untuk tree-shaking optimal.
-- **JANGAN** tambah library animasi baru selain GSAP tanpa diskusi — lihat DESIGN.md untuk daftar resmi.
+- Do not read, print, commit, or hardcode real `.env` secrets.
+- Do not edit Firebase credentials outside the approved environment-variable flow.
+- Do not add another animation library without discussion; GSAP is the official animation layer.
+- Do not delete active admin routes without maintainer confirmation.
+- Do not duplicate components under different paths with the same purpose.
+- Do not introduce heavy parallax or scroll effects on mobile/tablet without a reduced-motion and performance strategy.
+- Do not run destructive Firestore or filesystem operations unless explicitly requested.
 
 ---
 
-## Firestore Collections
+## Public Routes
 
-| Collection | Keterangan | Field Utama |
-|------------|------------|-------------|
-| `leads` | Calon pembeli/penyewa yang tertarik | `nama`, `proyek`, `createdAt`, `notifRead`, `notifHidden` |
-| `messages` | Pesan dari form kontak publik | `nama`, `pesan`, `createdAt`, `notifRead`, `notifHidden` |
-| `applications` | Lamaran kerja dari halaman karir | `nama`, `posisi`, `createdAt`, `notifRead`, `notifHidden` |
-| `bookings` | Booking unit properti | `nama`, `unit`, `blok`, `createdAt`, `notifRead`, `notifHidden` |
+| Path | Page |
+| --- | --- |
+| `/` | Home |
+| `/tentang-kami` | About |
+| `/karir` | Career |
+| `/proyek` | Projects |
+| `/proyek/:slug` | Project detail |
+| `/artikel` | Blog |
+| `/artikel/:slug` | Blog detail |
+| `/kontak` | Contact |
+| `/faq` | FAQ |
+| `*` | Not found |
 
 ---
 
 ## Admin Routes
 
-| Path | Halaman | Catatan |
-|------|---------|---------|
-| `/admin/leads` | Kelola lead masuk | — |
-| `/admin/messages` | Kelola pesan masuk | — |
-| `/admin/applications` | Kelola lamaran kerja | — |
-| `/admin/siteplan` | Kelola siteplan & booking unit | Route `/admin/bookings` dihapus → redirect ke sini |
-| `/admin/notifications` | Pusat notifikasi realtime | File: `ManageNotifications.jsx` |
+All `/admin/*` routes must stay protected by the admin auth guard in `AdminLayout`.
+
+| Path | Page | Notes |
+| --- | --- | --- |
+| `/admin/login` | Login | Public login screen for admins only. |
+| `/admin/dashboard` | Dashboard | Website monitoring center. |
+| `/admin/notifications` | ManageNotifications | Realtime notification center. |
+| `/admin/homepage` | ManageHomepage | Public website CMS and page content. |
+| `/admin/projects` | ManageProjects | Public project content and project detail data. |
+| `/admin/articles` | ManageArticles | Article/blog CMS. |
+| `/admin/gallery` | ManageGallery | Public media gallery. |
+| `/admin/testimonials` | ManageTestimonials | Public testimonial content. |
+| `/admin/services` | ManageServices | Public service content. |
+| `/admin/leads` | ManageLeads | Transitional module; should move to internal portal later. |
+| `/admin/messages` | ManageMessages | Transitional module; should move to internal portal later. |
+| `/admin/applications` | ManageApplications | Transitional module; should move to HRD portal later. |
+| `/admin/siteplan` | ManageSiteplan | Transitional module; project operations should move to portal later. |
+| `/admin/finance` | ManageFinance | Transitional module; finance should move to portal later. |
+| `/admin/performance` | ManagePerformance | Transitional module; team KPI should move to portal later. |
+| `/admin/seo` | ManageSEO | SEO, metadata, Search Console, Analytics/GTM config. |
+| `/admin/analytics` | ManageAnalytics | Public website analytics and Web Vitals monitoring. |
+| `/admin/settings` | Settings | Public website settings. |
+
+---
+
+## Portal Split Direction
+
+Main admin remains focused on the public website:
+
+- Homepage and public page CMS.
+- Public project content.
+- Articles, gallery, testimonials, services.
+- SEO manager.
+- Website analytics and Web Vitals.
+- Public website settings.
+
+Internal portal should own operational modules:
+
+- CRM, leads, messages, marketing tools.
+- HRD applications and employee workflows.
+- Siteplan operations and project progress.
+- Finance reports and approvals.
+- Team performance and executive dashboards.
+
+Recommended public link target: `VITE_TEAM_PORTAL_URL`, defaulting to `https://portal.afkarland.com`.
+
+---
+
+## Assets, SEO, And Performance
+
+- Use optimized public images where possible: WebP/AVIF and responsive sizing.
+- Keep `scripts/generate-sitemap.mjs` and `scripts/optimize-images.mjs` aligned with public routes and assets.
+- Sitemap and robots generation should run before production build.
+- Web Vitals tracking should cover LCP, CLS, and INP.
+- Avoid duplicate tracking between Google Analytics and GTM; define one primary tracking provider.
+- Lazy-load charts/admin-heavy pages through route splitting.
 
 ---
 
 ## Repo Reference
 
-### Struktur Direktori
-
-```
+```text
 AfkarGroupIndonesia/
-├── public/
-│   └── images/              # Aset gambar statis (properti, hero, dll)
-├── src/
-│   ├── assets/              # Aset yang di-import langsung (logo, SVG, dll)
-│   ├── components/
-│   │   ├── layout/          # Sidebar, Navbar, Footer, Layout wrapper
-│   │   └── ui/              # Komponen reusable (Button, Badge, Modal, Card, dll)
-│   ├── config/
-│   │   └── firebaseConfig.js  # Firebase init — JANGAN edit credentials di sini
-│   ├── context/             # React Context (AuthContext, NotifContext, dll)
-│   ├── hooks/               # Custom hooks (useAuth, useLeads, dll)
-│   ├── pages/
-│   │   ├── admin/           # Semua halaman admin panel
-│   │   └── [public pages]   # Landing, About, Career, Contact, dll
-│   ├── services/            # Fungsi Firestore abstracted (CRUD operations)
-│   └── utils/               # Helper functions (formatWaktu, formatRupiah, dll)
-├── .env                     # Credentials Firebase (OFF-LIMITS untuk agent)
-├── .env.example             # Template variabel environment
-├── package.json
-└── vite.config.js
+|-- public/
+|   |-- images/
+|-- src/
+|   |-- assets/
+|   |-- components/
+|   |   |-- layout/
+|   |   |-- ui/
+|   |-- config/
+|   |   |-- firebaseConfig.js
+|   |-- context/
+|   |-- hooks/
+|   |-- lib/
+|   |   |-- analytics.js
+|   |   |-- gsapMotion.jsx
+|   |-- pages/
+|   |   |-- admin/
+|   |-- services/
+|   |-- utils/
+|-- .env.example
+|-- package.json
+|-- vite.config.js
 ```
 
-### Running Services
+---
+
+## Running Services
 
 ```bash
-npm run dev          # Vite dev server (hot reload)
-npm run build        # Build produksi
-npm run preview      # Preview build produksi lokal
-firebase deploy      # Deploy ke Firebase Hosting (perlu auth)
+npm run dev
+npm run lint
+npm run build
+npm run preview
+firebase deploy
 ```
 
-### Gotchas
+---
 
-- **Firestore `onSnapshot` + multiple collections**: gabungkan dengan pattern `allNotifs[src.id]` dan merge+sort setelah setiap update — lihat `ManageNotifications.jsx` sebagai referensi.
-- **`writeBatch` limit**: Firestore batch maksimal 500 operasi per batch. Untuk operasi massal (contoh: mark all read), gunakan `Promise.all` untuk volume kecil (<50), atau pecah batch untuk volume besar.
-- **Tailwind purge**: pastikan class dinamis yang dibangun dengan string concatenation di-safelist di `tailwind.config.js` — Tailwind purger tidak bisa mendeteksi class dari template literals.
-- **react-icons vs lucide-react**: keduanya digunakan — `FiXxx` dari `react-icons/fi`, `CalendarCheck` dll dari `lucide-react`. Jangan mix-use untuk ikon yang sama.
-- **Animasi Parallax**: gunakan `will-change: transform` dengan hati-hati — terlalu banyak elemen dengan property ini bisa menurunkan performa. Lihat DESIGN.md untuk panduan.
-- **Firebase Auth guard**: semua route `/admin/*` harus dilindungi oleh auth guard — jangan deploy route admin baru tanpa proteksi auth.
+## Gotchas
+
+- Vercel production requires Firebase `VITE_*` environment variables to be configured in Project Settings.
+- Firebase Auth must include the deployed domain in Authorized Domains.
+- `framer-motion` imports are intentionally resolved through the internal GSAP adapter.
+- Broad light-mode overrides live in `src/index.css`; test public pages after changing them.
+- Too many `will-change: transform` elements can hurt mobile performance.
+- Route-level lazy loading already exists in `App.jsx`; do not undo it.
 
 ---
 
 ## Changelog
 
-| Tanggal | Versi | Perubahan |
-|---------|-------|-----------|
-| 2026-05-22 | 1.0.0 | Initial AGENTS.md — mendokumentasikan stack React+Firebase+Tailwind, konvensi kode, Firestore collections, admin routes, dan panduan animasi baru. |
+| Date | Version | Changes |
+| --- | --- | --- |
+| 2026-05-22 | 1.0.0 | Initial documentation for React/Firebase/Tailwind app, Firestore conventions, admin routes, and animation guidance. |
+| 2026-05-25 | 1.1.0 | Updated stack versions, cleaned encoding, refreshed route list, added portal split direction, and documented SEO/performance build flow. |
