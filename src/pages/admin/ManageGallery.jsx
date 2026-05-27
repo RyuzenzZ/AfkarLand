@@ -319,16 +319,19 @@ export default function ManageGallery() {
 
   useEffect(() => {
     const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'));
+    let fallbackUnsub = null;
     const unsub = onSnapshot(q,
       snap => { setPhotos(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); },
       () => {
-        const u2 = onSnapshot(collection(db, 'gallery'), snap => {
+        fallbackUnsub = onSnapshot(collection(db, 'gallery'), snap => {
           setPhotos(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false);
         });
-        return u2;
       }
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
   }, []);
 
   const filtered = useMemo(() => {

@@ -25,6 +25,7 @@ import toast from 'react-hot-toast';
 const CLOUDINARY_CLOUD_NAME    = 'dyrf9qkk0';
 const CLOUDINARY_UPLOAD_PRESET = 'articles_upload';
 const CLOUDINARY_DEFAULT_FOLDER = 'afkar-land';
+const SETTINGS_CACHE_KEY = 'afkar_site_settings_v1';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Sidebar navigation groups ────────────────────────────────────────────────
@@ -71,8 +72,8 @@ const PAGE_LIST = [
 // ── Default state ─────────────────────────────────────────────────────────────
 const DEFAULT = {
   branding: {
-    logoUrl: '', logoAlt: 'AFKAR GROUP INDONESIA',
-    siteName: 'AFKAR GROUP INDONESIA',
+    logoUrl: '', logoAlt: 'AFKAR LAND',
+    siteName: 'AFKAR LAND',
     tagline: 'Properti Syariah Terbaik di Sulawesi',
     faviconUrl: '', primaryColor: '#dc2626',
   },
@@ -169,7 +170,7 @@ const DEFAULT = {
     phone: '+62 812-3456-7890', email: 'info@afkarland.com',
     address: 'Makassar, Sulawesi Selatan',
     instagram: '', facebook: '', youtube: '', tiktok: '',
-    copyright: '© 2025 AFKAR GROUP INDONESIA. All rights reserved.',
+    copyright: '© 2025 AFKAR LAND. All rights reserved.',
   },
   faq: [
     { pertanyaan: 'Apakah produk AFKAR LAND bersertifikat syariah?', jawaban: 'Ya, semua produk kami telah melalui kajian syariah dan bebas dari riba.' },
@@ -208,7 +209,7 @@ const openCloudinaryWidget = (onSuccess, folder = CLOUDINARY_DEFAULT_FOLDER) => 
 };
 
 // ── Shared UI primitives ──────────────────────────────────────────────────────
-const ic = 'w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:border-red-400 outline-none text-sm transition-colors';
+const ic = 'w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder:text-gray-400 caret-gray-900 focus:border-red-400 outline-none text-sm transition-colors';
 
 const Row = ({ children, cols = 2 }) => (
   <div className={`grid gap-3 ${cols === 1 ? '' : cols === 3 ? 'grid-cols-3' : 'grid-cols-1 md:grid-cols-2'}`}>{children}</div>
@@ -326,6 +327,11 @@ export default function ManageHomepage() {
     setSaving(true);
     try {
       await setDoc(doc(db, 'homepage_settings', 'main'), data, { merge: true });
+      try {
+        window.localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(data));
+      } catch {
+        // Firestore is the source of truth; cache only prevents stale first paint.
+      }
       toast.success('✅ Semua perubahan disimpan dan langsung tampil di web!');
     } catch {
       toast.error('Gagal menyimpan. Cek koneksi dan coba lagi.');
@@ -703,9 +709,9 @@ export default function ManageHomepage() {
                 {(data.career.posisi || []).map((pos, pi) => (
                   <div key={pi} className="border border-gray-200 rounded-xl overflow-hidden">
                     <div className="flex items-center gap-2 p-3 bg-gray-50 border-b border-gray-100">
-                      <input className="w-9 px-1.5 py-1 rounded-lg bg-white border border-gray-200 text-center text-xs outline-none"
+                      <input className="w-9 px-1.5 py-1 rounded-lg bg-white border border-gray-200 text-center text-xs text-gray-900 placeholder:text-gray-400 caret-gray-900 outline-none"
                         value={pos.emoji} onChange={e => setPosisi(pi,'emoji',e.target.value)}/>
-                      <input className="flex-1 px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-sm font-bold outline-none focus:border-red-400"
+                      <input className="flex-1 px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-sm font-bold text-gray-900 placeholder:text-gray-400 caret-gray-900 outline-none focus:border-red-400"
                         value={pos.title} onChange={e => setPosisi(pi,'title',e.target.value)} placeholder="Nama Posisi"/>
                       <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 cursor-pointer">
                         <input type="checkbox" checked={pos.prioritas||false} onChange={e => setPosisi(pi,'prioritas',e.target.checked)} className="w-3.5 h-3.5 accent-red-600"/>
@@ -944,8 +950,8 @@ export default function ManageHomepage() {
               <Row>
                 <ImgField label="Logo Utama (PNG/SVG transparan)" hint="Digunakan di seluruh website." value={data.branding.logoUrl} onChange={v => setBranding('logoUrl', v)} folder="afkar-land/branding"/>
                 <div className="space-y-3">
-                  <F label="Alt Text Logo"><input className={ic} value={data.branding.logoAlt} onChange={e => setBranding('logoAlt', e.target.value)} placeholder="AFKAR GROUP INDONESIA"/></F>
-                  <F label="Nama Site (teks fallback)"><input className={ic} value={data.branding.siteName} onChange={e => setBranding('siteName', e.target.value)} placeholder="AFKAR GROUP INDONESIA"/></F>
+                  <F label="Alt Text Logo"><input className={ic} value={data.branding.logoAlt} onChange={e => setBranding('logoAlt', e.target.value)} placeholder="AFKAR LAND"/></F>
+                  <F label="Nama Site (teks fallback)"><input className={ic} value={data.branding.siteName} onChange={e => setBranding('siteName', e.target.value)} placeholder="AFKAR LAND"/></F>
                   <F label="Tagline"><input className={ic} value={data.branding.tagline} onChange={e => setBranding('tagline', e.target.value)} placeholder="Properti Syariah Terbaik di Sulawesi"/></F>
                 </div>
               </Row>
@@ -1033,7 +1039,7 @@ export default function ManageHomepage() {
           className={ic}
           value={data.branding.siteName}
           onChange={e => setBranding('siteName', e.target.value)}
-          placeholder="AFKAR GROUP INDONESIA"
+          placeholder="AFKAR LAND"
         />
       </F>
       <F label="Alt Text Logo">
@@ -1041,7 +1047,7 @@ export default function ManageHomepage() {
           className={ic}
           value={data.branding.logoAlt}
           onChange={e => setBranding('logoAlt', e.target.value)}
-          placeholder="AFKAR GROUP INDONESIA"
+          placeholder="AFKAR LAND"
         />
       </F>
     </div>
@@ -1098,7 +1104,7 @@ export default function ManageHomepage() {
                 <F label="Telepon / WhatsApp"><input className={ic} value={data.footer.phone} onChange={e => setFooter('phone', e.target.value)} placeholder="+62 812-3456-7890"/></F>
                 <F label="Email"><input className={ic} value={data.footer.email} onChange={e => setFooter('email', e.target.value)} placeholder="info@afkarland.com"/></F>
                 <F label="Alamat" span={2}><input className={ic} value={data.footer.address} onChange={e => setFooter('address', e.target.value)} placeholder="Makassar, Sulawesi Selatan"/></F>
-                <F label="Teks Copyright" span={2}><input className={ic} value={data.footer.copyright} onChange={e => setFooter('copyright', e.target.value)} placeholder="© 2025 AFKAR GROUP INDONESIA."/></F>
+                <F label="Teks Copyright" span={2}><input className={ic} value={data.footer.copyright} onChange={e => setFooter('copyright', e.target.value)} placeholder="© 2025 AFKAR LAND."/></F>
               </Row>
             </Card>
 

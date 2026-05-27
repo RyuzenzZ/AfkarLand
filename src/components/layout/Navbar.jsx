@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMenu, FiX, FiLock, FiMoon, FiSun } from 'react-icons/fi';
-import { gsap } from 'gsap';
 import { useSiteSettings } from '../../hooks/useSiteSettings';
 import { useThemeMode } from '../../hooks/useThemeMode';
+import OptimizedImage from '../ui/OptimizedImage';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const brandRef = useRef(null);
-  const logoRef = useRef(null);
   const location = useLocation();
   const { isLight, toggleTheme } = useThemeMode();
 
@@ -27,28 +25,6 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => { setIsOpen(false); }, [location.pathname]);
-
-  useEffect(() => {
-    const context = gsap.context(() => {
-      gsap.fromTo(
-        brandRef.current,
-        { autoAlpha: 0, y: -10, filter: 'blur(8px)' },
-        { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.55, ease: 'power3.out' }
-      );
-
-      gsap.to(logoRef.current, {
-        boxShadow: isLight
-          ? '0 10px 28px rgba(15,23,42,0.12), 0 0 18px rgba(185,28,28,0.18)'
-          : '0 0 24px rgba(255,255,255,0.34), 0 0 34px rgba(216,13,13,0.36)',
-        duration: 2.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
-    }, brandRef);
-
-    return () => context.revert();
-  }, [isLight]);
 
   const renderSiteName = () => {
     const parts = siteName.split(' ');
@@ -117,17 +93,16 @@ export default function Navbar() {
 
         {/* LOGO */}
         <Link
-          ref={brandRef}
           to="/"
-          className="group flex items-center gap-3 transition-transform duration-300 hover:scale-[1.025] shrink-0"
+          className="afkar-nav-brand group flex items-center gap-3 transition-transform duration-300 hover:scale-[1.025] shrink-0"
         >
           <div
-            ref={logoRef}
-            className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm shrink-0 ring-1 ring-white/50 transition-transform duration-300 group-hover:scale-105"
+            className={`afkar-nav-logo w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm shrink-0 ring-1 ring-white/50 transition-transform duration-300 group-hover:scale-105 ${isLight ? 'afkar-nav-logo-light' : 'afkar-nav-logo-dark'}`}
           >
-            <img
+            <OptimizedImage
               src={logoUrl || '/images/Logomerahafkar.jpeg'}
               alt={branding.logoAlt || siteName}
+              loading="eager"
               className="w-full h-full object-cover"
             />
           </div>

@@ -1,6 +1,3 @@
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '../config/firebaseConfig';
-
 const EVENT_PREFIX = 'afkar_';
 
 function normalizeEventName(name) {
@@ -53,6 +50,10 @@ export function trackCtaClick(label, extra = {}) {
 export function initWebVitalsTracking() {
   if (typeof window === 'undefined' || window.__afkarWebVitalsStarted) return;
   window.__afkarWebVitalsStarted = true;
+  const firestoreSampleRate = Number(
+    import.meta.env.VITE_WEB_VITALS_FIRESTORE_SAMPLE_RATE ?? (import.meta.env.PROD ? 0.2 : 1)
+  );
+  const shouldWriteToFirestore = Math.random() < Math.min(Math.max(firestoreSampleRate, 0), 1);
 
   import('web-vitals')
     .then(({ onCLS, onINP, onLCP }) => {
@@ -70,7 +71,11 @@ export function initWebVitalsTracking() {
           navigation_type: metric.navigationType,
           page_path: window.location.pathname,
         });
-        addDoc(collection(db, 'web_vitals'), {
+        if (!shouldWriteToFirestore) return;
+        Promise.all([
+          import('../config/firebaseConfig'),
+          import('firebase/firestore'),
+        ]).then(([{ db }, { addDoc, collection, serverTimestamp }]) => addDoc(collection(db, 'web_vitals'), {
           metricId: metric.id,
           name: metric.name,
           value: metricValue,
@@ -82,7 +87,7 @@ export function initWebVitalsTracking() {
           pageUrl: window.location.href,
           userAgent: window.navigator.userAgent,
           createdAt: serverTimestamp(),
-        }).catch(() => {});
+        })).catch(() => {});
       };
 
       onLCP(report);

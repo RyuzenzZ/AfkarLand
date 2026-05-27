@@ -366,6 +366,166 @@ html[data-theme='light'] .public-footer [class*='bg-white/5'] {
   }
 }
 
+.afkar-loader {
+  animation: afkar-loader-out 260ms ease 780ms both;
+  contain: layout paint style;
+}
+
+.afkar-loader-sweep {
+  animation: afkar-sweep 760ms cubic-bezier(.22,1,.36,1) 80ms both;
+  will-change: transform, opacity;
+}
+
+.afkar-loader-halo {
+  animation: afkar-halo 900ms ease-out both;
+}
+
+.afkar-loader-shell {
+  animation: afkar-pop 620ms cubic-bezier(.22,1,.36,1) 120ms both;
+  box-shadow: 0 22px 72px rgba(216, 13, 13, 0.22);
+}
+
+.afkar-loader-logo {
+  animation: afkar-pop 640ms cubic-bezier(.22,1,.36,1) 160ms both;
+}
+
+.afkar-loader-title span {
+  animation: afkar-letter 520ms cubic-bezier(.22,1,.36,1) both;
+}
+
+.afkar-loader-tagline {
+  animation: afkar-fade-up 520ms cubic-bezier(.22,1,.36,1) 320ms both;
+}
+
+.afkar-nav-brand {
+  animation: afkar-fade-down 420ms cubic-bezier(.22,1,.36,1) 80ms both;
+}
+
+.afkar-nav-logo-light {
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12), 0 0 18px rgba(185, 28, 28, 0.16);
+}
+
+.afkar-nav-logo-dark {
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.24), 0 0 24px rgba(216, 13, 13, 0.26);
+}
+
+.afkar-hero-image {
+  animation: afkar-hero-image 900ms cubic-bezier(.22,1,.36,1) both;
+}
+
+.afkar-hero-content {
+  animation: afkar-fade-up 620ms cubic-bezier(.22,1,.36,1) 140ms both;
+}
+
+.afkar-hero-stats {
+  animation: afkar-fade-up 620ms cubic-bezier(.22,1,.36,1) 260ms both;
+}
+
+.afkar-testimonial-track {
+  animation: afkar-marquee 42s linear infinite;
+  will-change: transform;
+}
+
+@keyframes afkar-loader-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes afkar-sweep {
+  from {
+    opacity: 0;
+    transform: translateX(-115%) rotate(12deg);
+  }
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateX(115%) rotate(12deg);
+  }
+}
+
+@keyframes afkar-halo {
+  from {
+    opacity: 0;
+    transform: scale(.86);
+  }
+  to {
+    opacity: .78;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes afkar-pop {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.86);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes afkar-letter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes afkar-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes afkar-fade-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes afkar-hero-image {
+  from {
+    transform: scale(1.035);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes afkar-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce), (max-width: 767px) {
+  .afkar-testimonial-track {
+    animation: none;
+  }
+}
+
 @media (max-width: 767px) {
   .public-main [class*='blur-[100px]'],
   .public-main [class*='blur-[120px]'],

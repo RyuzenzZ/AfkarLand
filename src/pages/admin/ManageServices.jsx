@@ -297,16 +297,19 @@ export default function ManageServices() {
 
   useEffect(() => {
     const q = query(collection(db, 'services'), orderBy('urutan', 'asc'));
+    let fallbackUnsub = null;
     const unsub = onSnapshot(q,
       snap => { setServices(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); },
       () => {
-        const u2 = onSnapshot(collection(db, 'services'), snap => {
+        fallbackUnsub = onSnapshot(collection(db, 'services'), snap => {
           setServices(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false);
         });
-        return u2;
       }
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
   }, []);
 
   const filtered = useMemo(() => {

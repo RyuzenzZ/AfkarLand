@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../config/firebaseConfig';
 
 const DEFAULT_GLOBAL = {
   siteUrl: '',
@@ -24,6 +22,27 @@ const DEFAULT_PAGE = {
   canonical: '',
   robots: 'index, follow',
 };
+
+const SEO_CACHE_KEY = 'afkar_seo_settings_v1';
+
+function readCachedSEO() {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(SEO_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCachedSEO(config) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SEO_CACHE_KEY, JSON.stringify(config || {}));
+  } catch {
+    // Cache is only used to avoid stale SEO on first paint.
+  }
+}
 
 const ROUTE_TO_PAGE = [
   { match: pathname => pathname === '/', key: 'home' },
@@ -210,14 +229,37 @@ function applySEO(config, pathname) {
 
 export function useSEO() {
   const location = useLocation();
+  const [seoConfig, setSeoConfig] = useState(() => readCachedSEO());
 
   useEffect(() => {
-    const unsub = onSnapshot(
-      doc(db, 'seo_settings', 'pages'),
-      (snap) => applySEO(snap.exists() ? snap.data() : {}, location.pathname),
-      () => applySEO({}, location.pathname)
-    );
+    let unsub = () => {};
+    let mounted = true;
 
-    return () => unsub();
-  }, [location.pathname]);
+    Promise.all([
+      import('../config/firebaseConfig'),
+      import('firebase/firestore'),
+    ]).then(([{ db }, { doc, onSnapshot }]) => {
+      if (!mounted) return;
+      unsub = onSnapshot(
+        doc(db, 'seo_settings', 'pages'),
+        (snap) => {
+          const nextConfig = snap.exists() ? snap.data() : {};
+          setSeoConfig(nextConfig);
+          writeCachedSEO(nextConfig);
+        },
+        () => setSeoConfig(readCachedSEO())
+      );
+    }).catch(() => {
+      if (mounted) setSeoConfig(readCachedSEO());
+    });
+
+    return () => {
+      mounted = false;
+      unsub();
+    };
+  }, []);
+
+  useEffect(() => {
+    applySEO(seoConfig, location.pathname);
+  }, [seoConfig, location.pathname]);
 }

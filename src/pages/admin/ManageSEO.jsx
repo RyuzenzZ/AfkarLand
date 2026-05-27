@@ -48,6 +48,8 @@ const DEFAULT_GLOBAL = {
   enableIndexing: true,
 };
 
+const SEO_CACHE_KEY = 'afkar_seo_settings_v1';
+
 const MAX = {
   metaTitle: 60,
   metaDescription: 160,
@@ -55,7 +57,7 @@ const MAX = {
   ogDescription: 200,
 };
 
-const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-red-400 outline-none text-sm transition-colors';
+const inputCls = 'w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder:text-gray-400 caret-gray-900 focus:border-red-400 outline-none text-sm transition-colors';
 
 const Field = ({ label, hint, children }) => (
   <div>
@@ -150,6 +152,11 @@ export default function ManageSEO() {
     setSaving(true);
     try {
       await setDoc(doc(db, 'seo_settings', 'pages'), seoData, { merge: true });
+      try {
+        window.localStorage.setItem(SEO_CACHE_KEY, JSON.stringify(seoData));
+      } catch {
+        // SEO cache only avoids stale first paint; Firestore remains source of truth.
+      }
       toast.success('Pengaturan SEO disimpan.');
     } catch {
       toast.error('Gagal menyimpan SEO.');

@@ -7,14 +7,31 @@
     <meta name="description" content="AFKAR LAND menghadirkan properti syariah modern, aman, transparan, dan profesional untuk keluarga Indonesia." />
     <meta name="robots" content="index, follow" />
     <title>AFKAR LAND - Developer Properti Syariah</title>
-    <!-- Google Fonts untuk Tipografi Premium -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      html,body,#root{margin:0;min-height:100%;background:#090909;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      .static-loader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 42%,rgba(216,13,13,.22),transparent 30%),linear-gradient(135deg,#070707,#111 48%,#050505);color:#fff;contain:layout paint style}
+      .static-loader:before{content:"";position:absolute;inset:0;opacity:.06;background-image:linear-gradient(rgba(255,255,255,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.25) 1px,transparent 1px);background-size:72px 72px}
+      .static-loader__inner{position:relative;z-index:1;text-align:center;padding:24px}
+      .static-loader__logo{width:112px;height:112px;border-radius:999px;object-fit:contain;animation:static-pop .58s cubic-bezier(.22,1,.36,1) both}
+      .static-loader__title{margin:18px 0 8px;font-size:42px;line-height:1;font-weight:900;letter-spacing:0;color:#fff;animation:static-up .55s cubic-bezier(.22,1,.36,1) .08s both}
+      .static-loader__title span{color:#d80d0d}
+      .static-loader__text{margin:0;color:rgba(255,255,255,.78);font-size:14px;font-weight:650;animation:static-up .55s cubic-bezier(.22,1,.36,1) .14s both}
+      @keyframes static-pop{from{opacity:0;transform:translateY(16px) scale(.88)}to{opacity:1;transform:translateY(0) scale(1)}}
+      @keyframes static-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+      @media(max-width:767px){.static-loader__logo{width:96px;height:96px}.static-loader__title{font-size:34px}.static-loader__text{font-size:13px}}
+    </style>
   </head>
   <body>
     <!-- Elemen utama tempat aplikasi React di-mount -->
-    <div id="root"></div>
+    <div id="root">
+      <div class="static-loader" aria-label="Memuat AFKAR LAND">
+        <div class="static-loader__inner">
+          <img class="static-loader__logo" src="/images/LogoAfkar1.avif" alt="AFKAR LAND" />
+          <h1 class="static-loader__title">AFKAR <span>LAND</span></h1>
+          <p class="static-loader__text">Developer Property syariah terbaik di Sulawesi</p>
+        </div>
+      </div>
+    </div>
     <!-- Memanggil script utama React -->
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -22,20 +22,23 @@ export default function ManageMessages() {
   // LOGIKA: Real-time listener dari Firebase
   useEffect(() => {
     const q = query(collection(db, 'messages'), orderBy('createdAt', 'desc'));
+    let fallbackUnsub = null;
     const unsub = onSnapshot(q,
       (snap) => {
         setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         setLoading(false);
       },
       () => {
-        const unsub2 = onSnapshot(collection(db, 'messages'), (snap) => {
+        fallbackUnsub = onSnapshot(collection(db, 'messages'), (snap) => {
           setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
           setLoading(false);
         });
-        return unsub2;
       }
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
   }, []);
 
   // LOGIKA: Buka pesan & otomatis tandai Dibaca

@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { useSEO } from './hooks/useSEO';
 import { initWebVitalsTracking } from './lib/analytics';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import Loader from './components/ui/Loader';
 import ScrollToTop from './components/ui/ScrollToTop';
+import { AuthProvider } from './context/AuthContext';
 
 const MainLayout = lazy(() => import('./components/layout/MainLayout'));
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout'));
@@ -53,65 +54,68 @@ export default function App() {
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    const introDuration = reduceMotion ? 800 : isMobile ? 1800 : 2400;
+    const introDuration = reduceMotion ? 180 : isMobile ? 420 : 620;
     const timer = setTimeout(() => setShowIntro(false), introDuration);
-    initWebVitalsTracking();
-    return () => clearTimeout(timer);
+    const vitalsTimer = setTimeout(initWebVitalsTracking, introDuration + 3500);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(vitalsTimer);
+    };
   }, []);
 
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
 
-      <AnimatePresence mode="wait">
-        {showIntro && <Loader />}
-      </AnimatePresence>
+      {showIntro && <Loader />}
 
       <ScrollToTop />
 
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/tentang-kami" element={<About />} />
-            <Route path="/karir" element={<Career />} />
-            <Route path="/proyek" element={<Projects />} />
-            <Route path="/proyek/:slug" element={<ProjectDetail />} />
-            <Route path="/artikel" element={<Blog />} />
-            <Route path="/artikel/:slug" element={<BlogDetail />} />
-            <Route path="/kontak" element={<Contact />} />
-            <Route path="/faq" element={<FAQ />} />
-          </Route>
+      <ErrorBoundary>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/tentang-kami" element={<About />} />
+              <Route path="/karir" element={<Career />} />
+              <Route path="/proyek" element={<Projects />} />
+              <Route path="/proyek/:slug" element={<ProjectDetail />} />
+              <Route path="/artikel" element={<Blog />} />
+              <Route path="/artikel/:slug" element={<BlogDetail />} />
+              <Route path="/kontak" element={<Contact />} />
+              <Route path="/faq" element={<FAQ />} />
+            </Route>
 
-          <Route path="/admin/login" element={<Login />} />
+            <Route path="/admin/login" element={<AuthProvider><Login /></AuthProvider>} />
 
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="notifications" element={<ManageNotifications />} />
+            <Route path="/admin" element={<AuthProvider><AdminLayout /></AuthProvider>}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="notifications" element={<ManageNotifications />} />
 
-            <Route path="homepage" element={<ManageHomepage />} />
-            <Route path="projects" element={<ManageProjects />} />
-            <Route path="articles" element={<ManageArticles />} />
-            <Route path="gallery" element={<ManageGallery />} />
-            <Route path="testimonials" element={<ManageTestimonials />} />
-            <Route path="services" element={<ManageServices />} />
+              <Route path="homepage" element={<ManageHomepage />} />
+              <Route path="projects" element={<ManageProjects />} />
+              <Route path="articles" element={<ManageArticles />} />
+              <Route path="gallery" element={<ManageGallery />} />
+              <Route path="testimonials" element={<ManageTestimonials />} />
+              <Route path="services" element={<ManageServices />} />
 
-            <Route path="leads" element={<ManageLeads />} />
-            <Route path="messages" element={<ManageMessages />} />
-            <Route path="applications" element={<ManageApplications />} />
-            <Route path="siteplan" element={<ManageSiteplan />} />
-            <Route path="finance" element={<ManageFinance />} />
-            <Route path="performance" element={<ManagePerformance />} />
+              <Route path="leads" element={<ManageLeads />} />
+              <Route path="messages" element={<ManageMessages />} />
+              <Route path="applications" element={<ManageApplications />} />
+              <Route path="siteplan" element={<ManageSiteplan />} />
+              <Route path="finance" element={<ManageFinance />} />
+              <Route path="performance" element={<ManagePerformance />} />
 
-            <Route path="seo" element={<ManageSEO />} />
-            <Route path="analytics" element={<ManageAnalytics />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+              <Route path="seo" element={<ManageSEO />} />
+              <Route path="analytics" element={<ManageAnalytics />} />
+              <Route path="settings" element={<Settings />} />
+            </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 }

@@ -354,6 +354,7 @@ export default function ManageArticles() {
   // ─── LOGIKA: Realtime listener Firestore untuk daftar artikel ────
   useEffect(() => {
     const q = query(collection(db, 'articles'), orderBy('createdAt', 'desc'));
+    let fallbackUnsub = null;
     const unsub = onSnapshot(
       q,
       snap => {
@@ -362,14 +363,16 @@ export default function ManageArticles() {
       },
       () => {
         // ─── LOGIKA: Fallback tanpa orderBy jika belum ada index ──
-        const u2 = onSnapshot(collection(db, 'articles'), snap => {
+        fallbackUnsub = onSnapshot(collection(db, 'articles'), snap => {
           setArticles(snap.docs.map(d => ({ id: d.id, ...d.data() })));
           setLoading(false);
         });
-        return u2;
       }
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
   }, []);
 
   // ─── LOGIKA: Reset semua state form ke kondisi awal ──────────────

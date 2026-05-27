@@ -41,7 +41,7 @@ export default function Career() {
   const posisiFromDB = career.posisi || [];
   const posisiList = posisiFromDB.length > 0 ? posisiFromDB.map(p => ({
     ...p,
-    waMsg: encodeURIComponent(`Assalamu'alaikum ${hrdNama} 👋\n\nSaya ingin melamar posisi *${p.title}* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
+    waMsg: encodeURIComponent(`Assalamu'alaikum ${hrdNama} 👋\n\nSaya ingin melamar posisi *${p.title}* di AFKAR LAND.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
   })) : [
     {
       title: 'Marketing Executive',
@@ -53,7 +53,7 @@ export default function Career() {
         'Presentasi produk & mengajak survey lokasi',
         'Closing penjualan & membuat laporan harian',
       ],
-      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Marketing Executive* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
+      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Marketing Executive* di AFKAR LAND.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
     },
     {
       title: 'Teknik',
@@ -65,7 +65,7 @@ export default function Career() {
         'Mengontrol kualitas, kuantitas & progres lapangan',
         'Koordinasi kontraktor, vendor & tim terkait',
       ],
-      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Teknik* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
+      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Teknik* di AFKAR LAND.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
     },
     {
       title: 'Sales Leader',
@@ -77,7 +77,7 @@ export default function Career() {
         'Memantau kinerja tim & coaching',
         'Membuat laporan penjualan & evaluasi tim',
       ],
-      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Sales Leader* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
+      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Sales Leader* di AFKAR LAND.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
     },
     {
       title: 'Marketing Communications',
@@ -89,7 +89,7 @@ export default function Career() {
         'Menulis materi promosi & press release',
         'Monitoring & analisa performa konten & kampanye',
       ],
-      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Marketing Communications* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
+      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Marketing Communications* di AFKAR LAND.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
     },
     {
       title: 'Admin Sales',
@@ -101,7 +101,7 @@ export default function Career() {
         'Memastikan kelengkapan dokumen sales',
         'Membuat laporan penjualan & administrasi',
       ],
-      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Admin Sales* di AFKAR GROUP INDONESIA.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
+      waMsg: encodeURIComponent(`Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar posisi *Admin Sales* di AFKAR LAND.\n\nBerikut data singkat saya:\n- Nama: \n- Usia: \n- Domisili: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏`),
     },
   ]; // end fallback posisiList ternary
 
@@ -298,7 +298,7 @@ export default function Career() {
               <h2 className="text-3xl md:text-4xl font-heading font-extrabold text-white mb-2 leading-tight">
                 Posisi yang Sedang Dibuka
               </h2>
-              <p className="text-white/40 text-sm">AFKAR GROUP INDONESIA · {rekLokasi}</p>
+              <p className="text-white/40 text-sm">AFKAR LAND · {rekLokasi}</p>
             </div>
             {/* Deadline badge */}
             <div className="shrink-0 flex items-center gap-3 bg-[#111] border border-white/8 rounded-2xl px-5 py-4">
@@ -322,7 +322,7 @@ export default function Career() {
               <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-red-900/10">
                 <img
                   src={flyerSrc}
-                  alt="Flyer Open Recruitment AFKAR GROUP INDONESIA 2026"
+                  alt="Flyer Open Recruitment AFKAR LAND 2026"
                   className="w-full object-cover"
                   onError={e => { e.target.src = '/images/Abdi.jpeg'; }}
                 />
@@ -336,14 +336,14 @@ export default function Career() {
                 </div>
                 <div className="p-5 space-y-4">
                   <a
-                    href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin mengirimkan lamaran kerja ke AFKAR GROUP INDONESIA.\n\nData saya:\n- Nama: \n- Usia: \n- Domisili: \n- Posisi yang dilamar: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏")}`}
+                    href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin mengirimkan lamaran kerja ke AFKAR LAND.\n\nData saya:\n- Nama: \n- Usia: \n- Domisili: \n- Posisi yang dilamar: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏")}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 rounded-xl bg-green-500/8 border border-green-500/20 hover:bg-green-500/15 hover:border-green-500/40 transition-all group/wa"
                   >
                     <div className="w-9 h-9 rounded-lg bg-green-500/20 flex items-center justify-center text-base shrink-0">💬</div>
                     <div className="min-w-0">
                       <p className="text-white font-bold text-sm group-hover/wa:text-green-400 transition-colors truncate">+{hrdWa}</p>
-                      <p className="text-white/35 text-xs">{hrdNama} · HRD AFKAR GROUP</p>
+                      <p className="text-white/35 text-xs">{hrdNama} · HRD AFKAR LAND</p>
                     </div>
                     <FiArrowRight size={14} className="text-white/25 group-hover/wa:text-green-400 transition-colors shrink-0 ml-auto" />
                   </a>
@@ -373,7 +373,7 @@ export default function Career() {
               <div className="relative">
                 <img
                   src={flyerSrc}
-                  alt="Open Recruitment AFKAR GROUP"
+                  alt="Open Recruitment AFKAR LAND"
                   className="w-full object-cover max-h-56 object-top"
                   onError={e => { e.target.style.display = 'none'; }}
                 />
@@ -384,10 +384,10 @@ export default function Career() {
                 <div>
                   <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold mb-0.5">Kirim Lamaran ke</p>
                   <p className="text-white font-bold text-sm">+62853-5535-5323</p>
-                  <p className="text-white/35 text-xs">Pak Abdi · HRD AFKAR GROUP</p>
+                  <p className="text-white/35 text-xs">Pak Abdi · HRD AFKAR LAND</p>
                 </div>
                 <a
-                  href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar di AFKAR GROUP INDONESIA.\n\n- Nama: \n- Usia: \n- Domisili: \n- Posisi: \n- Pengalaman: \n- Alasan: \n\nTerima kasih 🙏")}`}
+                  href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar di AFKAR LAND.\n\n- Nama: \n- Usia: \n- Domisili: \n- Posisi: \n- Pengalaman: \n- Alasan: \n\nTerima kasih 🙏")}`}
                   target="_blank" rel="noopener noreferrer"
                   className="shrink-0 flex items-center gap-1.5 px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white font-bold text-xs rounded-xl transition-all"
                 >
@@ -430,7 +430,7 @@ export default function Career() {
                           </div>
                           <div>
                             <h3 className="font-heading font-extrabold text-white text-base leading-tight">{pos.title}</h3>
-                            <p className="text-white/35 text-[10px] mt-0.5">AFKAR GROUP INDONESIA</p>
+                            <p className="text-white/35 text-[10px] mt-0.5">AFKAR LAND</p>
                           </div>
                         </div>
                         <span className="shrink-0 text-[8px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-500 text-white">
@@ -499,7 +499,7 @@ export default function Career() {
                           Full Time
                         </span>
                       </div>
-                      <p className="text-white/35 text-xs mb-2">AFKAR GROUP INDONESIA · Makassar & Wotu</p>
+                      <p className="text-white/35 text-xs mb-2">AFKAR LAND · Makassar & Wotu</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1">
                         {pos.jobdesk.slice(0, 2).map((jd, ji) => (
                           <span key={ji} className="flex items-center gap-1.5 text-white/35 text-xs">
@@ -586,7 +586,7 @@ export default function Career() {
                   </ul>
                   {col.cta && (
                     <a
-                      href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin mengirimkan lamaran ke AFKAR GROUP INDONESIA.\n\n- Nama: \n- Usia: \n- Domisili: \n- Posisi: \n- Pengalaman: \n- Alasan: \n\nTerima kasih 🙏")}`}
+                      href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin mengirimkan lamaran ke AFKAR LAND.\n\n- Nama: \n- Usia: \n- Domisili: \n- Posisi: \n- Pengalaman: \n- Alasan: \n\nTerima kasih 🙏")}`}
                       target="_blank" rel="noopener noreferrer"
                       className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-red-900/30"
                     >
@@ -637,7 +637,7 @@ export default function Career() {
                 step: '02',
                 icon: '📝',
                 title: 'Siapkan Data Diri',
-                desc: 'Siapkan nama lengkap, usia, domisili, riwayat pengalaman kerja, dan alasan mengapa Anda ingin bergabung bersama AFKAR GROUP.',
+                desc: 'Siapkan nama lengkap, usia, domisili, riwayat pengalaman kerja, dan alasan mengapa Anda ingin bergabung bersama AFKAR LAND.',
                 color: 'yellow',
               },
               {
@@ -700,7 +700,7 @@ export default function Career() {
             className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
           >
             <a
-              href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar kerja di AFKAR GROUP INDONESIA.\n\nData saya:\n- Nama: \n- Usia: \n- Domisili: \n- Posisi yang dilamar: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏")}`}
+              href={`https://wa.me/6285355355323?text=${encodeURIComponent("Assalamu'alaikum Pak Abdi 👋\n\nSaya ingin melamar kerja di AFKAR LAND.\n\nData saya:\n- Nama: \n- Usia: \n- Domisili: \n- Posisi yang dilamar: \n- Pengalaman Kerja: \n- Alasan Bergabung: \n\nTerima kasih 🙏")}`}
               target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-7 py-3.5 bg-red-600 hover:bg-red-500 text-white font-bold text-sm rounded-xl transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-red-900/30"
             >

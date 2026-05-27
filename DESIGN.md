@@ -239,9 +239,9 @@ className="animate-pulse"
 className="animate-spin"
 ```
 
-### GSAP — Pola Standar
+### Native Animation Adapter - Pola Standar
 
-Animasi aplikasi sekarang menggunakan **GSAP**. Untuk menjaga migrasi tetap aman, import lama `framer-motion` diarahkan oleh `vite.config.js` ke adapter internal `src/lib/gsapMotion.jsx` yang menjalankan animasi dengan GSAP. Kode baru sebaiknya memakai GSAP langsung atau adapter internal tersebut, bukan menambah library animasi lain.
+Animasi publik sekarang menggunakan CSS dan Web Animations API. Import lama `framer-motion` tetap diarahkan oleh `vite.config.js` ke adapter internal `src/lib/gsapMotion.jsx`, tetapi adapter tersebut tidak membawa runtime GSAP. Kode baru sebaiknya memakai CSS transition/keyframes atau adapter internal tersebut.
 
 ```jsx
 import { motion, AnimatePresence } from 'framer-motion';
@@ -306,39 +306,26 @@ const itemVariants = {
 
 ### Instalasi
 
-```bash
-npm install gsap
-```
+Tidak perlu dependency animasi tambahan untuk halaman publik.
 
-### Setup Provider
+### Setup
 
-```jsx
-// App.jsx atau main.jsx — WAJIB wrap di level atas
-import { ParallaxProvider } from 'react-scroll-parallax';
-
-function App() {
-  return (
-    <ParallaxProvider>
-      <RouterProvider router={router} />
-    </ParallaxProvider>
-  );
-}
-```
+Tidak perlu provider parallax tambahan. Hindari scroll-scrub/parallax di first viewport; gunakan CSS transform/opacity kecil dan matikan efek berat di mobile atau `prefers-reduced-motion`.
 
 ### Pola Parallax Standar
 
 #### Hero Section dengan Latar Bergerak
 
 ```jsx
-import { Parallax } from 'react-scroll-parallax';
+// Gunakan CSS keyframes atau adapter native untuk reveal ringan.
 
 // ── Hero Background Parallax ───────────────────────────────────
 // Gambar latar bergerak lebih lambat dari konten (depth effect)
 export function HeroSection() {
   return (
     <section className="relative h-screen overflow-hidden">
-      {/* Layer 1: Background (bergerak paling lambat) */}
-      <Parallax speed={-20} className="absolute inset-0">
+      {/* Layer 1: Background statis dengan entrance ringan */}
+      <div className="absolute inset-0 animate-[afkar-hero-image_900ms_cubic-bezier(.22,1,.36,1)_both]">
         <img
           src="/images/hero-bg.jpg"
           alt="AFKAR LAND"
@@ -346,7 +333,7 @@ export function HeroSection() {
         />
         {/* Overlay gradien */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/70" />
-      </Parallax>
+      </div>
 
       {/* Layer 2: Konten (kecepatan normal) */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full text-white text-center px-6">
@@ -380,12 +367,12 @@ export function PropertySection() {
   return (
     <section className="relative py-24 overflow-hidden bg-gray-50">
       {/* Elemen dekoratif melayang */}
-      <Parallax speed={5} className="absolute top-10 right-10 opacity-10 pointer-events-none">
+      <div data-parallax-speed="5" className="absolute top-10 right-10 opacity-10 pointer-events-none">
         <div className="w-64 h-64 rounded-full bg-blue-500 blur-3xl" />
-      </Parallax>
-      <Parallax speed={-5} className="absolute bottom-10 left-10 opacity-10 pointer-events-none">
+      </div>
+      <div data-parallax-speed="-5" className="absolute bottom-10 left-10 opacity-10 pointer-events-none">
         <div className="w-48 h-48 rounded-full bg-amber-500 blur-3xl" />
-      </Parallax>
+      </div>
 
       {/* Konten utama */}
       <div className="relative z-10 max-w-7xl mx-auto px-6">
@@ -397,10 +384,9 @@ export function PropertySection() {
 }
 ```
 
-#### Scroll-Triggered Reveal (GSAP)
+#### Scroll-Triggered Reveal (CSS + IntersectionObserver)
 
 ```jsx
-import { gsap } from 'gsap';
 import { useRef } from 'react';
 
 // ── Reveal saat elemen masuk viewport ─────────────────────────
@@ -686,32 +672,18 @@ font-size, border-width
 |---------|--------|
 | Jumlah elemen parallax per halaman | Maksimal 5 elemen aktif |
 | Gambar dalam parallax | Gunakan `loading="lazy"` + `will-change: transform` |
-| Mobile | Nonaktifkan parallax di layar < 768px (gunakan `useParallaxController`) |
+| Mobile | Nonaktifkan parallax di layar < 768px melalui guard `matchMedia`/reduced-motion |
 | Admin panel | **Tidak perlu parallax** — reserved untuk halaman publik saja |
 
 ```jsx
-// ── Disable parallax di mobile ─────────────────────────────────
-import { useParallaxController } from 'react-scroll-parallax';
-import { useEffect } from 'react';
+useEffect(() => {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = window.matchMedia('(max-width: 767px)').matches;
+  if (reduceMotion || isMobile) return undefined;
 
-function ParallaxDisabledOnMobile() {
-  const controller = useParallaxController();
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        controller.destroy();
-      } else {
-        controller.update();
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    handleResize(); // cek initial
-    return () => window.removeEventListener('resize', handleResize);
-  }, [controller]);
-
-  return null;
-}
+  // Register lightweight IntersectionObserver here if needed.
+  return undefined;
+}, []);
 ```
 
 ### Reduced Motion
@@ -753,10 +725,10 @@ function AnimatedCard({ children }) {
 
 | Package | Versi | Penggunaan |
 |---------|-------|-----------|
-| `react` | 18.x | UI framework |
-| `react-router-dom` | 6.x | Routing |
-| `firebase` | 9.x+ | Backend & Auth |
-| `tailwindcss` | 3.x | Styling |
+| `react` | 19.x | UI framework |
+| `react-router-dom` | 7.x | Routing |
+| `firebase` | 12.x | Backend & Auth |
+| `tailwindcss` | 4.x | Styling |
 | `react-icons` | latest | Feather Icons (`fi`) |
 | `lucide-react` | latest | Icon tambahan |
 | `react-hot-toast` | latest | Toast notifikasi |
@@ -765,17 +737,17 @@ function AnimatedCard({ children }) {
 
 | Package | Versi | Penggunaan | Install |
 |---------|-------|-----------|---------|
-| `gsap` | `^3.x` | Animasi komponen, page transitions, micro-interactions, parallax pointer/scroll | `npm i gsap` |
+| CSS keyframes / Web Animations API | native | Animasi komponen, page transitions, micro-interactions ringan | bawaan browser |
 
 ### Dependencies yang Tidak Boleh Ditambahkan
 
 | Package | Alasan |
 |---------|--------|
 | GSAP Club plugins berbayar | Hindari lisensi tertutup tanpa keputusan bisnis eksplisit |
-| `anime.js` | Sudah dicakup GSAP; redundan |
-| `AOS` (Animate On Scroll) | Gunakan GSAP + IntersectionObserver |
+| `anime.js` | Redundan untuk kebutuhan reveal/transition ringan |
+| `AOS` (Animate On Scroll) | Gunakan CSS + IntersectionObserver jika perlu |
 | Library CSS-in-JS (styled-components, emotion) | Proyek sudah full Tailwind — jangan mix |
-| `react-spring` | Redundan dengan GSAP |
+| `react-spring` | Redundan dengan adapter native |
 
 ### Konfigurasi Vite untuk Performa Animasi
 
@@ -786,8 +758,7 @@ export default {
     rollupOptions: {
       output: {
         manualChunks: {
-          // Pisahkan Framer Motion ke chunk sendiri untuk lazy loading
-          'framer-motion': ['framer-motion'],
+          // Adapter framer-motion diarahkan ke native Web Animations API lewat vite resolve.alias
           'firebase': ['firebase/app', 'firebase/firestore', 'firebase/auth'],
         }
       }

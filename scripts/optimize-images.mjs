@@ -11,6 +11,10 @@ const targets = [
   'Masagena1.jpg',
   'LogoAfkar.png',
   'LogoAfkar1.png',
+  'Logomerahafkar.jpeg',
+  'ustadz.png',
+  'nia.png',
+  'Abdi.jpeg',
 ];
 
 async function exists(filePath) {
@@ -30,17 +34,19 @@ async function optimizeImage(fileName) {
   const baseOutput = path.join(imageDir, parsed.name);
   const image = sharp(inputPath).rotate();
   const metadata = await image.metadata();
-  const width = Math.min(metadata.width || 1600, 1600);
+  const smallAsset = /logo|ustadz|nia|abdi/i.test(fileName);
+  const maxWidth = smallAsset ? 640 : 1200;
+  const width = Math.min(metadata.width || maxWidth, maxWidth);
 
   await image
     .resize({ width, withoutEnlargement: true })
-    .webp({ quality: 82 })
+    .webp({ quality: smallAsset ? 74 : 76 })
     .toFile(`${baseOutput}.webp`);
 
   await sharp(inputPath)
     .rotate()
     .resize({ width, withoutEnlargement: true })
-    .avif({ quality: 60 })
+    .avif({ quality: smallAsset ? 42 : 46 })
     .toFile(`${baseOutput}.avif`);
 }
 

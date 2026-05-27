@@ -2,15 +2,13 @@
 // Hook real-time untuk membaca pengaturan site dari Firestore
 // Dipakai di semua halaman publik agar perubahan admin langsung terlihat
 
-import { useState, useEffect } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../config/firebaseConfig';
+import { createContext, createElement, useContext, useEffect, useState } from 'react';
 
 const DEFAULT_SETTINGS = {
   branding: {
     logoUrl:      '',
-    logoAlt:      'AFKAR GROUP INDONESIA',
-    siteName:     'AFKAR GROUP INDONESIA',
+    logoAlt:      'AFKAR LAND',
+    siteName:     'AFKAR LAND',
     tagline:      'Properti Syariah Terbaik di Sulawesi',
     faviconUrl:   '',
     primaryColor: '#dc2626',
@@ -131,7 +129,7 @@ const DEFAULT_SETTINGS = {
     facebook:    '',
     youtube:     '',
     tiktok:      '',
-    copyright:   '© 2025 AFKAR GROUP INDONESIA. All rights reserved.',
+    copyright:   '© 2025 AFKAR LAND. All rights reserved.',
   },
   // ── FAQ ───────────────────────────────────────────────────────────────────
   faq: [
@@ -139,6 +137,28 @@ const DEFAULT_SETTINGS = {
     { pertanyaan: 'Bagaimana cara pemesanan unit?',                  jawaban: 'Anda bisa mengisi formulir booking di halaman detail proyek atau menghubungi tim kami.' },
   ],
 };
+
+const SETTINGS_CACHE_KEY = 'afkar_site_settings_v1';
+
+function readCachedSettings() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_CACHE_KEY);
+    if (!raw) return null;
+    return mergeWithDefaults(DEFAULT_SETTINGS, JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedSettings(settings) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(settings));
+  } catch {
+    // Cache is only a flicker-prevention layer; Firestore remains source of truth.
+  }
+}
 
 // ── Deep merge helpers ────────────────────────────────────────────────────────
 
@@ -208,25 +228,64 @@ function mergeWithDefaults(defaults, saved) {
 }
 
 // ── Hook utama ────────────────────────────────────────────────────────────────
-export function useSiteSettings() {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
-  const [loading, setLoading]   = useState(true);
+const SiteSettingsContext = createContext(null);
+
+function useSiteSettingsSubscription() {
+  const [initial] = useState(() => {
+    const cached = readCachedSettings();
+    return {
+      settings: cached || DEFAULT_SETTINGS,
+      hasCache: Boolean(cached),
+    };
+  });
+  const [settings, setSettings] = useState(initial.settings);
+  const [loading, setLoading]   = useState(!initial.hasCache);
 
   useEffect(() => {
-    const unsub = onSnapshot(
-      doc(db, 'homepage_settings', 'main'),
-      (snap) => {
-        if (snap.exists()) {
-          setSettings(mergeWithDefaults(DEFAULT_SETTINGS, snap.data()));
-        }
-        setLoading(false);
-      },
-      () => setLoading(false)
-    );
-    return () => unsub();
+    let unsub = () => {};
+    let mounted = true;
+
+    Promise.all([
+      import('../config/firebaseConfig'),
+      import('firebase/firestore'),
+    ]).then(([{ db }, { doc, onSnapshot }]) => {
+      if (!mounted) return;
+      unsub = onSnapshot(
+        doc(db, 'homepage_settings', 'main'),
+        (snap) => {
+          if (snap.exists()) {
+            const nextSettings = mergeWithDefaults(DEFAULT_SETTINGS, snap.data());
+            setSettings(nextSettings);
+            writeCachedSettings(nextSettings);
+          }
+          setLoading(false);
+        },
+        () => setLoading(false)
+      );
+    }).catch(() => {
+      if (mounted) setLoading(false);
+    });
+
+    return () => {
+      mounted = false;
+      unsub();
+    };
   }, []);
 
   return { settings, loading };
+}
+
+export function SiteSettingsProvider({ children }) {
+  const value = useSiteSettingsSubscription();
+  return createElement(SiteSettingsContext.Provider, { value }, children);
+}
+
+export function useSiteSettings() {
+  const context = useContext(SiteSettingsContext);
+  if (!context) {
+    throw new Error('useSiteSettings must be used inside SiteSettingsProvider');
+  }
+  return context;
 }
 
 // ── Helper: ambil pengaturan satu halaman tertentu ───────────────────────────

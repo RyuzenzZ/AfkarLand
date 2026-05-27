@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../config/firebaseConfig';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -15,20 +13,41 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Listener ini akan terus memantau apakah ada user yang login/logout
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false); // Matikan loading HANYA setelah Firebase merespon
+    let unsubscribe = () => {};
+    let mounted = true;
+
+    Promise.all([
+      import('../config/firebaseConfig'),
+      import('firebase/auth'),
+    ]).then(([{ auth }, { onAuthStateChanged }]) => {
+      if (!mounted) return;
+      unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        setLoading(false); // Matikan loading HANYA setelah Firebase merespon
+      });
+    }).catch(() => {
+      if (mounted) setLoading(false);
     });
-    
-    return unsubscribe;
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
-  const login = (email, password) => {
+  const login = async (email, password) => {
+    const [{ auth }, { signInWithEmailAndPassword }] = await Promise.all([
+      import('../config/firebaseConfig'),
+      import('firebase/auth'),
+    ]);
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const [{ auth }, { signOut }] = await Promise.all([
+      import('../config/firebaseConfig'),
+      import('firebase/auth'),
+    ]);
     return signOut(auth);
   };
 

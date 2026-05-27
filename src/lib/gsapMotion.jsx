@@ -9,7 +9,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { gsap } from 'gsap';
 
 const MOTION_PROPS = new Set([
   'initial',
@@ -21,6 +20,8 @@ const MOTION_PROPS = new Set([
   'viewport',
   'whileHover',
   'whileTap',
+  'onHoverStart',
+  'onHoverEnd',
   'layout',
   'custom',
 ]);
@@ -151,6 +152,92 @@ function toGsapVars(target, transition = {}) {
   return vars;
 }
 
+function toMs(value, fallback) {
+  return Math.max(0, Math.round((value ?? fallback) * 1000));
+}
+
+function toCssEase(ease) {
+  if (Array.isArray(ease)) return 'cubic-bezier(.22,1,.36,1)';
+  if (ease === 'easeOut' || ease === 'power2.out' || ease === 'power3.out') return 'cubic-bezier(.22,1,.36,1)';
+  if (ease === 'easeIn' || ease === 'power2.in') return 'cubic-bezier(.32,0,.67,0)';
+  if (ease === 'easeInOut' || ease === 'power2.inOut') return 'cubic-bezier(.65,0,.35,1)';
+  if (ease === 'linear' || ease === 'none') return 'linear';
+  return 'cubic-bezier(.22,1,.36,1)';
+}
+
+function finalValue(value) {
+  return Array.isArray(value) ? value[value.length - 1] : value;
+}
+
+function unit(value, suffix = 'px') {
+  if (value === undefined || value === null) return '';
+  return typeof value === 'number' ? `${value}${suffix}` : String(value);
+}
+
+function targetToStyle(target = {}) {
+  const style = {};
+  const transforms = [];
+
+  const x = finalValue(target.x);
+  const y = finalValue(target.y);
+  const xPercent = finalValue(target.xPercent);
+  const yPercent = finalValue(target.yPercent);
+  const scale = finalValue(target.scale);
+  const rotate = finalValue(target.rotate);
+  const rotateX = finalValue(target.rotateX);
+  const rotateY = finalValue(target.rotateY);
+
+  if (xPercent !== undefined) transforms.push(`translateX(${unit(xPercent, '%')})`);
+  if (yPercent !== undefined) transforms.push(`translateY(${unit(yPercent, '%')})`);
+  if (x !== undefined) transforms.push(`translateX(${unit(x)})`);
+  if (y !== undefined) transforms.push(`translateY(${unit(y)})`);
+  if (scale !== undefined) transforms.push(`scale(${scale})`);
+  if (rotate !== undefined) transforms.push(`rotate(${unit(rotate, 'deg')})`);
+  if (rotateX !== undefined) transforms.push(`rotateX(${unit(rotateX, 'deg')})`);
+  if (rotateY !== undefined) transforms.push(`rotateY(${unit(rotateY, 'deg')})`);
+  if (transforms.length) style.transform = transforms.join(' ');
+
+  Object.entries(target).forEach(([key, rawValue]) => {
+    if (['x', 'y', 'xPercent', 'yPercent', 'scale', 'rotate', 'rotateX', 'rotateY', 'transition'].includes(key)) return;
+    const value = finalValue(rawValue);
+    if (key === 'autoAlpha') {
+      style.opacity = value;
+      style.visibility = value <= 0 ? 'hidden' : 'visible';
+    } else if (key === 'opacity') {
+      style.opacity = value;
+    } else if (key === 'boxShadow') {
+      style.boxShadow = value;
+    } else {
+      style[key] = typeof value === 'number' && key !== 'zIndex' ? String(value) : value;
+    }
+  });
+
+  return style;
+}
+
+function applyTarget(node, target) {
+  if (!node) return;
+  Object.assign(node.style, targetToStyle(target));
+}
+
+function animateTarget(node, target, transition = {}) {
+  if (!node) return { kill: () => {} };
+  const finalStyle = targetToStyle(target);
+  const animation = node.animate(
+    [finalStyle],
+    {
+      duration: toMs(transition.duration, 0.36),
+      delay: toMs(transition.delay, 0),
+      easing: toCssEase(transition.ease),
+      iterations: transition.repeat === -1 ? Infinity : (transition.repeat ?? 1),
+      direction: transition.yoyo ? 'alternate' : 'normal',
+      fill: 'forwards',
+    }
+  );
+  animation.onfinish = () => applyTarget(node, target);
+  return { kill: () => animation.cancel() };
+}
+
 function clampDistance(value, max = 18) {
   if (typeof value !== 'number') return value;
   if (Math.abs(value) <= max) return value;
@@ -205,7 +292,7 @@ function subscribeStyleMotionValues(element, style) {
   Object.entries(style).forEach(([key, value]) => {
     if (!isMotionValue(value)) return;
     unsubs.push(value.on('change', nextValue => {
-      gsap.set(element, { [key]: nextValue });
+      applyTarget(element, { [key]: nextValue });
     }));
   });
 
@@ -244,6 +331,8 @@ function MotionComponent(tag) {
       style,
       onMouseEnter,
       onMouseLeave,
+      onHoverStart,
+      onHoverEnd,
       onPointerDown,
       onPointerUp,
       onPointerCancel,
@@ -270,10 +359,10 @@ function MotionComponent(tag) {
           : (optimizedTransition.delay || 0) + (inheritedStagger * childIndex),
       };
       if (motionProfile.reduced) {
-        gsap.set(node, optimizedTarget);
+        applyTarget(node, optimizedTarget);
         return null;
       }
-      tweenRef.current = gsap.to(node, toGsapVars(optimizedTarget, delayedTransition));
+      tweenRef.current = animateTarget(node, optimizedTarget, delayedTransition);
       return tweenRef.current;
     };
 
@@ -283,7 +372,7 @@ function MotionComponent(tag) {
       const resolvedInitial = resolveVariant(inheritedInitial, variants);
       if (!motionProfile.reduced && inheritedInitial !== false && Object.keys(resolvedInitial).length) {
         const { target } = splitAnimationConfig(resolvedInitial);
-        gsap.set(node, optimizeTargetForMotion(target, motionProfile));
+        applyTarget(node, optimizeTargetForMotion(target, motionProfile));
       }
       return subscribeStyleMotionValues(node, style);
     }, [motionProfile.reduced, motionProfile.mobile]);
@@ -335,42 +424,42 @@ function MotionComponent(tag) {
 
     const handleMouseEnter = (event) => {
       onMouseEnter?.(event);
+      onHoverStart?.(event);
       if (whileHover && localRef.current && !motionProfile.coarse && !motionProfile.reduced) {
-        gsap.to(
+        animateTarget(
           localRef.current,
-          toGsapVars(
-            optimizeTargetForMotion(resolveVariant(whileHover, variants), motionProfile),
-            optimizeTransitionForMotion(transition, motionProfile)
-          )
+          optimizeTargetForMotion(resolveVariant(whileHover, variants), motionProfile),
+          optimizeTransitionForMotion(transition, motionProfile)
         );
       }
     };
 
     const handleMouseLeave = (event) => {
       onMouseLeave?.(event);
+      onHoverEnd?.(event);
       if ((whileHover || whileTap) && localRef.current && !motionProfile.reduced) {
-        gsap.to(localRef.current, { scale: 1, y: 0, x: 0, duration: 0.18, ease: 'power2.out' });
+        animateTarget(localRef.current, { scale: 1, y: 0, x: 0 }, { duration: 0.18, ease: 'power2.out' });
       }
     };
 
     const handlePointerDown = (event) => {
       onPointerDown?.(event);
       if (whileTap && localRef.current && !motionProfile.reduced) {
-        gsap.to(localRef.current, toGsapVars(optimizeTargetForMotion(resolveVariant(whileTap, variants), motionProfile), { duration: 0.1 }));
+        animateTarget(localRef.current, optimizeTargetForMotion(resolveVariant(whileTap, variants), motionProfile), { duration: 0.1 });
       }
     };
 
     const handlePointerUp = (event) => {
       onPointerUp?.(event);
       if (whileTap && localRef.current) {
-        gsap.to(localRef.current, { scale: 1, duration: 0.12, ease: 'power2.out' });
+        animateTarget(localRef.current, { scale: 1 }, { duration: 0.12, ease: 'power2.out' });
       }
     };
 
     const handlePointerCancel = (event) => {
       onPointerCancel?.(event);
       if (whileTap && localRef.current) {
-        gsap.to(localRef.current, { scale: 1, duration: 0.12, ease: 'power2.out' });
+        animateTarget(localRef.current, { scale: 1 }, { duration: 0.12, ease: 'power2.out' });
       }
     };
 
@@ -504,19 +593,30 @@ export function useTransform(input, transformerOrRange, outputRange) {
 
 export function animate(value, target, options = {}) {
   if (!isMotionValue(value)) {
-    const tween = gsap.to(value, toGsapVars(target, options));
-    return { stop: () => tween.kill() };
+    return { stop: () => {} };
   }
 
-  const state = { value: value.get() };
-  const tween = gsap.to(state, {
-    value: target,
-    duration: options.duration ?? 0.4,
-    ease: toGsapEase(options.ease),
-    onUpdate: () => value.set(state.value),
-  });
+  const start = Number(value.get()) || 0;
+  const end = Number(target) || 0;
+  const duration = toMs(options.duration, 0.4);
+  const startedAt = performance.now();
+  let frame = 0;
+  let stopped = false;
 
-  return { stop: () => tween.kill() };
+  const tick = (now) => {
+    if (stopped) return;
+    const progress = duration ? Math.min((now - startedAt) / duration, 1) : 1;
+    value.set(start + ((end - start) * progress));
+    if (progress < 1) frame = requestAnimationFrame(tick);
+  };
+
+  frame = requestAnimationFrame(tick);
+  return {
+    stop: () => {
+      stopped = true;
+      if (frame) cancelAnimationFrame(frame);
+    },
+  };
 }
 
 export function useScroll() {

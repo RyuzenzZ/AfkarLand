@@ -33,7 +33,7 @@ Maintainer: repository maintainers
 | Auth | Firebase Authentication |
 | Icons | `react-icons/fi` and `lucide-react` |
 | Toast | `react-hot-toast` |
-| Animations | GSAP through internal adapter `src/lib/gsapMotion.jsx` |
+| Animations | CSS and native Web Animations API through internal adapter `src/lib/gsapMotion.jsx` |
 | Build Tool | Vite 8 |
 | Performance | `web-vitals`, sitemap/image optimization scripts |
 | Charts | `recharts`, lazy loaded through route splitting where possible |
@@ -121,7 +121,7 @@ Use these references before editing:
 
 - Do not read, print, commit, or hardcode real `.env` secrets.
 - Do not edit Firebase credentials outside the approved environment-variable flow.
-- Do not add another animation library without discussion; GSAP is the official animation layer.
+- Do not add another animation library without discussion; CSS and the native adapter are the official public animation layer.
 - Do not delete active admin routes without maintainer confirmation.
 - Do not duplicate components under different paths with the same purpose.
 - Do not introduce heavy parallax or scroll effects on mobile/tablet without a reduced-motion and performance strategy.
@@ -252,7 +252,7 @@ firebase deploy
 
 - Vercel production requires Firebase `VITE_*` environment variables to be configured in Project Settings.
 - Firebase Auth must include the deployed domain in Authorized Domains.
-- `framer-motion` imports are intentionally resolved through the internal GSAP adapter.
+- `framer-motion` imports are intentionally resolved through the internal native animation adapter.
 - Broad light-mode overrides live in `src/index.css`; test public pages after changing them.
 - Too many `will-change: transform` elements can hurt mobile performance.
 - Route-level lazy loading already exists in `App.jsx`; do not undo it.

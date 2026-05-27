@@ -244,6 +244,7 @@ export default function Projects() {
   //         gallery, faq, progress, marketingIds, launchingDate, order
   useEffect(() => {
     const q = query(collection(db, 'projects'), orderBy('order', 'asc'));
+    let fallbackUnsub = null;
     const unsub = onSnapshot(
       q,
       (snap) => {
@@ -252,16 +253,18 @@ export default function Projects() {
       },
       () => {
         // Fallback jika index belum dibuat
-        const unsub2 = onSnapshot(collection(db, 'projects'), (snap) => {
+        fallbackUnsub = onSnapshot(collection(db, 'projects'), (snap) => {
           const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
           data.sort((a, b) => (a.order || 0) - (b.order || 0));
           setProjects(data);
           setLoading(false);
         });
-        return unsub2;
       }
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
   }, []);
 
   const filtered = useMemo(() => {

@@ -25,6 +25,7 @@ export default function ManageApplications() {
   // LOGIKA: Real-time listener dari Firebase
   useEffect(() => {
     const q = query(collection(db, 'applications'), orderBy('createdAt', 'desc'));
+    let fallbackUnsub = null;
     const unsub = onSnapshot(q,
       (snap) => {
         setApps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -32,14 +33,16 @@ export default function ManageApplications() {
       },
       () => {
         // Fallback tanpa orderBy jika index belum dibuat
-        const unsub2 = onSnapshot(collection(db, 'applications'), (snap) => {
+        fallbackUnsub = onSnapshot(collection(db, 'applications'), (snap) => {
           setApps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
           setLoading(false);
         });
-        return unsub2;
       }
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
   }, []);
 
   // LOGIKA: Naikkan status pelamar

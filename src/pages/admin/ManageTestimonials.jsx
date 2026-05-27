@@ -301,16 +301,19 @@ export default function ManageTestimonials() {
 
   useEffect(() => {
     const q = query(collection(db, 'testimonials'), orderBy('createdAt', 'desc'));
+    let fallbackUnsub = null;
     const unsub = onSnapshot(q,
       snap => { setTestimonials(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false); },
       () => {
-        const u2 = onSnapshot(collection(db, 'testimonials'), snap => {
+        fallbackUnsub = onSnapshot(collection(db, 'testimonials'), snap => {
           setTestimonials(snap.docs.map(d => ({ id: d.id, ...d.data() }))); setLoading(false);
         });
-        return u2;
       }
     );
-    return () => unsub();
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
   }, []);
 
   const filtered = useMemo(() => {
