@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import { trackCtaClick, trackEvent, trackWhatsappClick } from '../lib/analytics';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 // --- INTERNAL SVG ICONS (To avoid unresolved dependency issues) ---
 const IconMapPin = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>;
@@ -29,8 +30,17 @@ export default function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ nama: '', email: '', telepon: '', pesan: '' });
 
-  const waNumber = "6285705218281";
-  const emailAddress = "Afkargroupindonesia@gmail.com";
+  const { settings } = useSiteSettings();
+  const contact = settings?.contact || {};
+  const waNumber = contact.waNumber || settings?.whatsapp?.nomorWa || "6285705218281";
+  const emailAddress = contact.emailAddress || settings?.footer?.email || "Afkargroupindonesia@gmail.com";
+  const address = contact.alamat || settings?.footer?.address || "Makassar, Sulawesi Selatan Indonesia";
+  const mapsEmbed = contact.mapsEmbed || contact.googleMapsEmbed || '';
+  const heroTitle = contact.heroJudul || 'Kami Siap Membantu';
+  const heroSubtitle = contact.heroSubjudul || 'Tinggalkan pesan atau kunjungi kantor pemasaran kami untuk informasi lebih lanjut mengenai project property syariah AFKAR LAND.';
+  const jamSenin = contact.jamSenin || '09.00 - 17.00';
+  const jamSabtu = contact.jamSabtu || '09.00 - 16.00';
+  const jamMinggu = contact.jamMinggu || 'By Confirmation';
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -83,11 +93,11 @@ export default function Contact() {
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl lg:text-7xl font-heading font-extrabold mb-6 leading-tight text-white">
-              Kami Siap Membantu
+              {heroTitle}
             </motion.h1>
 
             <motion.p variants={fadeUp} className="text-lg text-gray-400 font-light leading-relaxed mb-10 max-w-2xl mx-auto">
-              Tinggalkan pesan atau kunjungi kantor pemasaran kami untuk informasi lebih lanjut mengenai project property syariah AFKAR LAND.
+              {heroSubtitle}
             </motion.p>
             
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row justify-center gap-4">
@@ -126,7 +136,7 @@ export default function Contact() {
                   </div>
                   <div>
                     <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-1">Kantor Pusat</h3>
-                    <p className="text-white font-medium leading-relaxed">Makassar, Sulawesi Selatan<br/>Indonesia</p>
+                    <p className="text-white font-medium leading-relaxed">{address}</p>
                   </div>
                 </div>
 
@@ -163,15 +173,15 @@ export default function Contact() {
                 <div className="space-y-4 text-sm">
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-gray-400">Senin – Jumat</span>
-                    <span className="text-white font-bold">09.00 – 17.00</span>
+                    <span className="text-white font-bold">{jamSenin}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-white/5">
                     <span className="text-gray-400">Sabtu</span>
-                    <span className="text-white font-bold">09.00 – 16.00</span>
+                    <span className="text-white font-bold">{jamSabtu}</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span className="text-gray-400">Minggu</span>
-                    <span className="text-red-400 font-bold italic">By Confirmation</span>
+                    <span className="text-red-400 font-bold italic">{jamMinggu}</span>
                   </div>
                 </div>
 
@@ -199,20 +209,28 @@ export default function Contact() {
             <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} 
               className="w-full h-full min-h-[450px] rounded-[2.5rem] overflow-hidden border border-white/10 relative bg-[#111]"
             >
-              {/* LOGIKA: Embed Google Maps tepat ke lokasi AFKAR MADANI ESTATE
-                  Koordinat: -5.1308482, 119.5068271
-                  Filter dark mode agar sesuai tema gelap website */}
-              <iframe 
-                title="Lokasi AFKAR MADANI ESTATE"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d478.6!2d119.5068271!3d-5.1308482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dbefd83f4ba7a69%3A0x84a26c0292a6dff1!2sAFKAR%20MADANI%20ESTATE!5e0!3m2!1sid!2sid!4v1716301234567!5m2!1sid!2sid"
-                width="100%" 
-                height="100%" 
-                style={{ border: 0, filter: 'grayscale(100%) invert(100%) contrast(90%) hue-rotate(180deg)', minHeight: '100%' }} 
-                allowFullScreen="" 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade"
-                className="absolute inset-0"
-              ></iframe>
+              {mapsEmbed ? (
+                <iframe
+                  title="Lokasi AFKAR LAND"
+                  src={mapsEmbed}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, filter: 'grayscale(100%) invert(100%) contrast(90%) hue-rotate(180deg)', minHeight: '100%' }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="absolute inset-0"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center p-8 text-center">
+                  <div>
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-500">
+                      <IconMapPin />
+                    </div>
+                    <p className="mt-4 text-sm leading-relaxed text-gray-300">{address}</p>
+                  </div>
+                </div>
+              )}
             </motion.div>
 
             {/* Kanan: Form Contact Minimalis */}

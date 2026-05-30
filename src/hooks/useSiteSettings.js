@@ -19,6 +19,8 @@ const DEFAULT_SETTINGS = {
       { label: 'Beranda',      path: '/'             },
       { label: 'Tentang Kami', path: '/tentang-kami' },
       { label: 'Proyek',       path: '/proyek'        },
+      { label: 'Layanan',      path: '/layanan'       },
+      { label: 'Galeri',       path: '/galeri'        },
       { label: 'Artikel',      path: '/artikel'       },
       { label: 'Karir',        path: '/karir'         },
       { label: 'Kontak',       path: '/kontak'        },
@@ -50,6 +52,33 @@ const DEFAULT_SETTINGS = {
     { label: 'Kepuasan Klien', value: '98%'  },
   ],
   // ── Konten teks beranda ────────────────────────────────────────────────────
+  teamDivisions: [
+    {
+      name: 'Marketing Executive',
+      members: [
+        { name: 'Fila Amelia', role: 'Official Masagena Green Hills', img: 'https://ui-avatars.com/api/?name=Fila+Amelia&background=111&color=fff&size=200' },
+        { name: 'Hazfira', role: 'Official Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Hazfira&background=111&color=fff&size=200' },
+      ],
+    },
+    {
+      name: 'Digital Marketing',
+      members: [
+        { name: 'Damar Mahendra', role: 'Advertiser & Pengembang Web & APK', img: 'https://ui-avatars.com/api/?name=Damar+Mahendra&background=111&color=fff&size=200' },
+      ],
+    },
+    {
+      name: 'Marcomm',
+      members: [
+        { name: 'Nabila Azzahra', role: 'Creative Content Editor', img: 'https://ui-avatars.com/api/?name=Nabila+Azzahra&background=111&color=fff&size=200' },
+      ],
+    },
+    {
+      name: 'Pimpinan Proyek / Teknis',
+      members: [
+        { name: 'Novi Marliani', role: 'Admin Project Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Novi+Marliani&background=111&color=fff&size=200' },
+      ],
+    },
+  ],
   konten: {
     tentangParagraf1:   'AFKAR LAND adalah perusahaan pengembang property syariah modern yang berfokus menghadirkan kawasan hunian nyaman, berkualitas, dan bernilai investasi tinggi.',
     tentangParagraf2:   'Kami hadir untuk memberikan solusi kepemilikan rumah tanpa riba melalui sistem transaksi syariah yang aman, transparan, dan sesuai prinsip Islam.',
@@ -118,6 +147,20 @@ const DEFAULT_SETTINGS = {
     jamSenin:     '09.00 – 17.00',
     jamSabtu:     '09.00 – 16.00',
     jamMinggu:    'By Confirmation',
+  },
+  whatsapp: {
+    nomorWa: '6285705218281',
+    nomorWa2: '',
+    pesanWaDefault: 'Halo AFKAR LAND, saya ingin bertanya mengenai properti Anda.',
+    pesanWaLead: 'Halo AFKAR LAND, saya tertarik dengan proyek {proyek}. Boleh minta informasi lebih lanjut?',
+    pesanWaKarir: 'Halo AFKAR LAND, saya ingin menanyakan informasi lowongan {posisi}.',
+    tampilkanTombolWa: true,
+  },
+  maintenance: {
+    enabled: false,
+    message: 'Website sedang dalam pemeliharaan. Silakan coba beberapa saat lagi.',
+    email: '',
+    eta: '',
   },
   // ── Footer & Sosmed ───────────────────────────────────────────────────────
   footer: {
@@ -219,6 +262,7 @@ function mergeWithDefaults(defaults, saved) {
 
   // Array: data Firestore selalu menang kalau ada dan bukan kosong
   if (Array.isArray(saved?.statistik)            && saved.statistik.length)            result.statistik  = saved.statistik;
+  if (Array.isArray(saved?.teamDivisions)        && saved.teamDivisions.length)        result.teamDivisions = saved.teamDivisions;
   if (Array.isArray(saved?.faq)                  && saved.faq.length)                  result.faq        = saved.faq;
   if (Array.isArray(saved?.navbar?.links)        && saved.navbar.links.length)         result.navbar     = { ...result.navbar,  links:  saved.navbar.links };
   if (Array.isArray(saved?.career?.posisi)       && saved.career.posisi.length)        result.career     = { ...result.career,  posisi: saved.career.posisi };

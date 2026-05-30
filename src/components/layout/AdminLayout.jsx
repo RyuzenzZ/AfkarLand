@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowRight, FiBell, FiLock, FiMenu } from 'react-icons/fi';
+import { FiArrowRight, FiBell, FiChevronLeft, FiChevronRight, FiLock, FiMenu } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import Sidebar from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function AdminLayout() {
   const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState(() => localStorage.getItem('afkar_admin_sidebar_hidden') === 'true');
   const sessionToastShown = useRef(false);
 
   useEffect(() => {
@@ -17,6 +18,10 @@ export default function AdminLayout() {
       toast.error('Sesi admin tidak aktif. Silakan login kembali.', { duration: 3000 });
     }
   }, [loading, user]);
+
+  useEffect(() => {
+    localStorage.setItem('afkar_admin_sidebar_hidden', String(sidebarHidden));
+  }, [sidebarHidden]);
 
   if (loading) {
     return (
@@ -75,7 +80,7 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 font-body">
+    <div className="flex h-screen overflow-hidden bg-gray-50 font-body">
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-30 md:hidden"
@@ -84,12 +89,24 @@ export default function AdminLayout() {
       )}
 
       <div className={`fixed top-0 left-0 h-full z-40 transform transition-transform duration-300
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${sidebarHidden ? 'md:-translate-x-full' : 'md:translate-x-0'}`}
       >
         <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
 
-      <main className="flex-1 md:ml-64 min-h-screen overflow-y-auto bg-gray-50">
+      <button
+        type="button"
+        onClick={() => setSidebarHidden(prev => !prev)}
+        className={`fixed top-4 z-50 hidden items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 shadow-sm transition-all hover:border-red-200 hover:text-red-600 md:flex ${
+          sidebarHidden ? 'left-4' : 'left-[17rem]'
+        }`}
+        aria-label={sidebarHidden ? 'Tampilkan sidebar admin' : 'Sembunyikan sidebar admin'}
+      >
+        {sidebarHidden ? <FiChevronRight size={15} /> : <FiChevronLeft size={15} />}
+        {sidebarHidden ? 'Menu' : 'Hide'}
+      </button>
+
+      <main className={`admin-layout-scroll h-screen min-h-0 flex-1 overflow-y-auto bg-gray-50 transition-all duration-300 ${sidebarHidden ? 'md:ml-0' : 'md:ml-64'}`}>
         <div className="md:hidden flex items-center justify-between gap-4 px-5 py-4 bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
           <div className="flex items-center gap-3">
             <button
@@ -113,14 +130,9 @@ export default function AdminLayout() {
           </Link>
         </div>
 
-        <motion.div
-          className="p-6 md:p-10"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-        >
+        <div className="p-5 md:p-8">
           <Outlet />
-        </motion.div>
+        </div>
       </main>
     </div>
   );

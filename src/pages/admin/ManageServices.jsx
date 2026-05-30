@@ -151,13 +151,13 @@ function ServiceModal({ open, onClose, onSave, isEditing, form, setForm }) {
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4"
+        className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/70 p-0 backdrop-blur-sm md:items-center md:p-4"
         onClick={onClose}
       >
         <motion.div
           initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
           transition={{ type: 'spring', damping: 28, stiffness: 360 }}
-          className="bg-white w-full md:max-w-xl rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden"
+          className="w-full overflow-hidden rounded-t-2xl border border-gray-100 bg-white shadow-2xl md:max-w-2xl md:rounded-2xl"
           onClick={e => e.stopPropagation()}
         >
           {/* Modal header */}
@@ -173,8 +173,8 @@ function ServiceModal({ open, onClose, onSave, isEditing, form, setForm }) {
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[70vh]">
-            <div className="p-6 space-y-5">
+          <form onSubmit={handleSubmit} className="max-h-[70vh] overflow-y-auto bg-gray-50">
+            <div className="m-6 space-y-5 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
               {/* Icon picker */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Pilih Icon</label>
@@ -193,7 +193,7 @@ function ServiceModal({ open, onClose, onSave, isEditing, form, setForm }) {
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Layanan *</label>
                 <input
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 focus:bg-white outline-none text-sm transition-all font-medium"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                   value={form.nama} onChange={e => setForm(f => ({ ...f, nama: e.target.value }))}
                   required placeholder="Konsultasi Properti Syariah" />
               </div>
@@ -202,7 +202,7 @@ function ServiceModal({ open, onClose, onSave, isEditing, form, setForm }) {
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Deskripsi Singkat</label>
                 <textarea
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 focus:bg-white outline-none text-sm transition-all resize-none"
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                   rows={2} value={form.deskripsi} onChange={e => setForm(f => ({ ...f, deskripsi: e.target.value }))}
                   placeholder="Kami membantu Anda menemukan properti ideal..." />
               </div>
@@ -211,23 +211,23 @@ function ServiceModal({ open, onClose, onSave, isEditing, form, setForm }) {
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Detail Lengkap</label>
                 <textarea
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 focus:bg-white outline-none text-sm transition-all resize-none"
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                   rows={3} value={form.detail} onChange={e => setForm(f => ({ ...f, detail: e.target.value }))}
                   placeholder="Penjelasan lebih lengkap tentang layanan ini..." />
               </div>
 
               {/* Urutan & Status */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Urutan</label>
                   <input type="number" min={0}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 outline-none text-sm transition-all"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                     value={form.urutan} onChange={e => setForm(f => ({ ...f, urutan: e.target.value }))} />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Status</label>
                   <select
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 outline-none text-sm transition-all"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                     value={form.aktif ? 'aktif' : 'sembunyikan'}
                     onChange={e => setForm(f => ({ ...f, aktif: e.target.value === 'aktif' }))}>
                     <option value="aktif">✅ Tampilkan</option>
@@ -244,7 +244,7 @@ function ServiceModal({ open, onClose, onSave, isEditing, form, setForm }) {
                 Batal
               </button>
               <button type="submit" disabled={saving}
-                className="flex-1 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
                 {saving ? (
                   <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Menyimpan...</>
                 ) : (

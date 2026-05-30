@@ -6,7 +6,7 @@ import {
 import { db } from '../../config/firebaseConfig';
 import {
   FiPlus, FiEdit2, FiTrash2, FiEye, FiX,
-  FiUpload, FiImage, FiLoader, FiAlertCircle
+  FiUpload, FiImage, FiLoader, FiAlertCircle, FiFileText
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -117,6 +117,9 @@ const statusStyle = {
   Draft:     'bg-gray-100 text-gray-500 border border-gray-200',
 };
 
+const articleInputCls = 'w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 caret-gray-900 outline-none transition-all focus:border-red-500 focus:ring-4 focus:ring-red-500/10';
+const articleLabelCls = 'mb-2 block text-[11px] font-extrabold uppercase tracking-wider text-gray-500';
+
 // ─── LOGIKA: Buat slug URL dari teks judul ────────────────────────────
 function slugify(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -135,32 +138,38 @@ function renderFormFields({
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="rounded-xl border border-red-100 bg-red-50/70 px-4 py-3">
+        <p className="text-xs font-bold text-red-700">Alur cepat artikel</p>
+        <p className="mt-1 text-xs leading-relaxed text-red-700/75">
+          Isi judul untuk membuat slug otomatis, pilih kategori dan status, lalu tambahkan thumbnail serta isi artikel.
+        </p>
+      </div>
 
       {/* ── Judul ── */}
       <div>
-        <label className="text-sm font-bold text-gray-700 mb-1 block">Judul Artikel *</label>
+        <label className={articleLabelCls}>Judul Artikel *</label>
         <input name="judul" value={form.judul} onChange={handleChange}
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+          className={articleInputCls}
           placeholder="Masukkan judul artikel..." autoComplete="off" />
       </div>
 
       {/* ── Slug ── */}
       <div>
-        <label className="text-sm font-bold text-gray-700 mb-1 block">Slug URL</label>
+        <label className={articleLabelCls}>Slug URL</label>
         <input name="slug" value={form.slug} onChange={handleChange}
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+          className={articleInputCls}
           placeholder="judul-artikel-url" autoComplete="off" />
         <p className="text-xs text-gray-400 mt-1">/artikel/{form.slug || '...'}</p>
       </div>
 
       {/* ── Kategori + Status ── */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="text-sm font-bold text-gray-700 mb-1 block">Kategori</label>
+          <label className={articleLabelCls}>Kategori</label>
           <select
             value={showKategoriInput ? '__manual__' : form.kategori}
             onChange={handleKategoriChange}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-white"
+            className={articleInputCls}
           >
             {KATEGORI_LIST.map(k => <option key={k} value={k}>{k}</option>)}
             <option value="__manual__">+ Isi Manual...</option>
@@ -172,18 +181,18 @@ function renderFormFields({
                 setKategoriBaru(e.target.value);
                 handleChange({ target: { name: 'kategori', value: e.target.value } });
               }}
-              className="mt-2 w-full border border-red-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+              className={`${articleInputCls} mt-2 border-red-200 bg-red-50/30`}
               placeholder="Ketik kategori baru..." autoComplete="off"
             />
           )}
         </div>
 
         <div>
-          <label className="text-sm font-bold text-gray-700 mb-1 block">Status</label>
+          <label className={articleLabelCls}>Status</label>
           <select
             value={showStatusInput ? '__manual__' : form.status}
             onChange={handleStatusChange}
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 bg-white"
+            className={articleInputCls}
           >
             {STATUS_LIST.map(s => <option key={s} value={s}>{s}</option>)}
             <option value="__manual__">+ Isi Manual...</option>
@@ -195,7 +204,7 @@ function renderFormFields({
                 setStatusBaru(e.target.value);
                 handleChange({ target: { name: 'status', value: e.target.value } });
               }}
-              className="mt-2 w-full border border-red-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+              className={`${articleInputCls} mt-2 border-red-200 bg-red-50/30`}
               placeholder="Ketik status baru..." autoComplete="off"
             />
           )}
@@ -204,7 +213,7 @@ function renderFormFields({
 
       {/* ── Thumbnail Upload ── */}
       <div>
-        <label className="text-sm font-bold text-gray-700 mb-2 block">Thumbnail / Gambar</label>
+        <label className={articleLabelCls}>Thumbnail / Gambar</label>
 
         {/* ─── LOGIKA: Peringatan jika Cloudinary belum dikonfigurasi ── */}
         {!CLOUDINARY_READY && (
@@ -226,7 +235,7 @@ function renderFormFields({
         {/* ─── LOGIKA: Area klik/drop untuk pilih gambar ───────────── */}
         <div
           onClick={() => imageInputRef.current?.click()}
-          className="relative border-2 border-dashed border-gray-200 hover:border-red-400 rounded-xl p-4 cursor-pointer transition-colors group"
+          className="group relative cursor-pointer rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/70 p-4 transition-all hover:border-red-300 hover:bg-red-50/40"
         >
           {(imagePreview || form.thumbnail) ? (
             <div className="relative">
@@ -235,10 +244,10 @@ function renderFormFields({
               <img
                 src={imagePreview || form.thumbnail}
                 alt="preview"
-                className="w-full h-40 object-cover rounded-lg"
+                className="h-48 w-full rounded-xl object-cover"
                 onError={e => { e.target.style.display = 'none'; }}
               />
-              <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="text-white text-sm font-bold flex items-center gap-1.5">
                   <FiUpload /> Ganti Gambar
                 </span>
@@ -254,7 +263,7 @@ function renderFormFields({
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 py-6 text-gray-400 group-hover:text-red-400 transition-colors">
+            <div className="flex flex-col items-center gap-2 py-8 text-gray-400 transition-colors group-hover:text-red-500">
               <FiImage size={32} />
               <span className="text-sm font-bold">
                 {CLOUDINARY_READY ? 'Klik atau seret gambar ke sini' : 'Klik untuk pilih gambar'}
@@ -287,7 +296,7 @@ function renderFormFields({
           value={imageFile ? '' : form.thumbnail}
           onChange={handleChange}
           disabled={!!imageFile}
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-50 disabled:text-gray-400"
+          className={`${articleInputCls} disabled:bg-gray-50 disabled:text-gray-400`}
           placeholder="https://example.com/gambar.jpg"
           autoComplete="off"
         />
@@ -309,13 +318,13 @@ function renderFormFields({
 
       {/* ── Konten Artikel ── */}
       <div>
-        <label className="text-sm font-bold text-gray-700 mb-1 block">Konten / Isi Artikel</label>
+        <label className={articleLabelCls}>Konten / Isi Artikel</label>
         <textarea
           name="konten"
           value={form.konten}
           onChange={handleChange}
           rows={8}
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-y leading-relaxed"
+          className={`${articleInputCls} min-h-48 resize-y leading-relaxed`}
           placeholder="Tulis isi artikel di sini..."
         />
         <p className="text-xs text-gray-400 mt-1">{form.konten.length} karakter</p>
@@ -550,19 +559,19 @@ export default function ManageArticles() {
   };
 
   // ─── LOGIKA: Footer tombol modal — reusable ───────────────────────
-  const ModalFooter = ({ mode, onCancel, btnColor }) => (
-    <div className="flex gap-3 mt-6">
+  const ModalFooter = ({ mode, onCancel }) => (
+    <div className="flex flex-col-reverse gap-3 sm:flex-row">
       <button
         onClick={onCancel}
         disabled={saving}
-        className="flex-1 py-2.5 border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-50 text-sm disabled:opacity-50"
+        className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-50 disabled:opacity-50"
       >
         Batal
       </button>
       <button
         onClick={() => handleSimpan(mode)}
         disabled={saving}
-        className={`flex-1 py-2.5 ${btnColor} text-white rounded-xl font-bold text-sm disabled:opacity-60 flex items-center justify-center gap-2 transition-colors`}
+        className="flex-1 rounded-xl bg-red-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60 flex items-center justify-center gap-2"
       >
         {saving
           ? <><FiLoader className="animate-spin" size={14} /> {saveLabel || 'Menyimpan...'}</>
@@ -671,16 +680,23 @@ export default function ManageArticles() {
 
       {/* ══ Modal Tambah Artikel ══ */}
       {modalTambah && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-heading font-bold">Artikel Baru</h2>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/70 p-0 backdrop-blur-sm md:items-center md:p-4">
+          <div className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-gray-100 bg-white shadow-2xl md:max-w-2xl md:rounded-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 py-5">
+              <div>
+                <h2 className="font-heading text-xl font-bold text-gray-900">Artikel Baru</h2>
+                <p className="mt-1 text-sm text-gray-500">Lengkapi konten blog sebelum dipublikasikan.</p>
+              </div>
               <button onClick={() => { setModalTambah(false); resetForm(); }}
-                className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"><FiX /></button>
+                className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100"><FiX size={18} /></button>
             </div>
-            <div className="p-6">
-              {renderFormFields(formProps)}
-              <ModalFooter mode="tambah" onCancel={() => { setModalTambah(false); resetForm(); }} btnColor="bg-red-600 hover:bg-red-700" />
+            <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50">
+              <div className="m-4 space-y-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:m-6">
+                {renderFormFields(formProps)}
+              </div>
+            </div>
+            <div className="shrink-0 border-t border-gray-100 bg-white px-6 py-4">
+              <ModalFooter mode="tambah" onCancel={() => { setModalTambah(false); resetForm(); }} />
             </div>
           </div>
         </div>
@@ -688,16 +704,23 @@ export default function ManageArticles() {
 
       {/* ══ Modal Edit Artikel ══ */}
       {modalEdit && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <h2 className="text-xl font-heading font-bold">Edit Artikel</h2>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/70 p-0 backdrop-blur-sm md:items-center md:p-4">
+          <div className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-gray-100 bg-white shadow-2xl md:max-w-2xl md:rounded-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 py-5">
+              <div>
+                <h2 className="font-heading text-xl font-bold text-gray-900">Edit Artikel</h2>
+                <p className="mt-1 text-sm text-gray-500">Perbarui judul, thumbnail, status, dan isi artikel.</p>
+              </div>
               <button onClick={() => { setModalEdit(null); resetForm(); }}
-                className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"><FiX /></button>
+                className="rounded-xl p-2 text-gray-400 transition-colors hover:bg-gray-100"><FiX size={18} /></button>
             </div>
-            <div className="p-6">
-              {renderFormFields(formProps)}
-              <ModalFooter mode="edit" onCancel={() => { setModalEdit(null); resetForm(); }} btnColor="bg-blue-600 hover:bg-blue-700" />
+            <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50">
+              <div className="m-4 space-y-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm md:m-6">
+                {renderFormFields(formProps)}
+              </div>
+            </div>
+            <div className="shrink-0 border-t border-gray-100 bg-white px-6 py-4">
+              <ModalFooter mode="edit" onCancel={() => { setModalEdit(null); resetForm(); }} />
             </div>
           </div>
         </div>

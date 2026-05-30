@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { 
   FiArrowRight, FiShield, FiHome, FiHeart, FiCheckCircle, 
   FiTarget, FiTrendingUp, FiLayers, FiUsers, FiAward, 
-  FiDownload, FiStar, FiMapPin, FiMessageSquare, FiMonitor, FiShare2
+  FiDownload, FiStar, FiMapPin, FiMessageSquare, FiMonitor, FiShare2, FiX
 } from 'react-icons/fi';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import { db } from '../config/firebaseConfig';
 import { trackCtaClick, trackEvent } from '../lib/analytics';
+import { normalizePublicProjects } from '../utils/projectData';
 
 // ── Real-time settings dari admin ──────────────────────────────
 import { useSiteSettings } from '../hooks/useSiteSettings';
@@ -22,6 +25,11 @@ const stagger = {
   visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
 };
 
+const teamMemberVariants = {
+  hidden: { opacity: 0, y: 18, scale: 0.96 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35, ease: 'easeOut' } },
+};
+
 // --- DATA PROJECT (Untuk Beranda) ---
 const featuredProjects = [
   { slug: 'masagena-green-hills', name: 'Masagena Green Hills', img: '/images/Masagena.jpg', desc: 'Kawasan hunian modern bernuansa hijau dengan lingkungan strategis.', brosurUrl: '/brosur/Brosur_Masagena_Green_Hills.pdf' },
@@ -34,19 +42,14 @@ const featuredProjects = [
 const teamMembersData = {
   'Marketing Executive': [
     { name: 'Fila Amelia', role: 'Official Masagena Green Hills', img: 'https://ui-avatars.com/api/?name=Fila+Amelia&background=111&color=fff&size=200' },
-    { name: 'Hazfira', role: 'Official Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Hazfira&background=111&color=fff&size=200' },
-    { name: 'Cooming Soon', role: 'Official The Hasanah Panakkukang', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
-    { name: 'Cooming Soon', role: 'Official Afkar Madani Estate', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' }
+    { name: 'Hazfira', role: 'Official Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Hazfira&background=111&color=fff&size=200' }
   ],
   'Digital Marketing': [
     { name: 'Damar Mahendra', role: 'Adsvertiser & Pengembang Web & APK', img: 'https://ui-avatars.com/api/?name=Damar+Mahendra&background=111&color=fff&size=200' }
   ],
-  'Sales Leader': [
-    { name: 'Cooming Soon', role: 'Leader Official Project AFKAR LAND', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' }
-  ],
+  'Sales Leader': [],
   'Marcomm': [
-    { name: 'Nabila Azzahra', role: 'Creative Content Editor', img: 'https://ui-avatars.com/api/?name=Nabila+Azzahra&background=111&color=fff&size=200' },
-    { name: 'Cooming Soon', role: 'Creative Documenter', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' }
+    { name: 'Nabila Azzahra', role: 'Creative Content Editor', img: 'https://ui-avatars.com/api/?name=Nabila+Azzahra&background=111&color=fff&size=200' }
   ],
   'Pimpinan Proyek / Teknis': [
     { name: 'Cooming Soon', role: 'Pimpinan Proyek AFKAR LAND', img: 'https://ui-avatars.com/api/?name=Cooming+Soon&background=111&color=fff&size=200' },
@@ -61,8 +64,42 @@ const teamMembersData = {
   ]
 };
 
-// --- DATA TESTIMONI ---
-const testimonials = [
+const PLACEHOLDER_NAME_PATTERN = /^(cooming|coming)\s*soon$/i;
+
+const isValidTeamMember = (member) => {
+  const name = member?.name?.trim();
+  return Boolean(name) && !PLACEHOLDER_NAME_PATTERN.test(name);
+};
+
+const getMemberImage = (member) => {
+  const name = member?.name?.trim() || 'AFKAR LAND';
+  return member?.img?.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=111&color=fff&size=200`;
+};
+
+const getDivisionIcon = (name) => {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('digital')) return <FiMonitor />;
+  if (normalized.includes('sales')) return <FiTrendingUp />;
+  if (normalized.includes('marcomm')) return <FiShare2 />;
+  if (normalized.includes('teknis') || normalized.includes('proyek')) return <FiLayers />;
+  return <FiUsers />;
+};
+
+const buildTeamDivisions = (settingsDivisions) => {
+  const source = Array.isArray(settingsDivisions) && settingsDivisions.length
+    ? settingsDivisions
+    : Object.entries(teamMembersData).map(([name, members]) => ({ name, members }));
+
+  return source
+    .map((division) => ({
+      ...division,
+      members: (division.members || []).filter(isValidTeamMember),
+    }))
+    .filter((division) => division.name?.trim() && division.members.length > 0);
+};
+
+// --- DATA TESTIMONI FALLBACK ---
+const FALLBACK_TESTIMONIALS = [
   { text: "Alhamdulillah, proses pembelian sangat mudah tanpa ribet urusan bank. Developer sangat kooperatif dan yang terpenting hati tenang karena tidak ada denda jika telat bayar.", name: "Keluarga Ahmad", project: "Masagena Green Hills" },
   { text: "Lingkungan islami yang kami cari akhirnya ketemu di sini. Proses syariahnya benar-benar menenangkan hati, bebas dari perasaan was-was.", name: "Keluarga Rahman", project: "Wotu Islamic Village" },
   { text: "Lokasi sangat strategis di pusat kota namun tetap mengedepankan nilai-nilai syariah. Tanpa BI checking sangat membantu kami yang berwirausaha.", name: "Keluarga Ibrahim", project: "The Hasanah Panakkukang" },
@@ -70,7 +107,16 @@ const testimonials = [
   { text: "Sangat merekomendasikan AFKAR LAND untuk siapapun yang ingin hijrah dari transaksi ribawi. Legalitas aman dan sangat terpercaya.", name: "Keluarga Syamsuddin", project: "Masagena Green Hills" },
 ];
 
-const duplicatedTestimonials = [...testimonials, ...testimonials];
+const normalizeTestimonial = (item) => ({
+  id: item.id,
+  text: item.isi || item.text || '',
+  name: item.nama || item.name || 'Customer AFKAR LAND',
+  role: item.jabatan || item.perusahaan || '',
+  project: item.proyek || item.project || 'AFKAR LAND',
+  rating: Number(item.rating || 5),
+  photo: item.foto || '',
+  featured: Boolean(item.featured),
+});
 
 // Default fallback values — termasuk konten dari ManageHomepage
 const DEFAULTS = {
@@ -101,10 +147,64 @@ const DEFAULTS = {
 
 export default function Home() {
   const [activeDivision, setActiveDivision] = useState(null);
+  const [projectItems, setProjectItems] = useState([]);
+  const [testimonialItems, setTestimonialItems] = useState([]);
 
   // ── Baca pengaturan real-time dari Firestore via admin ─────
   const { settings } = useSiteSettings();
   const heroImage  = settings?.pages?.home?.heroImage  || DEFAULTS.heroImage;
+
+  useEffect(() => {
+    if (!db) return undefined;
+    const q = query(collection(db, 'projects'), orderBy('order', 'asc'));
+    let fallbackUnsub = null;
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setProjectItems(normalizePublicProjects(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+      },
+      () => {
+        fallbackUnsub = onSnapshot(collection(db, 'projects'), (snap) => {
+          setProjectItems(normalizePublicProjects(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+        });
+      }
+    );
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!db) return undefined;
+    const q = query(collection(db, 'testimonials'), orderBy('createdAt', 'desc'));
+    let fallbackUnsub = null;
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const data = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(item => item.tampil !== false && (item.isi || item.text))
+          .sort((a, b) => Number(b.featured === true) - Number(a.featured === true))
+          .map(normalizeTestimonial);
+        setTestimonialItems(data);
+      },
+      () => {
+        fallbackUnsub = onSnapshot(collection(db, 'testimonials'), (snap) => {
+          const data = snap.docs
+            .map(d => ({ id: d.id, ...d.data() }))
+            .filter(item => item.tampil !== false && (item.isi || item.text))
+            .sort((a, b) => Number(b.featured === true) - Number(a.featured === true))
+            .map(normalizeTestimonial);
+          setTestimonialItems(data);
+        });
+      }
+    );
+    return () => {
+      unsub();
+      fallbackUnsub?.();
+    };
+  }, []);
 
   // Ambil nilai dari admin, fallback ke default jika belum diisi
   const hero       = settings?.hero   || {};
@@ -127,6 +227,17 @@ export default function Home() {
   const ctaPenutupJudul    = konten.ctaPenutupJudul;
   const ctaPenutupSubjudul = konten.ctaPenutupSubjudul;
   const trustSubjudul      = konten.trustSubjudul;
+  const teamDivisions = buildTeamDivisions(settings?.teamDivisions);
+  const activeDivisionData = teamDivisions.find((division) => division.name === activeDivision);
+  const homeProjects = useMemo(() => {
+    const featured = projectItems.filter(project => project.isFeatured);
+    const source = featured.length ? featured : projectItems;
+    return source.length ? source.slice(0, 4) : featuredProjects;
+  }, [projectItems]);
+  const homeTestimonials = testimonialItems.length
+    ? testimonialItems
+    : FALLBACK_TESTIMONIALS.map((item, index) => normalizeTestimonial({ ...item, id: `fallback-${index}` }));
+  const duplicatedTestimonials = [...homeTestimonials, ...homeTestimonials];
 
   const toggleDivision = (divisionName) => {
     setActiveDivision(activeDivision === divisionName ? null : divisionName);
@@ -251,7 +362,6 @@ export default function Home() {
 
       {/* ==========================================
           2. SECTION TENTANG AFKAR LAND
-          ✅ Paragraf dari ManageHomepage → Konten Halaman
       ========================================== */}
       <section className="py-24 md:py-32 bg-[#080808] relative">
         <div className="container mx-auto px-6 md:px-12">
@@ -341,86 +451,104 @@ export default function Home() {
           </div>
 
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="pt-10 border-t border-white/5">
-            <h3 className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-8">
+            <h3 className="text-center text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">
               Struktur Divisi & Tim Profesional
             </h3>
-            <p className="text-center text-xs text-red-500/70 mb-8 -mt-4 animate-pulse">Klik divisi di bawah ini untuk melihat anggota tim</p>
+            <div className="mx-auto mb-8 h-px w-24 bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
             
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {[
-                { name: 'Marketing Executive', icon: <FiUsers /> },
-                { name: 'Digital Marketing', icon: <FiMonitor /> },
-                { name: 'Sales Leader', icon: <FiTrendingUp /> },
-                { name: 'Marcomm', icon: <FiShare2 /> },
-                { name: 'Pimpinan Proyek / Teknis', icon: <FiLayers /> },
-              ].map((div, i) => {
+            <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {teamDivisions.map((div, i) => {
                 const isActive = activeDivision === div.name;
                 return (
                   <motion.button 
-                    key={i} 
-                    variants={fadeUp} 
+                    key={div.name} 
+                    variants={fadeUp}
+                    layout
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => toggleDivision(div.name)}
                     className={`
-                      border p-6 rounded-2xl flex flex-col items-center justify-center text-center transition-all duration-300 group
+                      relative min-h-36 overflow-hidden border p-5 rounded-2xl flex flex-col items-center justify-center text-center transition-colors duration-300 group
                       ${isActive 
-                        ? 'border-red-500 bg-red-900/10 shadow-lg shadow-red-900/20' 
+                        ? 'border-red-500/80 bg-red-900/20 shadow-lg shadow-red-950/30' 
                         : 'border-white/5 bg-[#080808] hover:border-red-500/50 hover:bg-[#111]'}
                     `}
                   >
-                    <div className={`mb-4 transition-colors text-3xl group-hover:scale-110 ${isActive ? 'text-red-500' : 'text-gray-600 group-hover:text-red-400'}`}>
-                      {div.icon}
+                    <span className={`absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-red-500 to-transparent transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-70'}`} />
+                    <span className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-black transition-colors ${isActive ? 'bg-red-500 text-white' : 'bg-white/5 text-white/35 group-hover:text-white/70'}`}>
+                      {div.members.length}
+                    </span>
+                    <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300 text-2xl ${isActive ? 'bg-red-500 text-white shadow-lg shadow-red-950/40' : 'bg-white/5 text-gray-500 group-hover:bg-red-500/10 group-hover:text-red-400'}`}>
+                      {getDivisionIcon(div.name)}
                     </div>
-                    <h4 className={`text-[13px] font-bold transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
+                    <h4 className={`text-[13px] font-bold leading-snug transition-colors ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}`}>
                       {div.name}
                     </h4>
+                    <p className={`mt-2 text-[10px] font-bold uppercase tracking-widest transition-colors ${isActive ? 'text-red-300' : 'text-white/25 group-hover:text-red-400/80'}`}>
+                      Anggota Tim
+                    </p>
                   </motion.button>
                 );
               })}
-            </div>
+            </motion.div>
 
-            <AnimatePresence>
-              {activeDivision && (
+            <AnimatePresence mode="wait">
+              {activeDivisionData && (
                 <motion.div
+                  key={activeDivisionData.name}
+                  layout
                   initial={{ opacity: 0, height: 0, y: -20 }}
                   animate={{ opacity: 1, height: 'auto', y: 0 }}
-                  exit={{ opacity: 0, height: 0, y: -20 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  exit={{ opacity: 0, height: 0, y: -12 }}
+                  transition={{ duration: 0.32, ease: "easeOut" }}
                   className="overflow-hidden mt-6"
                 >
-                  <div className="bg-[#1a1a1a] p-8 md:p-10 rounded-3xl border border-white/10 relative">
+                  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#141414] p-6 shadow-2xl shadow-black/30 md:p-8">
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-red-500/70 to-transparent" />
+                    <div className="absolute -right-20 -top-20 h-52 w-52 rounded-full bg-red-600/10 blur-3xl" />
                     <button 
                       onClick={() => setActiveDivision(null)}
-                      className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:bg-red-500 hover:text-white transition-colors"
+                      aria-label="Tutup daftar anggota"
+                      className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/5 text-gray-400 hover:bg-red-500 hover:text-white transition-colors"
                     >
-                      ✕
+                      <FiX size={16} />
                     </button>
                     
-                    <h4 className="text-xl md:text-2xl font-bold text-white mb-8 border-b border-white/5 pb-4">
-                      Tim <span className="text-red-500">{activeDivision}</span>
-                    </h4>
+                    <div className="relative z-10 mb-8 border-b border-white/5 pb-5 pr-12">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-red-500/80">Divisi Aktif</p>
+                      <h4 className="mt-2 text-xl md:text-2xl font-bold text-white">
+                        {activeDivisionData.name}
+                      </h4>
+                    </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                      {teamMembersData[activeDivision]?.map((member, idx) => (
-                        <div key={idx} className="flex flex-col items-center text-center group">
-                          <div className="relative mb-4">
-                            <div className="absolute inset-0 bg-red-500 rounded-full blur-md opacity-0 group-hover:opacity-40 transition-opacity duration-300" />
+                    <motion.div
+                      variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
+                      initial="hidden"
+                      animate="visible"
+                      className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+                    >
+                      {activeDivisionData.members.map((member, idx) => (
+                        <motion.div
+                          key={`${member.name}-${idx}`}
+                          variants={teamMemberVariants}
+                          className="group flex min-h-52 flex-col items-center justify-center rounded-2xl border border-white/5 bg-[#080808]/70 p-5 text-center transition-colors duration-300 hover:border-red-500/40 hover:bg-red-950/10"
+                        >
+                          <div className="relative mb-4 h-24 w-24">
+                            <div className="absolute inset-0 rounded-full bg-red-500 blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-30" />
                             <img 
-                              src={member.img} 
+                              src={getMemberImage(member)} 
                               alt={member.name} 
                               loading="lazy"
                               decoding="async"
-                              className="w-24 h-24 rounded-full object-cover border-2 border-white/10 group-hover:border-red-500 relative z-10 transition-colors duration-300" 
+                              className="relative z-10 h-24 w-24 rounded-full border-2 border-white/10 object-cover transition-all duration-300 group-hover:border-red-500 group-hover:scale-[1.03]" 
                             />
                           </div>
-                          <h5 className="font-bold text-white text-sm md:text-base mb-1">{member.name}</h5>
-                          <p className="text-gray-500 text-[10px] uppercase tracking-widest">{member.role}</p>
-                        </div>
+                          <h5 className="font-bold text-white text-sm md:text-base mb-1 leading-snug">{member.name}</h5>
+                          <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed">{member.role}</p>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                     
-                    {!teamMembersData[activeDivision] && (
-                      <p className="text-gray-500 italic text-center py-4">Data anggota tim untuk divisi ini belum tersedia.</p>
-                    )}
                   </div>
                 </motion.div>
               )}
@@ -512,13 +640,13 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProjects.map((proj, i) => (
+            {homeProjects.map((proj, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} transition={{ delay: i * 0.1 }}
                 className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden group hover:border-red-500/50 transition-colors flex flex-col h-full"
               >
                 <div className="aspect-[4/3] overflow-hidden relative">
                   <OptimizedImage
-                    src={proj.img}
+                    src={proj.image || proj.img}
                     alt={proj.name}
                     loading="lazy"
                     decoding="async"
@@ -533,8 +661,24 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="p-6 flex flex-col flex-1">
+                  {(proj.address || proj.locationDetail || proj.location) && (
+                    <div className="mb-2 flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#C9A84C]">
+                      <FiMapPin size={10} /> {proj.address || proj.locationDetail || proj.location}
+                    </div>
+                  )}
                   <h3 className="text-lg font-bold mb-2 group-hover:text-red-400 transition-colors">{proj.name}</h3>
-                  <p className="text-gray-500 text-xs leading-relaxed mb-6 flex-1">{proj.desc}</p>
+                  {proj.tagline && <p className="mb-2 text-xs italic text-white/45">{proj.tagline}</p>}
+                  <p className="text-gray-500 text-xs leading-relaxed mb-3 flex-1">{proj.desc}</p>
+                  {proj.harga && <p className="text-red-500 text-xs font-black mb-5">{proj.harga}</p>}
+                  {Array.isArray(proj.features) && proj.features.length > 0 && (
+                    <div className="mb-5 grid grid-cols-2 gap-1.5">
+                      {proj.features.slice(0, 4).map((feature, index) => (
+                        <span key={index} className="text-[10px] text-white/40">
+                          <span className="mr-1 text-[#C9A84C]">•</span>{feature}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   
                   <div className="flex flex-col gap-2 mt-auto">
                     <Link
@@ -545,10 +689,11 @@ export default function Home() {
                       Lihat Detail
                     </Link>
                     <a 
-                      href={proj.brosurUrl}
+                      href={proj.brosurUrl || '#'}
                       download={`Brosur_${proj.name.replace(/\s+/g, '_')}.pdf`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-disabled={!proj.brosurUrl}
                       className="w-full text-center py-2.5 bg-transparent border border-white/10 hover:border-white/30 text-white/70 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
                       <FiDownload size={14} /> Download Brosur
@@ -563,7 +708,6 @@ export default function Home() {
 
       {/* ==========================================
           7. SECTION SISTEM PROPERTY SYARIAH
-          ✅ Daftar pilar dari ManageHomepage → Konten Halaman
       ========================================== */}
       <section className="py-24 bg-[#111] border-y border-white/5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-red-900/10 rounded-full blur-3xl" />
@@ -589,7 +733,6 @@ export default function Home() {
 
       {/* ==========================================
           8. SECTION TRUST / TESTIMONI
-          ✅ Subjudul dari ManageHomepage → Konten Halaman
       ========================================== */}
       <section className="py-32 bg-[#080808] overflow-hidden">
         <div className="container mx-auto px-6 md:px-12 mb-16 text-center max-w-4xl">
@@ -633,19 +776,30 @@ export default function Home() {
               <div key={i} className="w-[300px] md:w-[420px] bg-[#111] p-8 rounded-3xl border border-white/5 shrink-0 whitespace-normal flex flex-col justify-between">
                 <div>
                   <div className="flex gap-1 mb-5">
-                    {[1,2,3,4,5].map(star => <FiStar key={star} className="text-yellow-500 w-4 h-4 fill-yellow-500" />)}
+                    {[1,2,3,4,5].map(star => (
+                      <FiStar
+                        key={star}
+                        className={`h-4 w-4 ${star <= t.rating ? 'fill-yellow-500 text-yellow-500' : 'text-gray-700'}`}
+                      />
+                    ))}
                   </div>
                   <p className="text-gray-300 italic text-sm md:text-base leading-relaxed mb-8">
                     "{t.text}"
                   </p>
                 </div>
                 <div className="flex items-center gap-4 border-t border-white/5 pt-4 mt-auto">
-                  <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center font-bold text-red-500 text-lg shrink-0">
-                    {t.name.split(' ')[1]?.charAt(0) || t.name.charAt(0)}
-                  </div>
+                  {t.photo ? (
+                    <img src={t.photo} alt={t.name} className="h-12 w-12 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center font-bold text-red-500 text-lg shrink-0">
+                      {t.name.split(' ')[1]?.charAt(0) || t.name.charAt(0)}
+                    </div>
+                  )}
                   <div>
                     <h4 className="font-bold text-sm text-white">{t.name}</h4>
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">Konsumen {t.project}</p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+                      {t.role ? `${t.role} · ` : 'Konsumen '}{t.project}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -656,7 +810,6 @@ export default function Home() {
 
       {/* ==========================================
           9. CTA PENUTUP — dari ManageHomepage → Konten Halaman
-          ✅ Judul, subjudul, dan tombol dari admin
       ========================================== */}
       <section className="py-24 border-t border-white/5 bg-[#080808]">
         <div className="container mx-auto px-6 md:px-12">

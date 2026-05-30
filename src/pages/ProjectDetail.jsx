@@ -9,10 +9,11 @@ import {
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { createLead } from '../services/firestoreService';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { trackEvent, trackLeadSubmit, trackWhatsappClick } from '../lib/analytics';
+import { selectLatestProject } from '../utils/projectData';
 
 // ─────────────────────────────────────────────────────────────
 // CANVAS 1 — DATA LAYER LENGKAP
@@ -76,6 +77,25 @@ const allMarketing = [
     badgeClass: 'bg-[#C9A84C]/10 text-[#C9A84C] border-[#C9A84C]/20',
   },
 ];
+
+const normalizeCustomMarketing = (item = {}, index = 0) => {
+  const name = item.name || `Marketing ${index + 1}`;
+  const foto = item.foto || item.photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=C0392B&color=fff&size=200&bold=true`;
+  return {
+    id: item.id || `manual-${index}`,
+    name,
+    role: item.role || 'Marketing Executive',
+    label: item.label || item.role || 'Marketing Executive',
+    ahli: item.ahli || item.specialty || item.spesialisasi || 'Marketing Project',
+    spesialisasi: item.spesialisasi || item.specialty || item.ahli || 'Marketing Project',
+    foto,
+    wa: item.wa || '',
+    phone: item.phone || item.wa || '',
+    isOnline: item.isOnline ?? item.online ?? true,
+    badge: item.badge || 'Official Team Afkar Land',
+    badgeClass: item.badgeClass || 'bg-[#C9A84C]/10 text-[#C9A84C] border-[#C9A84C]/20',
+  };
+};
 
 const keunggulanList = [
   { emoji: '🚫', title: 'Tanpa Riba', desc: 'Sistem transaksi bersih tanpa unsur bunga' },
@@ -585,20 +605,20 @@ export default function ProjectDetail() {
 
   // ── FETCH PROJECT DARI FIRESTORE BERDASARKAN SLUG ──
   useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const q = query(collection(db, 'projects'), where('slug', '==', slug));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          setProj({ id: snap.docs[0].id, ...snap.docs[0].data() });
-        }
-      } catch (err) {
+    const q = query(collection(db, 'projects'), where('slug', '==', slug));
+    const unsubscribe = onSnapshot(
+      q,
+      (snap) => {
+        const matches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setProj(selectLatestProject(matches));
+        setLoadingProj(false);
+      },
+      (err) => {
         console.error('Error fetching project:', err);
-      } finally {
         setLoadingProj(false);
       }
-    };
-    fetchProject();
+    );
+    return () => unsubscribe();
   }, [slug]);
 
   // ✅ FIX: useEffect ini WAJIB di atas semua conditional return
@@ -644,9 +664,17 @@ export default function ProjectDetail() {
   // Alias untuk kompatibilitas kode di bawah
   Object.assign(proj, projWithFallback);
 
-  const teamIds = proj.marketingIds || ['damar', 'fila', 'hazfira', 'erni', 'ayu'];
-  const team = allMarketing.filter(m => teamIds.includes(m.id));
+  const customMarketing = Array.isArray(proj.customMarketing)
+    ? proj.customMarketing.map(normalizeCustomMarketing).filter(m => m.name)
+    : [];
+  const allProjectMarketing = [...allMarketing, ...customMarketing];
+  const teamIds = Array.isArray(proj.marketingIds) && proj.marketingIds.length
+    ? proj.marketingIds
+    : allProjectMarketing.map(m => m.id);
+  const team = allProjectMarketing.filter(m => teamIds.includes(m.id));
   const selectedMk = team.find(m => m.id === selectedMkId) || null;
+  const advantages = Array.isArray(proj.advantages) && proj.advantages.length ? proj.advantages : keunggulanList;
+  const facilities = Array.isArray(proj.facilities) && proj.facilities.length ? proj.facilities : fasilitasList;
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -729,7 +757,7 @@ export default function ProjectDetail() {
 
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-1.5 text-white/60 text-sm">
-                <FiMapPin size={14} className="text-[#C9A84C]" /> {proj.locationDetail || proj.location}
+                <FiMapPin size={14} className="text-[#C9A84C]" /> {proj.address || proj.locationDetail || proj.location}
               </div>
               <div className={`font-bold text-base ${proj.status === 'Coming Soon' ? 'text-[#C9A84C]' : 'text-white'}`}>{proj.harga}</div>
             </div>
@@ -770,7 +798,7 @@ export default function ProjectDetail() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: '📍', label: 'Lokasi', val: proj.locationDetail || proj.location },
+              { icon: '📍', label: 'Lokasi', val: proj.address || proj.locationDetail || proj.location },
               { icon: '💰', label: 'Harga Mulai', val: proj.harga },
               { icon: '📋', label: 'Status', val: proj.status },
               { icon: '🏡', label: 'Tipe', val: 'Syariah' },
@@ -788,7 +816,7 @@ export default function ProjectDetail() {
         <section>
           <SectionLabel>Keunggulan Project</SectionLabel>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {keunggulanList.map((k, i) => (
+            {advantages.map((k, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }}
                 className="bg-[#111] border border-white/6 hover:border-[#C9A84C]/25 rounded-2xl p-5 transition-all duration-300 group"
               >
@@ -804,7 +832,7 @@ export default function ProjectDetail() {
         <section>
           <SectionLabel>Fasilitas Kawasan</SectionLabel>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {fasilitasList.map((f, i) => (
+            {facilities.map((f, i) => (
               <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}
                 className="bg-[#111] border border-white/6 hover:border-[#C9A84C]/25 rounded-xl p-4 flex flex-col items-center text-center gap-2 transition-all duration-300 group"
               >
@@ -820,7 +848,7 @@ export default function ProjectDetail() {
           <section>
             <SectionLabel gold>Pricelist & Tipe Unit</SectionLabel>
             <div className="overflow-x-auto rounded-2xl border border-white/8">
-              <table className="w-full text-sm min-w-[600px]">
+              <table className="w-full text-sm min-w-[920px]">
                 <thead>
                   <tr className="bg-[#1a1a1a] border-b border-white/8">
                     <th className="text-left px-5 py-3.5 text-white/50 text-[10px] font-bold uppercase tracking-widest">Tipe Unit</th>
@@ -828,6 +856,9 @@ export default function ProjectDetail() {
                     <th className="text-left px-5 py-3.5 text-white/50 text-[10px] font-bold uppercase tracking-widest">Harga Normal</th>
                     <th className="text-left px-5 py-3.5 text-[#C9A84C] text-[10px] font-bold uppercase tracking-widest">💥 Promo Cash Keras</th>
                     <th className="text-left px-5 py-3.5 text-white/50 text-[10px] font-bold uppercase tracking-widest">Cash Lunak</th>
+                    <th className="text-left px-5 py-3.5 text-white/50 text-[10px] font-bold uppercase tracking-widest">DP</th>
+                    <th className="text-left px-5 py-3.5 text-white/50 text-[10px] font-bold uppercase tracking-widest">Angsuran</th>
+                    <th className="text-left px-5 py-3.5 text-white/50 text-[10px] font-bold uppercase tracking-widest">Tenor</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -840,11 +871,21 @@ export default function ProjectDetail() {
                       transition={{ delay: i * 0.06 }}
                       className={`border-b border-white/5 hover:bg-white/3 transition-colors ${i % 2 === 0 ? 'bg-[#111]' : 'bg-[#0f0f0f]'}`}
                     >
-                      <td className="px-5 py-4 text-white font-bold text-xs">{t.tipe}</td>
+                      <td className="px-5 py-4 text-white font-bold text-xs">
+                        {t.tipe}
+                        {(t.luasBangunan || t.luasTanah || t.stok) && (
+                          <div className="mt-1 text-[10px] font-medium text-white/35">
+                            {[t.luasBangunan, t.luasTanah, t.stok].filter(Boolean).join(' / ')}
+                          </div>
+                        )}
+                      </td>
                       <td className="px-5 py-4 text-white/50 text-xs">{t.lantai}{t.kamar !== '-' ? ` · ${t.kamar}` : ''}</td>
                       <td className="px-5 py-4 text-white/40 text-xs line-through">{t.normal}</td>
-                      <td className="px-5 py-4 text-[#C9A84C] font-black text-xs">{t.cashKeras}</td>
-                      <td className="px-5 py-4 text-white/40 text-xs">{t.cashLunak || '—'}</td>
+                      <td className="px-5 py-4 text-[#C9A84C] font-black text-xs">{t.cashKeras || t.hargaMulai}</td>
+                      <td className="px-5 py-4 text-white/40 text-xs">{t.cashLunak || '-'}</td>
+                      <td className="px-5 py-4 text-white/40 text-xs">{t.dp || '-'}</td>
+                      <td className="px-5 py-4 text-white/40 text-xs">{t.angsuran || '-'}</td>
+                      <td className="px-5 py-4 text-white/40 text-xs">{t.tenor || '-'}</td>
                     </motion.tr>
                   ))}
                 </tbody>

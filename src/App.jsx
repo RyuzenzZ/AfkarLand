@@ -16,6 +16,8 @@ const About = lazy(() => import('./pages/About'));
 const Career = lazy(() => import('./pages/Career'));
 const Projects = lazy(() => import('./pages/Projects'));
 const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+const Services = lazy(() => import('./pages/Services'));
+const Gallery = lazy(() => import('./pages/Gallery'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogDetail = lazy(() => import('./pages/BlogDetail'));
 const Contact = lazy(() => import('./pages/Contact'));
@@ -54,7 +56,7 @@ export default function App() {
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    const introDuration = reduceMotion ? 180 : isMobile ? 420 : 620;
+    const introDuration = reduceMotion ? 700 : 3000;
     const timer = setTimeout(() => setShowIntro(false), introDuration);
     const vitalsTimer = setTimeout(initWebVitalsTracking, introDuration + 3500);
     return () => {
@@ -65,7 +67,54 @@ export default function App() {
 
   return (
     <>
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        gutter={12}
+        containerStyle={{ top: 24 }}
+        toastOptions={{
+          duration: 3200,
+          className: 'afkar-toast',
+          style: {
+            minWidth: '280px',
+            maxWidth: '520px',
+            borderRadius: '16px',
+            border: '1px solid rgba(255,255,255,0.72)',
+            background: 'rgba(255,255,255,0.92)',
+            color: '#1f2937',
+            boxShadow: '0 18px 48px rgba(15,23,42,0.16), 0 4px 14px rgba(15,23,42,0.08)',
+            backdropFilter: 'blur(18px)',
+            WebkitBackdropFilter: 'blur(18px)',
+            padding: '14px 16px',
+            fontSize: '14px',
+            fontWeight: 700,
+          },
+          success: {
+            iconTheme: {
+              primary: '#22c55e',
+              secondary: '#ffffff',
+            },
+            style: {
+              border: '1px solid rgba(34,197,94,0.18)',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#ffffff',
+            },
+            style: {
+              border: '1px solid rgba(239,68,68,0.2)',
+            },
+          },
+          loading: {
+            iconTheme: {
+              primary: '#dc2626',
+              secondary: '#ffffff',
+            },
+          },
+        }}
+      />
 
       {showIntro && <Loader />}
 
@@ -80,6 +129,8 @@ export default function App() {
               <Route path="/karir" element={<Career />} />
               <Route path="/proyek" element={<Projects />} />
               <Route path="/proyek/:slug" element={<ProjectDetail />} />
+              <Route path="/layanan" element={<Services />} />
+              <Route path="/galeri" element={<Gallery />} />
               <Route path="/artikel" element={<Blog />} />
               <Route path="/artikel/:slug" element={<BlogDetail />} />
               <Route path="/kontak" element={<Contact />} />

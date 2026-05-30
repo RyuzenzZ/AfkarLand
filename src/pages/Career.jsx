@@ -416,7 +416,7 @@ export default function Career() {
               >
                 {posisiList.filter(p => p.prioritas).map((pos, i) => (
                   <motion.div key={i} variants={fadeUp} transition={{ delay: i * 0.1 }}
-                    className="relative flex flex-col rounded-2xl border border-red-500/30 bg-gradient-to-b from-[#1c0a0a] to-[#110808] overflow-hidden group hover:border-red-400/60 hover:shadow-lg hover:shadow-red-900/20 transition-all duration-300"
+                    className="career-priority-card relative flex flex-col rounded-2xl border border-red-500/30 bg-gradient-to-b from-[#1c0a0a] to-[#110808] overflow-hidden group hover:border-red-400/60 hover:shadow-lg hover:shadow-red-900/20 transition-all duration-300"
                   >
                     {/* Top accent line */}
                     <div className="h-0.5 w-full bg-gradient-to-r from-red-600 via-red-400 to-transparent" />

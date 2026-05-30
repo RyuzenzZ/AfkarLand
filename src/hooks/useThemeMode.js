@@ -13,6 +13,7 @@ function getInitialTheme() {
 }
 
 function applyTheme(theme) {
+  if (typeof document === 'undefined') return;
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
 }
@@ -36,12 +37,25 @@ export function useThemeMode() {
   }, []);
 
   const setMode = (nextTheme) => {
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
-    setTheme(nextTheme);
-    window.dispatchEvent(new Event(THEME_EVENT));
+    if (typeof window === 'undefined') return;
+    const resolvedTheme = nextTheme === 'light' ? 'light' : 'dark';
+    window.localStorage.setItem(STORAGE_KEY, resolvedTheme);
+    applyTheme(resolvedTheme);
+    setTheme(resolvedTheme);
+    window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: resolvedTheme }));
   };
 
-  const toggleTheme = () => setMode(theme === 'dark' ? 'light' : 'dark');
+  const toggleTheme = () => {
+    setTheme((currentTheme) => {
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(STORAGE_KEY, nextTheme);
+        applyTheme(nextTheme);
+        window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: nextTheme }));
+      }
+      return nextTheme;
+    });
+  };
 
   return {
     theme,

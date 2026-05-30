@@ -8,6 +8,8 @@ import {
 import toast from 'react-hot-toast';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import { normalizePublicProjects } from '../utils/projectData';
+import { useThemeMode } from '../hooks/useThemeMode';
 
 // ─────────────────────────────────────────────────────────────
 // CANVAS 1 — KONSTANTA & DATA LAYER
@@ -56,6 +58,7 @@ function triggerDownload(url, fileName, name) {
 
 function ProjectCard({ project, index }) {
   const [hovered, setHovered] = useState(false);
+  const { isLight } = useThemeMode();
 
   return (
     <motion.div
@@ -65,12 +68,15 @@ function ProjectCard({ project, index }) {
       transition={{ duration: 0.46, delay: index * 0.07 }}
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="
-        group flex flex-col bg-[#111111] rounded-2xl overflow-hidden
-        border border-white/6 hover:border-[#C9A84C]/30
-        shadow-lg hover:shadow-xl hover:shadow-black/40
+      className={`
+        group flex flex-col rounded-2xl overflow-hidden
+        border shadow-lg hover:shadow-xl
         transition-all duration-400
-      "
+        ${isLight
+          ? 'bg-white border-slate-200 hover:border-red-200 shadow-slate-900/10 hover:shadow-slate-900/14'
+          : 'bg-[#111111] border-white/6 hover:border-[#C9A84C]/30 hover:shadow-black/40'
+        }
+      `}
     >
       {/* ── THUMBNAIL IMAGE ── */}
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -82,12 +88,15 @@ function ProjectCard({ project, index }) {
           transition={{ duration: 0.65, ease: [0.25, 0.1, 0.25, 1] }}
         />
         {/* OVERLAY gradien hitam */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/20 to-transparent" />
+        <div className={isLight
+          ? 'absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent'
+          : 'absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/20 to-transparent'
+        } />
 
         {/* COMING SOON overlay */}
         {/* ✅ SYNC: launchingDate diambil dari Firestore, bukan hardcode */}
         {project.status === 'Coming Soon' && (
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
+          <div className={`absolute inset-0 ${isLight ? 'bg-white/72' : 'bg-black/50'} backdrop-blur-[2px] flex flex-col items-center justify-center gap-2`}>
             <span className="text-white font-black text-sm uppercase tracking-widest px-4 py-2 border border-white/30 rounded-xl bg-black/40">
               🚀 Coming Soon
             </span>
@@ -107,14 +116,14 @@ function ProjectCard({ project, index }) {
           </span>
 
           {/* LOGIKA: Badge Syariah glowing green premium */}
-          <span className="
+          <span className={`
             inline-flex items-center gap-1 w-fit
             text-[9px] font-black px-2 py-1 rounded-full
             uppercase tracking-wider
-            bg-black/60 backdrop-blur-sm
             border border-emerald-500/60
-            text-emerald-400
-          "
+            backdrop-blur-sm
+            ${isLight ? 'bg-white/90 text-emerald-700' : 'bg-black/60 text-emerald-400'}
+          `}
             style={{
               boxShadow: '0 0 8px rgba(52,211,153,0.5), 0 0 16px rgba(52,211,153,0.2)',
               textShadow: '0 0 6px rgba(52,211,153,0.8)',
@@ -151,20 +160,20 @@ function ProjectCard({ project, index }) {
 
         {/* LOKASI */}
         {/* ✅ SYNC: Pakai locationDetail jika ada, fallback ke location — sama dengan ProjectDetail */}
-        <div className="flex items-center gap-1 text-[#C9A84C] text-[9px] font-bold tracking-widest uppercase">
+        <div className={`flex items-center gap-1 text-[9px] font-bold tracking-widest uppercase ${isLight ? 'text-red-700' : 'text-[#C9A84C]'}`}>
           <FiMapPin size={8} />
-          {project.locationDetail || project.location}
+          {project.address || project.locationDetail || project.location}
         </div>
 
         {/* NAMA PROJECT */}
-        <h3 className="font-heading font-extrabold text-white text-sm md:text-base leading-tight group-hover:text-[#C9A84C] transition-colors duration-300">
+        <h3 className={`font-heading font-extrabold text-sm md:text-base leading-tight transition-colors duration-300 ${isLight ? 'text-slate-950 group-hover:text-red-700' : 'text-white group-hover:text-[#C9A84C]'}`}>
           {project.name}
         </h3>
 
         {/* TAGLINE */}
         {/* ✅ SYNC: Field tagline baru — ditampilkan di card jika ada, sama dengan hero ProjectDetail */}
         {project.tagline && (
-          <p className="text-white/35 text-[10px] font-medium italic leading-snug -mt-0.5">
+          <p className={`text-[10px] font-medium italic leading-snug -mt-0.5 ${isLight ? 'text-slate-500' : 'text-white/35'}`}>
             {project.tagline}
           </p>
         )}
@@ -175,20 +184,20 @@ function ProjectCard({ project, index }) {
         </p>
 
         {/* DESKRIPSI */}
-        <p className="text-white/38 text-xs leading-relaxed line-clamp-2 grow">{project.desc}</p>
+        <p className={`text-xs leading-relaxed line-clamp-2 grow ${isLight ? 'text-slate-600' : 'text-white/38'}`}>{project.desc}</p>
 
         {/* FITUR KECIL 2x2 */}
         {/* ✅ SYNC: features array dari Firestore, sama dengan ProjectDetail */}
         <div className="grid grid-cols-2 gap-y-1 gap-x-2">
           {(project.features || []).map((f, i) => (
-            <div key={i} className="flex items-center gap-1 text-white/40 text-[9px]">
+            <div key={i} className={`flex items-center gap-1 text-[9px] ${isLight ? 'text-slate-500' : 'text-white/40'}`}>
               <span className="w-1 h-1 rounded-full bg-[#C9A84C] shrink-0" />
               {f}
             </div>
           ))}
         </div>
 
-        <div className="border-t border-white/6 pt-2.5 flex flex-col gap-2">
+        <div className={`border-t pt-2.5 flex flex-col gap-2 ${isLight ? 'border-slate-200' : 'border-white/6'}`}>
           {/* CTA 1: Lihat Detail */}
           {/* ✅ SYNC: Route /proyek/:slug — cocok dengan useParams di ProjectDetail */}
           <Link
@@ -209,14 +218,14 @@ function ProjectCard({ project, index }) {
           {/* ✅ SYNC: brosurUrl + brosurFileName dari Firestore */}
           <button
             onClick={() => triggerDownload(project.brosurUrl, project.brosurFileName, project.name)}
-            className="
+            className={`
               flex items-center justify-center gap-1.5 py-2.5
               bg-transparent hover:bg-[#C9A84C]/8
-              text-white/45 hover:text-[#C9A84C]
               font-bold text-xs rounded-xl
-              border border-white/8 hover:border-[#C9A84C]/35
+              border hover:border-[#C9A84C]/35
               transition-all duration-300
-            "
+              ${isLight ? 'text-slate-700 border-slate-200 hover:text-red-700' : 'text-white/45 border-white/8 hover:text-[#C9A84C]'}
+            `}
           >
             <FiDownload size={10} />
             Download Brosur
@@ -248,15 +257,13 @@ export default function Projects() {
     const unsub = onSnapshot(
       q,
       (snap) => {
-        setProjects(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setProjects(normalizePublicProjects(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
         setLoading(false);
       },
       () => {
         // Fallback jika index belum dibuat
         fallbackUnsub = onSnapshot(collection(db, 'projects'), (snap) => {
-          const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          data.sort((a, b) => (a.order || 0) - (b.order || 0));
-          setProjects(data);
+          setProjects(normalizePublicProjects(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
           setLoading(false);
         });
       }
@@ -371,7 +378,7 @@ export default function Projects() {
         <div className="container mx-auto px-5 md:px-10">
 
           {/* FILTER */}
-          <div className="flex items-center justify-between flex-wrap gap-3 mb-7">
+          <div className="flex flex-col gap-3 mb-7 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-white font-heading font-bold text-base">
                 Semua Project{' '}
@@ -384,13 +391,14 @@ export default function Projects() {
 
             {/* ✅ SYNC: Filter status harus cocok dengan nilai field status di Firestore
                          Tersedia | Sisa Sedikit | Coming Soon — sama dengan ProjectDetail */}
-            <div className="flex gap-1 bg-white/4 p-1 rounded-xl border border-white/7">
+            <div className="w-full max-w-full overflow-x-auto pb-1 lg:w-auto lg:overflow-visible">
+              <div className="flex w-max min-w-full gap-1 rounded-xl border border-white/7 bg-white/4 p-1 lg:min-w-0">
               {['Semua', 'Tersedia', 'Sisa Sedikit', 'Coming Soon'].map((f) => (
                 <button
                   key={f}
                   onClick={() => setActiveFilter(f)}
                   className={`
-                    px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
+                    shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200
                     ${activeFilter === f
                       ? 'bg-brand-primary text-white shadow-md'
                       : 'text-white/30 hover:text-white/60'
@@ -400,6 +408,7 @@ export default function Projects() {
                   {f}
                 </button>
               ))}
+              </div>
             </div>
           </div>
 
@@ -421,7 +430,7 @@ export default function Projects() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
               >
                 {filtered.map((project, index) => (
-                  <ProjectCard key={project.slug || project.id} project={project} index={index} />
+                  <ProjectCard key={project.id || project.slug} project={project} index={index} />
                 ))}
               </motion.div>
             </AnimatePresence>

@@ -143,29 +143,32 @@ function UploadModal({ open, onClose, onSave }) {
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end md:items-center justify-center p-0 md:p-4"
+        className="fixed inset-0 z-50 flex items-end justify-center bg-gray-950/70 p-0 backdrop-blur-sm md:items-center md:p-4"
         onClick={onClose}
       >
         <motion.div
           initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
           transition={{ type: 'spring', damping: 28, stiffness: 360 }}
-          className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden"
+          className="w-full overflow-hidden rounded-t-2xl border border-gray-100 bg-white shadow-2xl md:max-w-2xl md:rounded-2xl"
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-            <h2 className="font-bold text-gray-900">Upload Foto Baru</h2>
+          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
+            <div>
+              <h2 className="font-heading text-xl font-bold text-gray-900">Upload Foto Baru</h2>
+              <p className="mt-1 text-sm text-gray-500">Tambahkan gambar galeri yang akan tampil di website.</p>
+            </div>
             <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl text-gray-400 transition-colors"><FiX size={18}/></button>
           </div>
 
-          <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[75vh]">
-            <div className="p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="max-h-[75vh] overflow-y-auto bg-gray-50">
+            <div className="m-6 space-y-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
               {/* URL Input with drag hint */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">URL Foto *</label>
-                <div className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all
-                  ${isDragging ? 'border-gray-400 bg-gray-50' : 'border-gray-200'}`}>
+                <div className={`rounded-2xl border-2 border-dashed p-4 text-center transition-all
+                  ${isDragging ? 'border-red-300 bg-red-50/50' : 'border-gray-200 bg-gray-50/70'}`}>
                   <input
-                    className="w-full text-sm bg-transparent outline-none text-center text-gray-700 placeholder-gray-400"
+                    className="w-full bg-transparent text-center text-sm text-gray-900 outline-none placeholder:text-gray-400"
                     value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
                     placeholder="Paste URL gambar di sini..." required
                   />
@@ -187,22 +190,22 @@ function UploadModal({ open, onClose, onSave }) {
               {/* Judul */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Judul *</label>
-                <input className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 outline-none text-sm transition-all"
+                <input className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                   value={form.judul} onChange={e => setForm(f => ({ ...f, judul: e.target.value }))} required placeholder="Eksterior Type 36/72" />
               </div>
 
               {/* Kategori & Proyek */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Kategori</label>
-                  <select className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 outline-none text-sm transition-all"
+                  <select className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                     value={form.kategori} onChange={e => setForm(f => ({ ...f, kategori: e.target.value }))}>
                     {KATEGORI.filter(k => k !== 'Semua').map(k => <option key={k}>{k}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Proyek</label>
-                  <select className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 outline-none text-sm transition-all"
+                  <select className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                     value={form.proyek} onChange={e => setForm(f => ({ ...f, proyek: e.target.value }))}>
                     <option value="">Umum</option>
                     {PROYEK_LIST.map(p => <option key={p} value={p}>{p}</option>)}
@@ -213,7 +216,7 @@ function UploadModal({ open, onClose, onSave }) {
               {/* Alt Text */}
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Alt Text (SEO)</label>
-                <input className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-gray-400 outline-none text-sm transition-all"
+                <input className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10"
                   value={form.altText} onChange={e => setForm(f => ({ ...f, altText: e.target.value }))} placeholder="Deskripsi untuk mesin pencari" />
               </div>
             </div>
@@ -222,7 +225,7 @@ function UploadModal({ open, onClose, onSave }) {
               <button type="button" onClick={onClose}
                 className="flex-1 py-3 border border-gray-200 rounded-xl text-gray-600 font-bold text-sm hover:bg-gray-50 transition-colors">Batal</button>
               <button type="submit" disabled={saving}
-                className="flex-1 py-3 bg-gray-900 hover:bg-gray-800 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
                 {saving ? (
                   <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> Mengupload...</>
                 ) : (

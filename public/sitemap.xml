@@ -16,6 +16,11 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://afkarland.com/galeri</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://afkarland.com/karir</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -24,6 +29,11 @@
     <loc>https://afkarland.com/kontak</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://afkarland.com/layanan</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://afkarland.com/proyek</loc>

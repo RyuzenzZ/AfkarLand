@@ -36,24 +36,7 @@ const NAV = [
       { id: 'hero',      icon: FiHome,        label: 'Hero Banner'    },
       { id: 'konten',    icon: FileText,       label: 'Teks Beranda'   },
       { id: 'statistik', icon: BarChart3,      label: 'Statistik'      },
-    ],
-  },
-  {
-    group: 'HALAMAN',
-    items: [
-      { id: 'about',  icon: Building2,   label: 'Tentang Kami' },
-      { id: 'career', icon: FiBriefcase, label: 'Karir'         },
-      { id: 'kontak', icon: FiPhone,     label: 'Kontak'        },
-      { id: 'faq',    icon: HelpCircle,  label: 'FAQ'           },
-    ],
-  },
-  {
-    group: 'VISUAL & SISTEM',
-    items: [
-      { id: 'pages',    icon: ImageIcon,      label: 'Gambar Halaman' },
-      { id: 'branding', icon: Palette,        label: 'Branding & Logo' },
-      { id: 'navbar',   icon: Navigation,     label: 'Navbar'          },
-      { id: 'footer',   icon: AlignJustify,   label: 'Footer & Sosmed' },
+      { id: 'team',      icon: FiUser,         label: 'Struktur Tim'   },
     ],
   },
 ];
@@ -83,6 +66,8 @@ const DEFAULT = {
       { label: 'Beranda',      path: '/'             },
       { label: 'Tentang Kami', path: '/tentang-kami' },
       { label: 'Proyek',       path: '/proyek'        },
+      { label: 'Layanan',      path: '/layanan'       },
+      { label: 'Galeri',       path: '/galeri'        },
       { label: 'Artikel',      path: '/artikel'       },
       { label: 'Karir',        path: '/karir'         },
       { label: 'Kontak',       path: '/kontak'        },
@@ -109,6 +94,33 @@ const DEFAULT = {
     { label: 'Proyek Aktif', value: '4'    },
     { label: 'Kota Jangkauan', value: '8+' },
     { label: 'Kepuasan Klien', value: '98%'},
+  ],
+  teamDivisions: [
+    {
+      name: 'Marketing Executive',
+      members: [
+        { name: 'Fila Amelia', role: 'Official Masagena Green Hills', img: 'https://ui-avatars.com/api/?name=Fila+Amelia&background=111&color=fff&size=200' },
+        { name: 'Hazfira', role: 'Official Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Hazfira&background=111&color=fff&size=200' },
+      ],
+    },
+    {
+      name: 'Digital Marketing',
+      members: [
+        { name: 'Damar Mahendra', role: 'Advertiser & Pengembang Web & APK', img: 'https://ui-avatars.com/api/?name=Damar+Mahendra&background=111&color=fff&size=200' },
+      ],
+    },
+    {
+      name: 'Marcomm',
+      members: [
+        { name: 'Nabila Azzahra', role: 'Creative Content Editor', img: 'https://ui-avatars.com/api/?name=Nabila+Azzahra&background=111&color=fff&size=200' },
+      ],
+    },
+    {
+      name: 'Pimpinan Proyek / Teknis',
+      members: [
+        { name: 'Novi Marliani', role: 'Admin Project Wotu Islamic Village', img: 'https://ui-avatars.com/api/?name=Novi+Marliani&background=111&color=fff&size=200' },
+      ],
+    },
   ],
   konten: {
     tentangParagraf1: 'AFKAR LAND adalah perusahaan pengembang property syariah modern yang berfokus menghadirkan kawasan hunian nyaman, berkualitas, dan bernilai investasi tinggi.',
@@ -266,6 +278,7 @@ const hasSectionData = (id, data) => {
   if (id === 'hero')      return !!data.hero?.judul;
   if (id === 'konten')    return !!data.konten?.tentangParagraf1;
   if (id === 'statistik') return data.statistik?.length > 0;
+  if (id === 'team')      return data.teamDivisions?.some(d => d.members?.some(m => m.name));
   if (id === 'about')     return !!data.about?.heroJudul;
   if (id === 'career')    return !!data.career?.heroJudul;
   if (id === 'kontak')    return !!data.contact?.waNumber;
@@ -314,6 +327,7 @@ export default function ManageHomepage() {
             career:    { ...prev.career,    ...s.career, posisi: s.career?.posisi || prev.career.posisi },
             contact:   { ...prev.contact,   ...s.contact   },
             statistik: s.statistik || prev.statistik,
+            teamDivisions: s.teamDivisions || prev.teamDivisions,
             faq:       s.faq       || prev.faq,
           }));
         }
@@ -367,6 +381,13 @@ export default function ManageHomepage() {
   const setPilar    = (i,v) => setData(d => { const p=[...(d.konten.pilarSyariah||[])]; p[i]=v; return {...d,konten:{...d.konten,pilarSyariah:p}}; });
   const addPilar    = ()    => setData(d => ({ ...d, konten: { ...d.konten, pilarSyariah: [...(d.konten.pilarSyariah||[]), ''] } }));
   const removePilar = (i)   => setData(d => ({ ...d, konten: { ...d.konten, pilarSyariah: (d.konten.pilarSyariah||[]).filter((_,x)=>x!==i) } }));
+
+  const setDivision = (i,k,v) => setData(d => { const divs=[...(d.teamDivisions||[])]; divs[i]={...divs[i],[k]:v}; return {...d,teamDivisions:divs}; });
+  const addDivision = () => setData(d => ({ ...d, teamDivisions: [...(d.teamDivisions||[]), { name:'', members:[] }] }));
+  const removeDivision = (i) => setData(d => ({ ...d, teamDivisions: (d.teamDivisions||[]).filter((_,x)=>x!==i) }));
+  const setTeamMember = (di,mi,k,v) => setData(d => { const divs=[...(d.teamDivisions||[])]; const members=[...(divs[di]?.members||[])]; members[mi]={...members[mi],[k]:v}; divs[di]={...divs[di],members}; return {...d,teamDivisions:divs}; });
+  const addTeamMember = (di) => setData(d => { const divs=[...(d.teamDivisions||[])]; const members=[...(divs[di]?.members||[]), { name:'', role:'', img:'' }]; divs[di]={...divs[di],members}; return {...d,teamDivisions:divs}; });
+  const removeTeamMember = (di,mi) => setData(d => { const divs=[...(d.teamDivisions||[])]; const members=(divs[di]?.members||[]).filter((_,x)=>x!==mi); divs[di]={...divs[di],members}; return {...d,teamDivisions:divs}; });
 
   const setPosisi    = (i,k,v) => setData(d => { const p=[...d.career.posisi]; p[i]={...p[i],[k]:v}; return {...d,career:{...d.career,posisi:p}}; });
   const addPosisi    = ()      => setData(d => ({ ...d, career: { ...d.career, posisi: [...d.career.posisi, { title:'', prioritas:false, emoji:'💼', jobdesk:[''] }] } }));
@@ -572,6 +593,49 @@ export default function ManageHomepage() {
           )}
 
           {/* ── TENTANG KAMI ─────────────────────────────────────────────────── */}
+          {active === 'team' && (
+            <Card title="Struktur Divisi & Anggota Beranda" icon={<FiUser size={14}/>}>
+              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
+                <p className="text-xs text-red-700">
+                  Anggota dengan nama kosong atau "Coming Soon/Cooming Soon" tidak akan tampil di beranda. Foto bisa diisi URL langsung atau upload.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {(data.teamDivisions || []).map((division, di) => (
+                  <div key={di} className="rounded-xl border border-gray-100 bg-gray-50 p-3 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <input className={`${ic} flex-1 bg-white`} value={division.name || ''} onChange={e => setDivision(di, 'name', e.target.value)} placeholder="Nama divisi"/>
+                      <button onClick={() => removeDivision(di)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg shrink-0"><FiTrash2 size={13}/></button>
+                    </div>
+                    <div className="space-y-3">
+                      {(division.members || []).map((member, mi) => (
+                        <div key={mi} className="grid grid-cols-1 lg:grid-cols-[96px_1fr_auto] gap-3 rounded-xl border border-gray-100 bg-white p-3">
+                          <div className="h-24 w-24 overflow-hidden rounded-full border border-gray-100 bg-gray-100">
+                            {member.img
+                              ? <img src={member.img} alt={member.name || 'Anggota tim'} className="h-full w-full object-cover" onError={e => { e.target.style.display = 'none'; }}/>
+                              : <div className="flex h-full w-full items-center justify-center text-center text-[10px] font-bold text-gray-400 px-3">Belum ada foto</div>
+                            }
+                          </div>
+                          <div className="space-y-2 min-w-0">
+                            <Row>
+                              <F label="Nama Anggota"><input className={ic} value={member.name || ''} onChange={e => setTeamMember(di, mi, 'name', e.target.value)} placeholder="Nama anggota"/></F>
+                              <F label="Jabatan / Role"><input className={ic} value={member.role || ''} onChange={e => setTeamMember(di, mi, 'role', e.target.value)} placeholder="Contoh: Official Masagena Green Hills"/></F>
+                            </Row>
+                            <ImgField label="Foto Anggota" value={member.img || ''} onChange={v => setTeamMember(di, mi, 'img', v)} folder="afkar-land/team" previewH="h-0"/>
+                          </div>
+                          <button onClick={() => removeTeamMember(di, mi)} className="self-start p-2 text-red-400 hover:bg-red-50 rounded-lg"><FiTrash2 size={13}/></button>
+                        </div>
+                      ))}
+                    </div>
+                    <AddBtn onClick={() => addTeamMember(di)} label="Tambah Anggota"/>
+                  </div>
+                ))}
+                <AddBtn onClick={addDivision} label="Tambah Divisi"/>
+              </div>
+            </Card>
+          )}
+
           {active === 'about' && (<>
             <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 flex items-center gap-2.5">
               <span className="text-base shrink-0">ℹ️</span>

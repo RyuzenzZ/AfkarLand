@@ -19,6 +19,8 @@ const PAGES = [
   { id: 'tentang', label: 'Tentang Kami', path: '/tentang-kami' },
   { id: 'proyek', label: 'Daftar Proyek', path: '/proyek' },
   { id: 'proyekDetail', label: 'Detail Proyek', path: '/proyek/:slug' },
+  { id: 'layanan', label: 'Layanan', path: '/layanan' },
+  { id: 'galeri', label: 'Galeri', path: '/galeri' },
   { id: 'artikel', label: 'Artikel', path: '/artikel' },
   { id: 'artikelDetail', label: 'Detail Artikel', path: '/artikel/:slug' },
   { id: 'karir', label: 'Karir', path: '/karir' },
@@ -66,6 +68,19 @@ const Field = ({ label, hint, children }) => (
     {children}
   </div>
 );
+
+const DETAIL_TEMPLATE_HELP = {
+  proyekDetail: {
+    title: 'SEO detail proyek otomatis dari ManageProjects',
+    text: 'Jika field detail proyek dikosongkan, website memakai nama, lokasi, deskripsi, harga, dan gambar proyek terbaru dari Firestore. Isi field di bawah hanya jika ingin membuat template global untuk semua proyek.',
+    tokens: '{title}, {project}, {location}, {description}, {siteName}',
+  },
+  artikelDetail: {
+    title: 'SEO detail artikel otomatis dari ManageArticles',
+    text: 'Jika field detail artikel dikosongkan, website memakai judul, kategori, isi artikel, thumbnail, status publish, dan tanggal artikel terbaru dari Firestore. Isi field di bawah hanya jika ingin membuat template global untuk semua artikel.',
+    tokens: '{title}, {article}, {category}, {description}, {siteName}',
+  },
+};
 
 const CharCount = ({ value, max }) => {
   const len = (value || '').length;
@@ -344,6 +359,18 @@ export default function ManageSEO() {
             </>
           ) : (
             <>
+              {DETAIL_TEMPLATE_HELP[activePage] && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <p className="text-sm font-extrabold text-emerald-800">{DETAIL_TEMPLATE_HELP[activePage].title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-emerald-700">
+                    {DETAIL_TEMPLATE_HELP[activePage].text}
+                  </p>
+                  <div className="mt-3 rounded-xl border border-emerald-200 bg-white/70 px-3 py-2 text-xs text-emerald-800">
+                    Placeholder template: <span className="font-mono font-bold">{DETAIL_TEMPLATE_HELP[activePage].tokens}</span>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                 <div className="flex items-center justify-between mb-3 gap-4">
                   <h3 className="font-bold text-gray-800 text-sm">

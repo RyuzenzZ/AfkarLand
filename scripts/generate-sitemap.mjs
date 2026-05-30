@@ -11,6 +11,8 @@ const staticRoutes = [
   { path: '/', priority: '1.0', changefreq: 'daily' },
   { path: '/tentang-kami', priority: '0.8', changefreq: 'monthly' },
   { path: '/proyek', priority: '0.9', changefreq: 'weekly' },
+  { path: '/layanan', priority: '0.8', changefreq: 'monthly' },
+  { path: '/galeri', priority: '0.7', changefreq: 'weekly' },
   { path: '/artikel', priority: '0.8', changefreq: 'weekly' },
   { path: '/karir', priority: '0.6', changefreq: 'monthly' },
   { path: '/kontak', priority: '0.7', changefreq: 'monthly' },
